@@ -56,6 +56,7 @@ export default defineConfig({
           { label: '配置模板参考', link: 'notes/config-templates/' },
           { label: 'API 渠道速查', link: 'notes/api-reference/' },
           { label: '故障排除手册', link: 'notes/troubleshooting/' },
+          { label: '工作流自动化', link: 'notes/automation/' },
         ],
       },
     ],
