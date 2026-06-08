@@ -31,6 +31,7 @@ export default defineConfig({
           { label: '持久记忆', link: 'hermes/memory-system/' },
           { label: 'CI/CD 自动部署', link: 'hermes/ci-cd/' },
           { label: 'BigSet 集成', link: 'hermes/bigset-integration/' },
+          { label: 'Codex 接入', link: 'hermes/codex-integration/' },
         ],
       },
       {
