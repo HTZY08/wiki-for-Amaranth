@@ -195,7 +195,7 @@ Hindsight Lite（SQLite）→ 持久记忆层
        │   · 模拟 → MiroFish（按需）
        │
        └─ {持久化层}
-          BigSet（Convex 后端，localhost:3210）
+          BigSet（Convex 后端，host.docker.internal:3210）
           分析结果、决策记录、代码审查 → 结构化数据集
 ```
 
