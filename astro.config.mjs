@@ -30,6 +30,7 @@ export default defineConfig({
           { label: '定时任务', link: 'hermes/cron-background/' },
           { label: '持久记忆', link: 'hermes/memory-system/' },
           { label: 'CI/CD 自动部署', link: 'hermes/ci-cd/' },
+          { label: 'BigSet 集成', link: 'hermes/bigset-integration/' },
         ],
       },
       {
