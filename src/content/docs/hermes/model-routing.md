@@ -1,59 +1,116 @@
 ---
 title: 多模型路由
-description: MoE 式多模型调度架构
+description: 配置多个 AI 模型，按任务自动选择最合适的模型
 ---
 
-Hermes Agent 采用 MoE（Mixture of Experts）式多模型架构，按任务类型自动分配最合适的 LLM 后端。
+Hermes 支持同时配置多个 AI 模型，根据任务类型自动选择最合适的模型。这样既能省钱（简单任务用便宜模型），又能保证质量（复杂任务用好模型）。
 
-## 模型栈
+---
 
-| 模型 | 角色 | 调用量 | 用途 |
-|------|------|--------|------|
-| **DeepSeek V4 Flash** | 常驻 backbone | ~80-90% | 日常对话、常规任务、CLI 交互 |
-| **GPT-5.5** (via Codex) | 代码专家 | 按需 | 代码重构、复杂编程 |
-| **Claude Opus** (via PackyAPI) | 推理专家 | 按需 | 架构决策、深度分析 |
-| **Gemini Pro** (via APIYi) | 备选推理 | 按需 | 长上下文、特定场景 |
-| **Grok/Mistral** (via OpenRouter) | 实验性 | 偶尔 | 测试、对比、特定需求 |
+## 为什么需要多个模型
 
-## 路由策略
+不同 AI 模型各有专长：
 
-```
-任务请求
-    │
-    ├── 日常对话/简单查询 → DeepSeek V4 Flash
-    ├── 复杂代码/编程     → Codex → GPT-5.5
-    ├── 深度分析/架构     → Claude Opus
-    ├── 长文档处理        → Gemini Pro
-    └── 实验/对比         → OpenRouter (Grok/Mistral)
-```
+| 模型 | 特点 | 适合做什么 |
+|------|------|-----------|
+| DeepSeek V4 Flash | 响应快、价格低 | 日常对话、简单查询、常规任务 |
+| GPT-5.x | 编程能力强 | 写代码、重构、调试 |
+| Claude Opus | 分析深度好 | 架构设计、复杂分析、长文本 |
+| Gemini Pro | 上下文窗口大 | 处理超长文档、多模态输入 |
 
-## 配置方式
+## 配置多模型
 
-在 `config.yaml` 中配置多个 provider：
+在 `~/.hermes/config.yaml` 中配置多个 provider：
 
 ```yaml
 providers:
+  # 主力模型——处理 80% 的日常任务
   deepseek:
     api_key: ${DEEPSEEK_API_KEY}
     models:
-      - name: deepseek-v4-flash
+      - name: deepseek-chat
         type: chat
 
-  openrouter:
-    api_key: ${OPENROUTER_API_KEY}
+  # 代码专家——只有写代码时才调用
+  openai:
+    api_key: ${OPENAI_API_KEY}
     models:
-      - name: openai/gpt-5.5
-      - name: x-ai/grok-3
+      - name: gpt-4o
+        type: chat
+
+  # 深度推理——复杂问题使用
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+    models:
+      - name: claude-sonnet-4
+        type: chat
 ```
 
-通过 CLI 或 Gateway 请求时指定模型：
+## 路由策略
+
+配置好后，Hermes 会自动按策略选择模型：
+
+```
+你发来一个请求
+    │
+    ├── 日常聊天/简单问题 → DeepSeek（成本最低）
+    ├── 编写代码/调试     → GPT（编程最强）
+    ├── 深度分析/架构设计 → Claude（分析最深）
+    ├── 处理长文档        → Gemini（上下文最大）
+    └── 实验性任务        → 其他模型（按配置）
+```
+
+## 手动指定模型
+
+你也可以在对话中临时指定用哪个模型：
 
 ```bash
-hermes --model claude-opus "分析这个架构的缺陷"
+# 在 CLI 中
+hermes --model claude-opus "帮我分析这个架构的缺陷"
+
+# 在对话中
+使用 GPT 帮我写一段 Python 代码
 ```
 
-## 优势
+## 配置 API 中转
 
-- **成本优化**：80% 调用走便宜的 DeepSeek，硬骨头才调高价模型
-- **能力互补**：各取所长——DeepSeek 快，Claude 深，GPT 编码稳
-- **容灾**：某个 provider 挂掉时自动 fallback
+如果直接连接海外 API 不稳定，可以使用中转服务：
+
+```yaml
+providers:
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    base_url: "https://你的中转地址/v1"  # 替换为你的中转 URL
+    models:
+      - name: gpt-4o
+```
+
+## 故障排查
+
+### 某个模型报错
+
+```yaml
+# 临时禁用有问题的模型
+providers:
+  openai:
+    enabled: false  # 先关掉
+```
+
+### 所有模型都超时
+
+检查网络代理是否正常。尝试直接 ping API 地址：
+
+```bash
+curl -I https://api.openai.com
+```
+
+如果不通，检查[代理配置](/hermes/proxy-setup/)。
+
+### 想切换主力模型
+
+修改 `config.yaml` 中的 `default_model`：
+
+```yaml
+agent:
+  default_model: gpt-4o  # 把主力模型改成 GPT
+```

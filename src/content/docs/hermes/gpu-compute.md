@@ -1,39 +1,59 @@
 ---
 title: GPU 透传
-description: NVIDIA 显卡直通 Docker 容器
+description: 让 Hermes 使用 NVIDIA 显卡加速
 ---
 
-Hermes 容器内的 GPU 加速服务（如 Whisper 音频转录、本地 LLM 推理）需要将宿主机 NVIDIA 显卡透传入容器。
+配置 GPU 后，Hermes 可以使用显卡加速语音识别、本地模型推理等任务。
 
-## 环境
+---
 
-- **GPU**: NVIDIA RTX 5070 Ti (12GB VRAM)
-- **宿主**: WSL2 (Ubuntu) + Docker Desktop
-- **驱动**: NVIDIA Driver 通过 Windows 侧安装，WSL2 自动继承
+## 前置条件
 
-## 前提条件
+- ✅ 宿主机已安装 NVIDIA 显卡驱动（`nvidia-smi` 能正常输出）
+- ✅ WSL2（Windows 用户）
+- ✅ Docker Desktop（Windows 用户）
 
-WSL2 中安装 NVIDIA Container Toolkit：
+## 安装 NVIDIA Container Toolkit
+
+### Windows + WSL2 用户
+
+在 WSL2（Ubuntu）终端中运行：
 
 ```bash
-# 添加 NVIDIA 容器工具源
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+# 添加 NVIDIA 软件源
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
-sudo apt update && sudo apt install -y nvidia-container-toolkit
+# 安装
+sudo apt update
+sudo apt install -y nvidia-container-toolkit
 
 # 配置 Docker
 sudo nvidia-ctk runtime configure --runtime=docker
+
+# 重启 Docker
 sudo systemctl restart docker
 ```
 
-## Docker Compose 配置
+### Linux 原生用户
+
+```bash
+# 同样方法安装
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt update && sudo apt install -y nvidia-container-toolkit
+sudo systemctl restart docker
+```
+
+## 配置 Docker Compose
+
+在 `docker-compose.yml` 中添加 GPU 配置：
 
 ```yaml
 services:
   hermes:
-    image: hermes-agent
+    # ... 其他配置 ...
     deploy:
       resources:
         reservations:
@@ -43,29 +63,62 @@ services:
               capabilities: [gpu]
 ```
 
-在 Windows + WSL2 + Docker Desktop 环境下，也可以通过 `devices` 方式直通：
+## 验证 GPU 透传
 
-```yaml
-services:
-  hermes:
-    devices:
-      - /dev/dri:/dev/dri  # WSL2 GPU 设备节点
-```
-
-## 验证
+重启容器后验证：
 
 ```bash
-# 容器内检查 GPU 是否可见
+docker compose up -d
 docker exec hermes-agent nvidia-smi
-
-# 预期输出应显示 RTX 5070 Ti 及其 12GB 显存
 ```
 
-## 使用场景
+应该能看到：
+```
++-----------------------------------------------------------------------+
+| NVIDIA-SMI ...  Driver Version: ...  CUDA Version: ...                |
+|-------------------------------+----------------------+----------------+
+| GPU  Name            TCC/WDDN | Bus-Id        Disp.A | Volatile Uncorr.|
+|===============================+======================+================|
+|   0  NVIDIA GPU          ...  | ...                  |                |
++-------------------------------+----------------------+----------------+
+```
 
-| 服务 | 用途 | GPU 负载 |
-|------|------|----------|
-| faster-whisper | 音频/语音转文字 | 低（~1-2GB） |
-| ComfyUI | AI 图像生成 | 中高（~6-8GB） |
-| 本地 LLM (llama.cpp) | 本地语言模型推理 | 取决于模型大小 |
-| LM Studio | 本地模型服务 | 取决于模型大小 |
+## GPU 加速的应用
+
+### 语音转文字（Whisper）
+
+配置好 GPU 后，语音转文字会自动使用 GPU 加速，处理速度提升 5-10 倍。
+
+```bash
+# 在容器内检查 Whisper 是否使用 GPU
+docker exec hermes-agent python3 -c "import torch; print(torch.cuda.is_available())"
+# 应该输出：True
+```
+
+### 本地模型推理
+
+可以用 ollama 或 llama.cpp 在容器内运行本地模型：
+
+```bash
+# 在 Hermes 对话中
+你：能不能在本地跑一个翻译模型？
+```
+
+## 故障排查
+
+### nvidia-smi 报错 "command not found"
+
+驱动还没有安装或者 WSL2 没有继承驱动。在 Windows 下安装 NVIDIA 驱动后重启。
+
+### "could not select device driver "nvidia""
+
+NVIDIA Container Toolkit 没有正确安装。重新执行安装步骤，确认 `sudo systemctl restart docker` 成功。
+
+### 容器能启动但 nvidia-smi 不显示 GPU
+
+```bash
+# 检查 WSL2 中是否能识别 GPU
+nvidia-smi
+```
+
+如果在 WSL2 终端里能看到 GPU，但容器里看不到，检查 Docker Desktop 的 WSL Integration 设置是否开启。

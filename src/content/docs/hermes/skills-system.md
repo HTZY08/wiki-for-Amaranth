@@ -1,76 +1,118 @@
 ---
 title: 技能系统
-description: Hermes Skill 体系——自定义、加载与管理
+description: Skill 是什么、怎么用、怎么写
 ---
 
-Skill 是 Hermes Agent 的"肌肉记忆"——把解决特定问题的流程、命令、参数和注意事项打包成一个可复用的知识包。
+Skill（技能包）是 Hermes 的"操作说明书"——告诉 Agent 如何完成特定任务的标准化流程。
+
+---
 
 ## 什么是 Skill
 
-每个 Skill 是一份 `SKILL.md` 文件，包含：
+简单说，Skill 就是一份 Markdown 文件，里面写了：
 
-```
----
-name: skill-name
-description: 一句话描述
-category: devops / research / creative / ...
----
+- **这个技能是干什么的**（描述）
+- **遇到什么情况应该用**（触发条件）
+- **具体怎么做**（步骤）
+- **容易踩什么坑**（注意事项）
 
-## 触发条件
-什么场景下加载这个 Skill
+比如有一个"查 arXiv 论文"的 Skill，当你问"帮我找一下最近关于 XXX 的论文"时，Agent 会加载这个 Skill，按照里面写的步骤去搜索、筛选、返回结果。
 
-## 步骤
-按顺序的执行步骤
-
-## 陷阱
-常踩的坑
-```
-
-## 目录结构
+## Skill 存在哪
 
 ```
 ~/.hermes/profiles/default/skills/
-├── devops/
-│   ├── docker-deploy.md
-│   └── proxy-setup.md
-├── research/
-│   ├── arxiv-search.md
-│   └── paper-analysis.md
-└── creative/
-    ├── excalidraw.md
-    └── ppt-master.md
+├── devops/           ← 运维相关
+│   ├── docker.md
+│   └── proxy.md
+├── research/         ← 研究相关
+│   ├── arxiv.md
+│   └── paper.md
+└── creative/         ← 创意相关
+    ├── image-gen.md
+    └── ppt.md
 ```
 
-## 加载与使用
+按类别存放在不同文件夹里。
 
-在对话中，Agent 会自动扫描技能列表并加载匹配的 Skill。也可以手动指定：
+## 查看已有 Skill
 
 ```bash
-skill_view(name='docker-deploy')
+# 列出所有可用 Skill
+hermes skills list
+
+# 查看某个 Skill 的详细内容
+hermes skills view skill-name
 ```
 
 ## 编写自己的 Skill
 
-当遇到以下情况时值得写成 Skill：
+当一个操作你做了 3 次以上，就值得写成 Skill。
 
-- 需要 5 步以上的重复操作
-- 有特定的陷阱和注意事项
-- 工具调用链有固定模式
+### 基本格式
 
-编写命令：
+```markdown
+---
+name: my-skill
+description: 一句话说明这个技能做什么
+category: devops
+---
 
-```bash
-hermes skill create my-skill --category devops
+## 触发条件
+
+什么情况下加载这个 Skill（例如：用户问"怎么部署 XXX"）
+
+## 步骤
+
+1. 第一步做什么
+2. 第二步做什么
+3. ...
+
+## 陷阱
+
+- 容易出错的地方
+- 需要特别注意的参数
 ```
 
-## 常用 Skill 举例
+### 创建命令
 
-| Skill | 用途 |
-|-------|------|
-| `github-pr-workflow` | PR 生命周期管理 |
-| `systematic-debugging` | 4 阶段根因调试法 |
-| `siliconflow-image-gen` | 硅基流动 AI 生图 |
-| `obsidian` | Obsidian 笔记库操作 |
-| `daily-briefing` | 每日三合一简报 |
+```bash
+# 创建一个新 Skill
+hermes skill create my-skill --category devops
 
-更新 Skill 直接用 `skill_manage(action='patch')`——发现遗漏就补，不等到下次。
+# 编辑内容
+nano ~/.hermes/profiles/default/skills/devops/my-skill.md
+```
+
+### 什么时候值得写 Skill
+
+- ✅ 需要 5 步以上的重复操作
+- ✅ 有特定的参数组合和注意事项
+- ✅ 容易忘步骤的操作
+- ❌ 一次性任务
+- ❌ 过于简单（1-2 步）的操作
+
+## Skill 实际案例
+
+| Skill 名称 | 用途 | 包含内容 |
+|-----------|------|---------|
+| `github-pr-workflow` | 提 PR 的完整流程 | 分支、提交、推送、创建 PR、检查 CI |
+| `daily-briefing` | 每日新闻简报 | 抓取 RSS、调用 AI 摘要、格式化输出 |
+| `obsidian` | 操作 Obsidian 笔记 | 搜索、读写、创建双向链接 |
+| `architectural-diagram` | 画架构图 | 选择合适的图表类型、生成 SVG |
+
+## 更新和删除
+
+```bash
+# 更新 Skill 内容
+hermes skill patch skill-name
+
+# 删除
+hermes skill delete skill-name
+```
+
+## 注意事项
+
+- Skill 名称用小写字母和短横线（`my-skill` 而非 `My Skill`）
+- 描述要准确，方便 Agent 自动匹配
+- 发现 Skill 有遗漏就及时更新，不要等下次

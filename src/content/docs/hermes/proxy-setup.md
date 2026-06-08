@@ -1,53 +1,154 @@
 ---
 title: 代理配置
-description: mihomo (Clash Meta) 代理容器配置
+description: 配置网络代理——让 Hermes 能访问海外 AI API
 ---
 
-Hermes Agent 需要稳定的国际网络出口以调用海外 AI API。使用 mihomo（Clash Meta 内核）作为 Docker 容器内的代理服务。
+Hermes Agent 需要调用海外 AI 服务（如 OpenAI、Anthropic），在国内网络环境下需要配置代理。
 
-## 架构
+> 如果你在海外服务器部署，或使用国内可直连的 AI 服务商（如 DeepSeek 硅基流动），可以跳过本配置。
+
+---
+
+## 原理
 
 ```
-Hermes 容器 → HTTP_PROXY → mihomo 容器:7890 → 宿主机 → 海外出口(US)
+Hermes 容器 → HTTP 代理 → 海外出口 → AI API 服务
 ```
 
-代理出口**锁定美国**，确保 AI API 调用不被地域限制阻断。
+代理是一个中间服务，负责把网络请求转发到海外。Hermes 使用 mihomo（Clash Meta 内核）作为代理服务。
 
-## 配置要点
+## 第一步：准备代理订阅
 
-### mihomo 容器
+你需要一个代理服务商的订阅链接（通常在购买代理服务后，服务商会提供一个 URL，以 `https://` 开头）。
 
-mihomo 以 sidecar 容器运行，通过 `depends_on` 确保 Hermes 容器在代理就绪后启动。
+> 本手册不推荐具体服务商。自行搜索"Clash 订阅"、"机场订阅"了解。
 
-### 环境变量注入
+## 第二步：配置代理文件
 
-Hermes 容器中设置：
-
-```bash
-http_proxy=http://mihomo:7890
-https_proxy=http://mihomo:7890
-```
-
-Docker Compose 的 DNS 解析会通过容器名 `mihomo` 自动解析到代理容器 IP。
-
-### 订阅与配置
-
-代理节点通过订阅 URL 更新。配置目录映射到宿主机，持久化保存：
+创建代理配置文件 `mihomo-config.yaml`：
 
 ```yaml
-volumes:
-  - ./config/mihomo:/root/.config/mihomo
+# mihomo-config.yaml
+port: 7890
+socks-port: 7891
+allow-lan: true
+mode: rule
+log-level: info
+
+# 代理节点（从订阅 URL 获取）
+proxies:
+  # 这里的内容通常由订阅自动生成
+
+# 代理组
+proxy-groups:
+  - name: Proxy
+    type: select
+    proxies:
+      - 你的节点名称
+
+# 规则 —— 哪些走代理，哪些直连
+rules:
+  - DOMAIN-SUFFIX,openai.com,Proxy
+  - DOMAIN-SUFFIX,anthropic.com,Proxy
+  - DOMAIN-SUFFIX,api.github.com,Proxy
+  - GEOIP,CN,DIRECT
+  - MATCH,Proxy
 ```
 
-## 调试
+### 使用订阅自动生成
+
+大多数代理服务商提供"Clash 配置文件下载"。可以直接保存为 `mihomo-config.yaml` 使用。
 
 ```bash
-# 检查代理连通性
-docker exec hermes-agent curl -x http://mihomo:7890 -I https://api.openai.com
+# 用订阅 URL 下载配置
+curl -o mihomo-config.yaml "你的订阅链接"
+```
 
+## 第三步：配置 Docker Compose
+
+在 `docker-compose.yml` 中添加代理容器：
+
+```yaml
+services:
+  hermes:
+    # ... 其他配置 ...
+    environment:
+      - http_proxy=http://mihomo:7890
+      - https_proxy=http://mihomo:7890
+    depends_on:
+      - mihomo
+
+  mihomo:
+    image: ghcr.io/metacubex/mihomo:latest
+    container_name: mihomo
+    volumes:
+      - ./mihomo-config.yaml:/root/.config/mihomo/config.yaml
+    ports:
+      - "7890:7890"
+      - "9090:9090"  # 控制面板端口
+    cap_add:
+      - NET_ADMIN
+```
+
+## 第四步：启动并验证
+
+```bash
+# 重新创建容器（加上了 mihomo 服务）
+docker compose up -d
+
+# 验证代理连通性
+docker exec hermes-agent curl -x http://mihomo:7890 -I https://api.openai.com
+```
+
+应该返回 `HTTP/2 200` 或类似的状态码。
+
+## 锁定出口地区（可选）
+
+AI 服务商可能有地域限制。可以在配置中指定出口地区：
+
+```yaml
+proxy-groups:
+  - name: Proxy
+    type: select
+    proxies:
+      - 美国节点  # 选择美国节点以确保兼容性
+```
+
+## 调试代理
+
+### 查看代理状态
+
+```bash
 # 查看 mihomo 日志
 docker compose logs mihomo
 
-# 查看代理节点状态
+# 查看连接的节点
 curl http://localhost:9090/proxies
 ```
+
+### 测试延迟
+
+```bash
+# 测试代理延迟
+curl -x http://127.0.0.1:7890 -o /dev/null -s -w "%{time_total}s\n" https://www.google.com
+```
+
+### 常见问题
+
+**问题：代理无法连接**
+> 检查订阅是否过期。
+> `docker compose logs mihomo` 看具体错误。
+
+**问题：部分网站能上，AI API 连不上**
+> 检查规则配置，确保 AI 服务商的域名走代理。
+> 试试把 `MATCH,Proxy` 改为全部走代理。
+
+**问题：国内网站打不开**
+> 检查 GEOIP 规则是否生效。
+> 可以在规则中添加：`DOMAIN-SUFFIX,baidu.com,DIRECT`
+
+---
+
+## 下一步
+
+配置完成后，进入 **[基础配置](/hermes/basic-config/)** 设置 API Key。
