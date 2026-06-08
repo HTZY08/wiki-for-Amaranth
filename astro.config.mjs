@@ -43,7 +43,7 @@ export default defineConfig({
         label: '🎮 项目',
         collapsed: true,
         items: [
-          { label: '暂无内容', link: '#' },
+          { label: 'PPT-Master', link: 'projects/ppt-master/' },
         ],
       },
       {
