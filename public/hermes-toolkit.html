@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hermes 新手必装的开源神器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #ffffff;
+      --color-text: #171717;
+      --color-text-secondary: #4d4d4d;
+      --color-text-tertiary: #666666;
+      --color-border: rgba(0,0,0,0.08);
+      --color-border-light: rgb(235,235,235);
+      --color-accent-blue: #0072f5;
+      --color-accent-green: #0a8a3f;
+      --color-accent-purple: #7928ca;
+      --color-accent-orange: #e67a00;
+      --color-card-bg: #ffffff;
+      --color-badge-bg: #ebf5ff;
+      --color-badge-text: #0068d6;
+      --shadow-border: 0px 0px 0px 1px var(--color-border);
+      --shadow-card: 0px 0px 0px 1px rgba(0,0,0,0.08), 0px 2px 2px rgba(0,0,0,0.04), 0px 8px 8px -8px rgba(0,0,0,0.04);
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    /* Navigation */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+      border-bottom: var(--shadow-border);
+    }
+    .nav-logo {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.32px;
+      color: var(--color-text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-accent-blue); }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--color-accent-blue); }
+
+    /* Hero */
+    .hero {
+      max-width: 1000px;
+      margin: 80px auto 0;
+      text-align: center;
+      padding: 0 32px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--color-badge-bg);
+      color: var(--color-badge-text);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 24px;
+      letter-spacing: -0.16px;
+    }
+    .hero h1 {
+      font-size: 52px;
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -2.88px;
+      color: var(--color-text);
+      margin-bottom: 20px;
+    }
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, #0072f5 0%, #7928ca 50%, #de1d8d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 20px;
+      font-weight: 400;
+      line-height: 1.8;
+      color: var(--color-text-secondary);
+      max-width: 680px;
+      margin: 0 auto 48px;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      padding: 32px 0;
+      margin-bottom: 40px;
+    }
+    .stat-item { text-align: center; }
+    .stat-number {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -1.28px;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--color-text-tertiary);
+      margin-top: 4px;
+    }
+    .stat-divider {
+      width: 1px;
+      background: var(--color-border-light);
+    }
+
+    /* Section */
+    .section-title {
+      max-width: 1000px;
+      margin: 80px auto 32px;
+      padding: 0 32px;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -1.12px;
+    }
+
+    /* Tool Cards Grid */
+    .tools-grid {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .tool-card {
+      background: var(--color-card-bg);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      padding: 32px;
+      transition: box-shadow 0.2s;
+    }
+    .tool-card:hover {
+      box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.08), 0px 4px 8px rgba(0,0,0,0.06), 0px 12px 24px -8px rgba(0,0,0,0.08);
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .tool-name-group { display: flex; align-items: center; gap: 12px; }
+    .tool-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .tool-icon.wm { background: #f0f5ff; color: #0072f5; }
+    .tool-icon.mf { background: #f5f0ff; color: #7928ca; }
+    .tool-icon.ecc { background: #fff5f0; color: #e67a00; }
+
+    .tool-name { font-size: 20px; font-weight: 600; letter-spacing: -0.8px; }
+    .tool-name .repo {
+      font-family: 'Geist Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+      letter-spacing: 0;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .tool-stars {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+    }
+    .tool-stars .star { color: #f5a623; }
+
+    .tool-description {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .tool-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tool-tag {
+      background: #f5f5f5;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+    }
+
+    .tool-why {
+      background: #fafafa;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-border);
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .tool-why-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 8px;
+    }
+    .tool-why p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+    }
+
+    .tool-links {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .tool-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-accent-blue);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-border);
+      transition: box-shadow 0.15s, background 0.15s;
+    }
+    .tool-link:hover {
+      box-shadow: 0px 0px 0px 2px rgba(0,114,245,0.2);
+      background: #f8faff;
+    }
+
+    /* How they fit together */
+    .architecture {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 32px;
+      background: #fafafa;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-border);
+      flex-wrap: wrap;
+    }
+    .arch-node {
+      background: white;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      min-width: 80px;
+    }
+    .arch-node .sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--color-text-tertiary);
+      display: block;
+      margin-top: 2px;
+    }
+    .arch-arrow {
+      font-size: 18px;
+      color: var(--color-text-tertiary);
+    }
+
+    /* Footer */
+    footer {
+      border-top: var(--shadow-border);
+      padding: 32px;
+      text-align: center;
+      color: var(--color-text-tertiary);
+      font-size: 14px;
+    }
+    footer a { color: var(--color-accent-blue); text-decoration: none; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 36px; letter-spacing: -1.44px; }
+      .hero p { font-size: 18px; }
+      .stats-bar { gap: 24px; flex-wrap: wrap; }
+      .stat-number { font-size: 24px; }
+      .nav-links { display: none; }
+      .tool-header { flex-direction: column; gap: 8px; }
+      .arch-flow { flex-direction: column; }
+      .arch-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#" class="nav-logo">Hermes <span>Toolkit</span></a>
+    <div class="nav-links">
+      <a href="#tools">工具</a>
+      <a href="#arch">协作架构</a>
+      <a href="https://github.com/NousResearch/hermes-agent" target="_blank">Hermes</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-badge">✦ 社区精选</div>
+    <h1>
+      新手装完 Hermes<br>
+      必装的 <span class="highlight">3 个开源神器</span>
+    </h1>
+    <p>
+      Hermes Agent 是一个强大的 AI 操作框架，但光装完骨架还不够。
+      这三款开源项目能让 Agent 的能力从"顺嘴生成"升级到
+      <strong>规划推演、群体模拟、性能调优</strong>的完整工作流。
+    </p>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number" style="color:#0072f5;">296k+</div>
+      <div class="stat-label">GitHub Stars</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-number" style="color:#7928ca;">3</div>
+      <div class="stat-label">开源项目</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-number" style="color:#e67a00;">2 Mins</div>
+      <div class="stat-label">安装上手</div>
+    </div>
+  </div>
+
+  <h2 class="section-title" id="tools">🛠 三款工具</h2>
+
+  <div class="tools-grid">
+
+    <!-- World-Model Method -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-name-group">
+          <div class="tool-icon wm">🧠</div>
+          <div>
+            <div class="tool-name">
+              世界模型工作法
+              <span class="repo">Renhuai123/world-model-method</span>
+            </div>
+          </div>
+        </div>
+        <div class="tool-stars">
+          <span class="star">★</span> 19
+        </div>
+      </div>
+      <p class="tool-description">
+        让 AI「规划出」答案，而不是「顺嘴生成」。基于 Yann LeCun 的世界模型理论，
+        6 步工作法：<strong>定目标 → 建模 → 预测后果 → 搜索规划 → 渲染 → 自检</strong>。
+        原本是 Claude Skill，可无缝接入 Hermes。
+      </p>
+      <div class="tool-tags">
+        <span class="tool-tag">LeCun 世界模型</span>
+        <span class="tool-tag">6 步法</span>
+        <span class="tool-tag">Claude Skill</span>
+        <span class="tool-tag">System-2</span>
+      </div>
+      <div class="tool-why">
+        <div class="tool-why-label">为什么装</div>
+        <p>
+          默认的 Hermes 骨架模型也是 token-by-token 顺嘴生成的。
+          这个 skill 给它装了一个"思考引擎"——重要决策先规划再产出，
+          方案质量靠比选不是靠运气。
+        </p>
+      </div>
+      <div class="tool-links">
+        <a href="https://github.com/Renhuai123/world-model-method" class="tool-link" target="_blank">GitHub</a>
+        <a href="/hermes/bigset-integration/" class="tool-link">⚡ 已集成 Skill</a>
+      </div>
+    </div>
+
+    <!-- MiroFish -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-name-group">
+          <div class="tool-icon mf">🌊</div>
+          <div>
+            <div class="tool-name">
+              MiroFish
+              <span class="repo">666ghj/MiroFish</span>
+            </div>
+          </div>
+        </div>
+        <div class="tool-stars">
+          <span class="star">★</span> 65.3k
+        </div>
+      </div>
+      <p class="tool-description">
+        群体智能预测引擎——输入种子信息（新闻/政策/故事），自动构建高保真平行数字世界。
+        数千个拥有独立人格、长期记忆和行為邏輯的智能体在其中自由交互、社会演化。
+        从上帝视角注入变量，推演未来轨迹。
+      </p>
+      <div class="tool-tags">
+        <span class="tool-tag">群体智能</span>
+        <span class="tool-tag">多 Agent 模拟</span>
+        <span class="tool-tag">GraphRAG</span>
+        <span class="tool-tag">Docker</span>
+      </div>
+      <div class="tool-why">
+        <div class="tool-why-label">为什么装</div>
+        <p>
+          Hermes 做信息收集和结构化，MiroFish 做深度推演。
+          两个配合：Hermes 搜热点 → 整理种子材料 → 送入 MiroFish 跑千 Agent 模拟 →
+          拿推演结果做决策。从"查资料"升级到"预演未来"。
+        </p>
+      </div>
+      <div class="tool-links">
+        <a href="https://github.com/666ghj/MiroFish" class="tool-link" target="_blank">GitHub</a>
+        <a href="https://666ghj.github.io/mirofish-demo/" class="tool-link" target="_blank">在线 Demo</a>
+      </div>
+    </div>
+
+    <!-- ECC -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-name-group">
+          <div class="tool-icon ecc">⚡</div>
+          <div>
+            <div class="tool-name">
+              ECC
+              <span class="repo">affaan-m/ECC</span>
+            </div>
+          </div>
+        </div>
+        <div class="tool-stars">
+          <span class="star">★</span> 209k
+        </div>
+      </div>
+      <p class="tool-description">
+        Everything Claude Code — 跨平台 Agent 性能调优系统。
+        <strong>64 个专业 Agent</strong>（planner、architect、code-reviewer、security-reviewer…）、
+        <strong>261 个 Skills</strong>、<strong>14+ MCP 服务</strong>、
+        <strong>12+ 语言生态</strong>。支持 Claude Code / Codex / Cursor / OpenCode 全平台。
+      </p>
+      <div class="tool-tags">
+        <span class="tool-tag">64 Agents</span>
+        <span class="tool-tag">261 Skills</span>
+        <span class="tool-tag">MCP 服务</span>
+        <span class="tool-tag">跨平台</span>
+      </div>
+      <div class="tool-why">
+        <div class="tool-why-label">为什么装</div>
+        <p>
+          ECC 的 64 个 Agent 定义可直接译为 Hermes 的 delegate_task 子任务 prompt。
+          261 个 Skills 是 workflow 模板的宝藏库——遇到"怎么写 PR 描述"、
+          "怎么做安全审计"这类重复需求，直接翻 ECC 的 skill 目录找现成的。
+        </p>
+      </div>
+      <div class="tool-links">
+        <a href="https://github.com/affaan-m/ECC" class="tool-link" target="_blank">GitHub</a>
+        <a href="https://ecc.tools/" class="tool-link" target="_blank">官网</a>
+      </div>
+    </div>
+
+  </div>
+
+  <h2 class="section-title" id="arch">🔗 协作架构</h2>
+
+  <div class="architecture">
+    <div class="arch-flow">
+      <div class="arch-node">
+        Hermes Agent
+        <span class="sub">操作框架</span>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border: 2px solid #0072f5;">
+        世界模型工作法
+        <span class="sub">结构化思考</span>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border: 2px solid #7928ca;">
+        MiroFish
+        <span class="sub">群体推演</span>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border: 2px solid #e67a00;">
+        ECC
+        <span class="sub">性能调优</span>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="background: #171717; color: white;">
+        高质量产出
+        <span class="sub" style="color: #aaa;">决策 / 代码 / 内容</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; padding: 20px; background: #fafafa; border-radius: var(--radius-sm); box-shadow: var(--shadow-border);">
+      <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.6;">
+        <strong style="color: var(--color-text);">工作流示例：</strong><br>
+        你说"帮我分析一下最近 AI 融资趋势" → 
+        <strong>Hermes</strong> 搜全网整理成结构化数据 → 
+        <strong>世界模型工作法</strong> 规划分析框架 → 
+        <strong>MiroFish</strong> 进行多 Agent 推演 → 
+        <strong>ECC</strong> 的 agent prompt 做交叉验证 →
+        输出完整分析报告，每一步都可追溯。
+      </p>
+    </div>
+  </div>
+
+  <footer>
+    <p>收录于 <a href="https://github.com/HTZY08/wiki-for-Amaranth">Amaranth Wiki</a> · 基于 Hermes Agent 生态 · 数据来源 GitHub</p>
+  </footer>
+
+</body>
+</html>
