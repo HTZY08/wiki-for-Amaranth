@@ -49,6 +49,7 @@ export default defineConfig({
             collapsed: true,
             items: [
               { label: 'Skill 详解', link: 'projects/skills-guide/' },
+              { label: 'MCP 详解', link: 'projects/mcp-guide/' },
               { label: '命令详解', link: 'projects/commands-guide/' },
             ],
           },
