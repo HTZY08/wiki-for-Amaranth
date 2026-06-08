@@ -51,6 +51,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: '系统架构总览', link: 'notes/architecture/' },
+          { label: '技能索引', link: 'notes/skills-index/' },
         ],
       },
     ],
