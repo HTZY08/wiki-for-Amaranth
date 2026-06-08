@@ -1,137 +1,163 @@
 ---
 title: 技能索引
-description: 最常用的技能和工作流速查
+description: 即用即走的操作菜谱
 ---
 
-当前系统有 120+ 个技能包（skills）。以下是实际使用中最常用的——按场景分类，需要的直接翻。
+> 不需要理解原理，找到你要做的事，复制命令，粘贴执行。
 
 ---
 
-## 🛠 运维排障
-
-### 微信网关诊断
-
-微信连不上时，按这个顺序查：
+## 微信连不上了
 
 ```bash
-# 1. 查 gateway 进程是否活着
-ps aux | grep "hermes gateway run"
+# 三步排查
+ps aux | grep "hermes gateway run"                  # ① 进程活着吗？
+cat /opt/data/gateway_state.json | python3 -m json.tool    # ② 连接状态？
+tail -20 /opt/data/logs/agent.log                    # ③ 最新的错误？
 
-# 2. 查连接状态
-cat /opt/data/gateway_state.json | python3 -m json.tool
+# 最常见的修复（代理冲突导致）：
+pkill -f "hermes gateway run"
+rm -f /opt/data/gateway.lock /opt/data/gateway_state.json
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+HERMES_ALLOW_ROOT_GATEWAY=1 /opt/hermes/.venv/bin/hermes gateway run --replace
 
-# 3. 查日志——三个日志文件都要看
-tail -20 /opt/data/logs/agent.log       # 实时微信错误
-tail -20 /opt/data/logs/errors.log      # 完整错误堆栈
-tail -20 /opt/data/logs/gateway.log     # s6 管道日志
-
-# 4. 查代理环境变量——微信必须直连
-env | grep -i proxy
+# 等 1-2 分钟让限流计数器复位
 ```
 
-**最常见的挂掉原因：#1 代理冲突**（gateway 继承了代理环境变量，连不上 `ilinkai.weixin.qq.com`），#2 限流（`rate limited`），#3 s6 环境变量丢失。
-
-👉 详细操作手册：[微信接入](/hermes/gateway-wechat/)
-
-### 环境恢复
-
-容器出问题后一键恢复配置：
+## 想用微信发语音气泡（不是文件）
 
 ```bash
-# 执行 hermes-env-recovery skill 中的恢复流程
-# 包括：TTS 流式补丁、微信 Gateway、视觉模型、GPU 服务
+# 在回复中加入：
+[[audio_as_voice]]
+MEDIA:/path/to/audio.mp3
 ```
 
----
-
-## 🖼 图像生成
-
-### 生图管线
-
-实际有三条管线，按优先级选：
-
-| 管线 | 成本 | 质量 | 适用场景 |
-|------|------|------|----------|
-| **API Yi → chatgpt-image-latest** | ~$1/张 | ⭐⭐⭐⭐⭐ | 角色图、高质量出图 |
-| **SiliconFlow → Qwen-Image** | ~$0.03/张 | ⭐⭐⭐ | 日常插图、快速出图 |
-| **SiliconFlow → Z-Image-Turbo** | ~$0.005/张 | ⭐⭐⭐⭐ | 写实人像（男性） |
-
-关键规则：
-- **国内 API（SiliconFlow）**：不能走代理，调用前 `unset http_proxy https_proxy`
-- **海外 API（API Yi）**：走代理
-- **角色图（Amaranth/莲）**：用 API Yi，贵但脸不崩
-- **微信发图**：超过 1MB 的图需要压缩（缩到 1200px + quality=85）
-
----
-
-## 📰 自动化日报
-
-每天自动生成的"三合一简报"：
-
-```
-RSS/API 多源采集 → 汇总 → 筛选（AI+政经+热点）→ 投递到微信
-```
-
-定时任务在 Hermes cron 中配置，结果自动发到微信。
-
----
-
-## 🎤 语音合成
+## 电脑重启了，重新连微信
 
 ```bash
-# TTS 输出到音频文件
-# 内置引擎：edge-tts（免费首选）
-# 备用引擎：MiniMax TTS（Token Plan）
+rm -f /opt/data/gateway.lock /opt/data/gateway_state.json
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+HERMES_ALLOW_ROOT_GATEWAY=1 /opt/hermes/.venv/bin/hermes gateway run --replace
 ```
-
-语音消息通过微信发送时，可以用 `[[audio_as_voice]]` 指令让音频以原生语音气泡形式发送。
 
 ---
 
-## 💾 记忆系统
+## 生一张图（便宜版 / SiliconFlow）
 
 ```bash
-# 持久记忆——记住用户偏好、环境事实、工作流
-# 存在 SQLite（Hindsight Lite），跨会话持久
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
 
-# 会话搜索——查过去聊过什么
-# 不用猜，直接搜
+python3 << 'PYEOF'
+import os, json, urllib.request
+
+# 读 API Key
+key = None
+with open('/opt/data/.env') as f:
+    for line in f:
+        if line.startswith('SILICONFLOW_API_KEY='):
+            key = line.split('=', 1)[1].strip()
+            break
+
+proxy = urllib.request.ProxyHandler({})
+opener = urllib.request.build_opener(proxy)
+
+prompt = "你想要的画面描述，中文最好"
+payload = json.dumps({
+    "model": "Qwen/Qwen-Image",
+    "prompt": prompt,
+    "image_size": "928x1664",
+}).encode()
+
+req = urllib.request.Request(
+    "https://api.siliconflow.cn/v1/images/generations",
+    data=payload,
+    headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+)
+
+resp = opener.open(req, timeout=180)
+data = json.loads(resp.read())
+img_url = (data.get("images") or data.get("data") or [{}])[0].get("url", "")
+urllib.request.urlretrieve(img_url, "/opt/data/output.png")
+print(f"Saved: /opt/data/output.png")
+PYEOF
 ```
 
-使用原则：
-- **存**：用户偏好、纠正、环境事实、学到的工作流
-- **不存**：任务进度、会话日志、临时状态（用 session_search 查）
-- **写**：声明式事实（"用户偏好简洁回复"），不是指令式（"必须简洁回复"）
+成本 ~$0.03/张。要高质量（~$1/张）让 Amaranth 用 API Yi 跑。
+
+## 微信发的图太大发不出去
+
+```bash
+python3 -c "
+from PIL import Image
+img = Image.open('原图.png').convert('RGB')
+img.thumbnail((1200, 1200))
+img.save('压缩后.jpg', 'JPEG', quality=85)
+print('Done ~270KB')
+"
+```
 
 ---
 
-## ⏰ 定时任务
+## 把一段文字转语音
 
-| 场景 | 方案 |
-|------|------|
-| 每日定时任务 | Hermes 内置 cron |
-| 长耗时的批量任务 | 自动转后台执行 |
-| 脚本直出（不经过 LLM） | `no_agent: true` 模式 |
-| 任务链 | 用 `context_from` 串起来 |
+```bash
+# 最简单的方式——让 Amaranth 直接发
+# 说"把这段话念出来"就行
 
-所有定时任务结果投递到微信，不用守在电脑前看。
+# 手动指定输出路径：
+python3 -m edge_tts --text "要转成语音的文字" --voice zh-CN-XiaoxiaoNeural --write-media /opt/data/output.mp3
+```
 
 ---
 
-## 🧠 模型路由速查
+## 查之前聊过什么
 
-| 你要做什么 | 用什么模型 | 怎么调 |
-|-----------|-----------|--------|
-| 日常对话 | DeepSeek V4 Flash | 默认就是 |
-| 写代码 | Codex → GPT-5.5 | 切 Codex CLI |
-| 复杂推理 | Claude Opus | 手动切换 |
-| 图片识别 | Qwen-VL / Gemini | Hermes 自动调 |
-| 本地推理 | LM Studio | 本地 GPU 跑 |
+```bash
+# 直接问 Amaranth："上次我们讨论 XXX 的时候说了什么？"
+# 她会自动搜索会话记录
+
+# 或者自己搜 SQLite：
+sqlite3 /opt/data/hindsight-lite/memory.db "SELECT content FROM memories WHERE content LIKE '%关键词%' ORDER BY id DESC LIMIT 5;"
+```
+
+---
+
+## 日志太多不知道从哪看起
+
+```bash
+# 微信相关 → agent.log
+tail -50 /opt/data/logs/agent.log
+
+# 程序崩溃 → errors.log
+tail -50 /opt/data/logs/errors.log
+
+# Gateway 完整输出 → gateway.log
+tail -50 /opt/data/logs/gateway.log
+```
+
+---
+
+## 每天自动收日报
+
+这个不需要手动操作。已经在跑了——每天 RSS 采集 → 汇总 → 发微信。
+
+如果想改内容或频率，告诉 Amaranth 就行。
+
+---
+
+## 让 Hermes 定时执行某个任务
+
+```bash
+# 告诉 Amaranth：
+# "每天早上9点检查我的 GitHub 仓库更新"
+# "每30分钟查一次服务器负载"
+# 她会帮你建好定时任务
+```
 
 ---
 
 ## 技能怎么来的
 
-这些技能不是一次性写好的。大部分是在实际使用中碰到问题→修好→写成 skill 存下来。以后再遇到同样的问题不用重新想。
+每次遇到一个坑、修好了，顺手把修复步骤记成一个 skill。所以 120 多个 skill 里大部分是**故障记录**而不是"最佳实践"——哪个坑踩得最多，哪个 skill 就最长。
 
-所以如果有一天某个流程变了，记得顺手更新对应的 skill——下次需要它的人（可能是你自己）会感谢你。
+如果你发现某个步骤不对了，告诉 Amaranth，她会更新对应的 skill。
