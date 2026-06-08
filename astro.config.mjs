@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 export default defineConfig({
-  site: 'https://wiki.yourdomain.com',
+  site: 'https://wiki-for-amaranth.pages.dev',
   integrations: [starlight({
     title: 'Amaranth Wiki',
     sidebar: [{
