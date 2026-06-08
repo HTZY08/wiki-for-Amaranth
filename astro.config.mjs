@@ -55,6 +55,7 @@ export default defineConfig({
           { label: '设计原理摘要', link: 'notes/design-principles/' },
           { label: '配置模板参考', link: 'notes/config-templates/' },
           { label: 'API 渠道速查', link: 'notes/api-reference/' },
+          { label: '故障排除手册', link: 'notes/troubleshooting/' },
         ],
       },
     ],
