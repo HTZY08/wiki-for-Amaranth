@@ -50,7 +50,7 @@ export default defineConfig({
         label: '📚 笔记',
         collapsed: true,
         items: [
-          { label: '暂无内容', link: '#' },
+          { label: '系统架构总览', link: 'notes/architecture/' },
         ],
       },
     ],
