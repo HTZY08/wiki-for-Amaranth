@@ -44,6 +44,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: 'PPT-Master', link: 'projects/ppt-master/' },
+          { label: 'BigSet 部署', link: 'projects/bigset/' },
           { label: '🧰 自定义技能集', link: 'projects/skill-portfolio/' },
           {
             label: '📖 详解',
