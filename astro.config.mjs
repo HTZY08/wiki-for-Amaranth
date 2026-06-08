@@ -44,6 +44,14 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: 'PPT-Master', link: 'projects/ppt-master/' },
+          {
+            label: '📖 详解',
+            collapsed: true,
+            items: [
+              { label: 'Skill 详解', link: 'projects/skills-guide/' },
+              { label: '命令详解', link: 'projects/commands-guide/' },
+            ],
+          },
         ],
       },
       {
