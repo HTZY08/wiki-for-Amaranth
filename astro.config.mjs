@@ -5,9 +5,9 @@ export default defineConfig({
   site: 'https://wiki-for-amaranth.pages.dev',
   integrations: [starlight({
     title: 'Amaranth Wiki',
-    defaultLocale: 'zh-cn',
+    defaultLocale: 'root',
     locales: {
-      'zh-cn': { label: '简体中文', lang: 'zh-cn' },
+      root: { label: '简体中文', lang: 'zh-cn' },
     },
     sidebar: [
       {
