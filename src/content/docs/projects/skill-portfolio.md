@@ -1,62 +1,156 @@
 ---
 title: 自定义技能集
-description: 自建的 Hermes Skill 生态——从论文建模到风格复刻，覆盖科研计算、自动化、写作辅助等方向
+description: 自建的 Hermes Skill 生态——从微信机器人到论文编辑器，5 个开箱即用的自动化能力
 ---
 
-这里收录的是基于日常工作流沉淀的自定义技能，每个都是一个可复用的自动化能力单元。
+都是平时干活攒的，每个都有完整的 SKILL.md 和可执行的触发流程。
 
-## 🔬 学术计算
+---
 
-### 论文计算模型提取与实现
-从论文/学位论文中提取数学模型，实现第一性原理仿真代码，通过蒙特卡洛和多参数迭代测试做统计验证。
+## 🤖 微信接入机器人
 
-> `paper-computational-modeling`
-> **能力**：论文→代码的自动建模管道  
-> **适用**：导师扔给你一篇论文说"把这个跑出来"  
-> **验证方式**：Monte Carlo + 多参数迭代测试
+将 Hermes 接进个人微信。基于腾讯 iLink Bot API，无需注册开发者账号，扫码即用。
 
-### 核酸热力学引擎 (NN 模型)
-纯 Python 实现 DNA/RNA Nearest-Neighbor 热力学——自由能计算、链置换动力学、盐浓度校正、Tm 预测、序列设计优化、ITC 模拟、荧光探针建模。
+**开箱步骤：**
 
-> `nucleic-acid-thermodynamics`
-> **能力**：无外部依赖的 NUPACK 替代方案  
-> **适用**：DNAzyme 动力学、CRISPR 探针设计、微流控核酸检测  
-> **数值验证**：NN 参数表与实验数据交叉比对
+```bash
+# 安装依赖
+source /opt/hermes/.venv/bin/activate
+uv pip install aiohttp cryptography
 
-### DFT/MD 科学计算套件
-零预算跑 DFT (CP2K/Quantum ESPRESSO) 和 MD (GROMACS) 的完整方案——本地 GPU 编译、免费云端算力发现、GFW 突破、学术授权绕过策略。
+# 交互式向导（推荐）
+hermes gateway setup
+# 选 "Weixin / WeChat" → 扫码 → 配置DM策略
 
-> `dft-md-computing` + `scientific-computing-resources` + `scientific-computing-setup`
-> **适用**：材料/化学/物理硕士生，没有学校超算账号  
-> **亮点**：从裸机编译到生产跑批的全链路指导
+# 或 API 直拿二维码
+python3 << 'PY'
+import urllib.request, json
+resp = urllib.request.urlopen(
+    "https://ilinkai.weixin.qq.com/ilink/bot/get_bot_qrcode?bot_type=3", timeout=10)
+data = json.loads(resp.read())
+print("QR:", data.get("qrcode_img_content"))
+PY
+```
 
-## 🤖 自动化
+扫码后自动写入 `~/.hermes/.env`，重启 Hermes 即生效：
+```ini
+WEIXIN_ACCOUNT_ID=<自动获取>
+WEIXIN_TOKEN=<自动获取>
+```
 
-### Playwright 网页自动化
-国内平台浏览器自动化——反检测、验证码绕过、二维码扫码登录流程。弥补 Hermes 浏览器工具无法执行 JS 的短板。
+**故障速查：**
+- 网关报 `NO_PLATFORMS` → 检查 `.env` 中 `WEIXIN_ACCOUNT_ID` / `WEIXIN_TOKEN` 是否写入
+- 扫码后无反应 → 代理冲突，确认 mihomo 未拦截 `ilinkai.weixin.qq.com`
+- 消息延迟大 → iLink Bot 有 5 秒/条的限流，群消息需开白名单
 
-> `playwright-web-automation`
-> **适用**：抖音数据采集、政务平台自动填报、需要 JS 执行的网页操作  
-> **技术栈**：Playwright + 反检测配置
+**文件位置：** `~/.hermes/skills/.archive/hermes-wechat-setup/SKILL.md`
 
-### 微信接入机器人
-微信个人号接入 Hermes 的全流程——iLink Bot API 扫码登录、环境变量配置、Gateway 启动、s6 容器桥接。
+---
 
-> `hermes-wechat-setup`
-> **能力**：微信→Hermes→多模型推理的完整链路
+## 🌐 网页自动化 (Playwright)
 
-## ✍️ 写作与语言
+Hermes 的 `browser_navigate` 等工具不能执行 JS、无反检测、CAPTCHA 过不去。Playwright 补上。
 
-### 中文论文语言编辑器
-对工学硕士论文做语言收束与终稿净化——句式润色、AI 词清除、文体一致性、格式净化。不扩写内容，只做减法。
+**开箱步骤：**
 
-> `chinese-academic-editing`
-> **能力**：压低翻译腔、套话、空泛评价和概念标签  
-> **适用**：论文终稿提交前的最后一轮语言打磨
+```bash
+source /opt/hermes/.venv/bin/activate
+uv pip install playwright
 
-### 用户风格语料库
-系统收集语言风格数据，用于复刻写作/说话风格的管道。每次对话后主动追加观察，不做被动等待。
+# 下载 Chromium（去掉代理防 CAPTCHA 反爬）
+http_proxy="" https_proxy="" python3 -m playwright install chromium
+```
 
-> `user-style-corpus` + `user-style-collection`
-> **用途**：训练个人风格 LoRA / 风格一致性保持  
-> **采集方式**：对话中持续隐式积累，无需用户主动提供样本
+**核心脚架：**
+
+```python
+from playwright.async_api import async_playwright
+
+async with async_playwright() as p:
+    browser = await p.chromium.launch(
+        headless=True,
+        args=['--no-sandbox', '--disable-blink-features=AutomationControlled']
+    )
+    page = await browser.new_page()
+    # 覆盖 webdriver 检测
+    await page.add_init_script("""
+        Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    """)
+    await page.goto("目标URL")
+    content = await page.content()
+```
+
+**适用场景：**
+- 抖音/微博等需要 JS 执行的数据采集
+- 政务平台自动填表（验证码用 `page.screenshot` 截取后走 OCR）
+- 需要绕过遮罩层点击拦截的页面
+
+**文件位置：** `~/.hermes/skills/.archive/playwright-web-automation/SKILL.md`
+
+---
+
+## ✍️ 中文论文语言编辑器
+
+对工学/理学/医学硕士论文做终稿语言净化。**只改语言，不改内容**——不收束套话、不拔高观点、不造概念标签。
+
+**开箱用法（对话中直接告诉 AI）：**
+
+> "帮我润色这段论文正文"
+> "去一下 AI 味"
+> "压一压翻译腔"
+
+AI 会执行四个层面处理：
+
+| 层面 | 做什么 | 典型操作 |
+|------|--------|----------|
+| 句式润色 | 按中文科技论文语序重排 | 长句拆短、条件→行为→结果 |
+| 用词净化 | 清除 AI 词和空泛评价 | "赋能""重塑""显著地"→删 |
+| 文体控制 | 保持全文语气一致 | 不出现前修后拼的断裂 |
+| 机械净化 | 修排版垃圾 | 括号不配对、中英标点混、概念双引号 |
+
+**核心原则：** 每段只承担一个功能（背景/方法/结果/讨论），段落末尾不写"具有重要意义"这种废话。
+
+**文件位置：** `~/.hermes/skills/.archive/chinese-academic-editing/SKILL.md`
+
+---
+
+## 🧠 用户写作风格采集
+
+持续收集语言风格数据，目标是训练一个能复刻你说话/写作方式的模型。每次对话后自动追加观察，不用你提醒。
+
+**自动采集的维度：**
+
+| 维度 | 看什么 |
+|------|--------|
+| 句法特征 | 句长、指令结构、否定式、语气词 |
+| 修辞特征 | 类比模式、直白/缓冲比例 |
+| 交互特征 | 纠偏方式、推进信号 |
+| 写作特征 | 开头方式、段落推进 |
+| 词汇偏好 | 高频词、避用词 |
+
+**数据文件位置：** `/opt/data/docs/user-style-data-v0.1.md`
+
+**与 AI 配合方式：**
+- 对话中自然表达即可，AI 会在收尾时扫描本轮对话，提取新的语言模式追加到数据文件
+- 如果你纠正了 AI 对你风格的理解，那是一次重要的采样
+
+**文件位置：** `~/.hermes/skills/.archive/user-style-corpus/SKILL.md`
+
+---
+
+## 🗣️ 用户风格语料库
+
+上者的兄弟技能，一个偏"识别和存储"，这个偏"系统化积累"。核心区别：
+
+- `user-style-collection` → 跨会话持续追加已有维度
+- `user-style-corpus` → 发现新维度时开新节，保证覆盖完整
+
+**触发条件：** 每次对话自然结束时自动执行。不需要你喊"记得收集"。
+
+**当前数据量：** 每次对话后增量更新，版本号自动递增 (`v0.1 → v0.2 → ...`)
+
+**文件位置：** `~/.hermes/skills/.archive/user-style-collection/SKILL.md`
+
+---
+
+> 所有 skill 都在 `~/.hermes/skills/.archive/` 下。想激活某个 skill 直接用 `skill_manage` 创建或 `skill_view` 加载即可。
