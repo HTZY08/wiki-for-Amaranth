@@ -154,3 +154,56 @@ Hindsight Lite（SQLite）→ 持久记忆层
 3. **Skill 是 AI 的 procedural memory** —— 不是给人读的文档，是给 AI 读的 prompt
 4. **本地优先** —— 核心架构在本地 Docker，云服务只做锦上添花（Cloudflare Pages）
 5. **单源信任 > 算法聚合** —— 宁可信任一个高质量来源（如 Juya），不要算法聚合的二手信息
+
+## 复杂任务执行管线
+
+不是所有任务都走同一条路。系统根据任务复杂度分两条管线：
+
+### 路由决策
+
+| 任务特征 | 走哪条路 | 涉及的层 |
+|---------|---------|---------|
+| 简单查询、随手回复 | 直出 | Hermes 骨架模型 |
+| 写方案、做决策、分析问题 | 增强规划 | Hermes + 世界模型 6 步法 |
+| 写代码、修 bug | 增强编码 | Hermes + ECC Agent + Codex |
+| 预测趋势、模拟场景 | 增强推演 | Hermes + MiroFish |
+| 产出需要持久化 | 全部 | + BigSet |
+
+### 增强管线数据流
+
+```
+用户需求
+  │
+  ▼
+{Hermes 骨架} ── 评估复杂度
+  │
+  ├─ 简单 → 直接输出（模型即用）
+  │
+  └─ 复杂 →
+       │
+       ├─ {世界模型规划}
+       │   目标→建模→预测→比选→渲染→校验
+       │   （来源：world-model-method 思路）
+       │
+       ├─ {子 Agent 路由}
+       │   从 ECC 的 64 个 Agent prompt 中挑选
+       │   通过 delegate_task 分配子任务
+       │
+       ├─ {执行层}
+       │   · 编码 → Codex CLI（GPT-5.5）
+       │   · 数据 → BigSet Convex API
+       │   · 模拟 → MiroFish（按需）
+       │
+       └─ {持久化层}
+          BigSet（Convex 后端，localhost:3210）
+          分析结果、决策记录、代码审查 → 结构化数据集
+```
+
+### 相关 Skill
+
+- `hermes-enhanced-workflow` — 增强工作流入口 skill
+- `world-model-method` — 世界模型 6 步法参考
+- `ecc-agent-harness` — ECC Agent 模板参考
+- `mirofish` — MiroFish 部署参考
+- `bigset-agent-integration` — BigSet 持久化操作
+
