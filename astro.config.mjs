@@ -38,7 +38,7 @@ export default defineConfig({
         label: '📝 博客',
         collapsed: true,
         items: [
-          { label: '暂无内容', link: '#' },
+          { label: '论文→代码：Lau博士落地实践', link: 'blog/lau-hermes-implementations/' },
         ],
       },
       {
