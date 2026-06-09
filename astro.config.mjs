@@ -49,6 +49,7 @@ export default defineConfig({
           { label: 'PPT-Master', link: 'projects/ppt-master/' },
           { label: 'BigSet 部署', link: 'projects/bigset/' },
           { label: '🧰 自定义技能集', link: 'projects/skill-portfolio/' },
+          { label: 'ComfyUI 部署与训练', link: 'projects/comfyui/' },
           {
             label: '📖 详解',
             collapsed: true,
