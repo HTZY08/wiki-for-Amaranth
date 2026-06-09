@@ -81,14 +81,6 @@ export default defineConfig({
           { label: '🕳️ 全系统踩坑指南', link: 'notes/pitfalls/' },
         ],
       },
-      {
-        label: '⚙️ Amaranth 工具箱',
-        collapsed: true,
-        items: [
-          { label: '版主索引', link: 'hermes-toolkit/' },
-          { label: '💡 全息投影管家', link: 'hermes-toolkit/hologram-project/' },
-        ],
-      },
     ],
   })],
 });
