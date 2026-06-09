@@ -9,6 +9,7 @@ export default defineConfig({
     locales: {
       root: { label: '简体中文', lang: 'zh-cn' },
     },
+    customCss: ['./src/styles/custom.css'],
     sidebar: [
       {
         label: '🏠 首页',
