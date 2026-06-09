@@ -6,6 +6,7 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 # 2026 年中大模型选型指南
 
 > **版本记录**
+> - 2026.6.10 — 补充 Mistral / Perplexity Sonar / Grok 4.20 系列，更新定价表与社区共识。骨架不变。
 > - 2026.6.9 — 初版。骨架：快速选型 → 一句话评级 → 基准测试 → 定价 → 社区共识 → MoE 策略 → 本地训练部署。后续更新只改内容和数据，不打破这个结构。
 
 **先说明**：这篇文章不会告诉你"某某模型排名第一"。截至 2026 年 6 月，不存在一个在所有场景下都最好的模型。Benchmark 数字越来越没用——很多模型跑分高但不经用，有些跑分低但日常顺手。本文的结构是：先帮你找到自己的场景→再看具体数据和社区风评→最后给一个实际可用的多模型策略。
@@ -48,7 +49,14 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | **GLM-5** | 国产全模态 | 中规中矩 |
 | **Kimi K2.5 / K2.6** | 长文本不错，编程一般 | 偏向营销宣传 |
 | **MiniMax M2.7 / M3** | ⚠️ **不推荐** | 社区评价极差 |
-| **Grok 4.3** | 推理强，生态弱 | 小众但硬核 |
+| **Grok 4.3** | 推理强，生态弱 | 性价比高，长程Agent任务意外好用 |
+| **Grok 4.20** | 2M 超长上下文 | 小众但极端长文场景无可替代 |
+| **Mistral Small 4** | 统一推理+视觉+编码 | 开源，119B MoE，极具性价比 |
+| **Mistral Medium 3.5** | 128B 精调，Agent 专用 | 工具调用和多步推理稳定 |
+| **Mistral Large 2512** | 旗舰模型 | 比上一代降价75% |
+| **Devstral 2** | 编码 Agent 专用 | SWE-bench 开源 SOTA |
+| **Perplexity Sonar Pro** | 搜索增强推理 | 带引用的深度研究，适合调研 |
+| **Perplexity Sonar Deep Research** | 自主多步检索+综合 | 调研场景独一档 |
 | **Llama 4 Scout** | 10M 上下文的玩具 | 跑分好看，实际没人用 |
 
 ---
@@ -116,8 +124,16 @@ M2.7 发布时一篇 VentureBeat 文章吹成了"自进化模型"，但：
 | DeepSeek V4 Pro | $1.74 | $3.48 | 1M |
 | **DeepSeek V4 Flash** | **$0.14** | **$0.28** | 1M |
 | Qwen3.7 Max | $0.90 | $2.70 | 262K |
-| Kimi K2.5 | $0.23 | $0.88 | 256K |
-| GLM-5 | $0.50 | $2.00 | 200K |
+| Mistral Medium 3.5 | $1.50 | $7.50 | 262K |
+| Mistral Large 2512 | $0.50 | $1.50 | 262K |
+| Mistral Small 4 | $0.15 | $0.60 | 262K |
+| Devstral 2 | $0.40 | $2.00 | 262K |
+| Grok 4.3 | $1.25 | $2.50 | 1M |
+| Grok 4.20 | $2.00 | $6.00 | 2M |
+| Perplexity Sonar Pro | $3.00 | $15.00 | 200K |
+| Perplexity Sonar Deep Research | $2.00 | $8.00 | 128K |
+| Perplexity Sonar (轻量) | $1.00 | $1.00 | 127K |
+| Qwen3 235B A22B | $0.72 | $2.16 | 262K |
 
 ### 4.2 真正有用的数字
 
@@ -150,10 +166,25 @@ M2.7 发布时一篇 VentureBeat 文章吹成了"自进化模型"，但：
 - "API 经常崩，返回乱码，自进化是个营销概念"
 
 **关于 Grok：**
-- "Grok 4.3 的推理确实强，HLE 第三，但 xAI 的 API 生态太差了"
+- "Grok 4.3 的推理确实强，HLE 第三，但 xAI 的 API 生态太差了"——Reddit
+- "Grok 4.3 赢下了13/18个长程Agent任务，总花费 $7.84，换 Opus 要 $71.50" — Towards AI 实测
+- "Grok 4.3 是市场上最便宜的前沿模型" — 多家评测确认
 - "如果你只跑推理题，Grok 性价比不错"
+- "Grok Build 的并行子Agent是亮点，但beta阶段，没有独立基准测试"
 
-### 🔥 不吐不快
+**关于 Mistral：**
+- "Mistral Small 4 用一个模型替代了三个（Magistral/Pixtral/Devstral），119B MoE，$0.15/M 输入" — 多家 AI 媒体
+- "Mistral Medium 3.5 的 128B 密集模型在工具调用和 Agentic 工作流上比同价位竞品更可靠" — Reddit r/LocalLLaMA
+- "Devstral 2 在 SWE-bench Verified 上超越所有开源模型，单张 4090 可跑" — Mistral 官方
+- "欧洲那边的朋友主力在用 Mistral，数据合规优势"
+
+**关于 Perplexity Sonar：**
+- "Sonar Deep Research 在 Law、Medicine、Academic 场景表现特别好" — Perplexity 官方
+- "Deep Research 跑一次的费用可能到 $0.41，但替代了几十次手动搜索" — Finout 定价分析
+- "Sonar Pro Search 的自主多步推理在调研场景独一档，但每千次额外收 $18，高频用不起" — OpenRouter
+- "Perplexity 做 research 不错，别当常规 LLM 用"
+
+**关于 MiniMax：**
 
 1. **SWE-bench 已被污染**——各厂商针对它做了专门优化，跑分和实际体验的差距越来越大
 2. **MiniMax 的跑分是 Benchmark 游戏的最佳案例**——56.2% SWE-Pro 看着吓人，实际体验远不如跑分低 20% 的 DeepSeek V4 Flash
@@ -169,13 +200,17 @@ M2.7 发布时一篇 VentureBeat 文章吹成了"自进化模型"，但：
 ```
 80% 调用 → DeepSeek V4 Flash（日常：问答、中文、轻量编码）
 10% 调用 → Claude Opus 4.7/4.8（攻坚：复杂架构、高难度调试）
-10% 调用 → Gemini 3 Pro / GPT-5.4（多模态、数学、长文档）
+ 5% 调用 → Gemini 3 Pro / GPT-5.4（多模态、数学、长文档）
+ 5% 调用 → Grok 4.3 / Perplexity Sonar / Mistral（实验、对比、特定场景）
 ```
 
 **为什么这么配？**
 - Flash 承担 80% 的流量，年成本控制在 $20-50
 - Opus 只用来解决 Flash 搞不定的硬骨头——推理、多文件重构、架构决策
 - 偶尔用 Gemini/GPT 补多模态和数学场景
+- Grok 适合长程 Agent 任务和性价比敏感的高频迭代
+- Perplexity Sonar 在调研/文献检索场景无可替代
+- Mistral 是欧洲数据合规场景下的可靠备选
 
 **成本对比**：如果全用 Opus 4.8，同样流量年花费约 $5,000-10,000。上述组合将成本压到 1/100 以下，质量损失不到 5%。
 
@@ -261,11 +296,13 @@ cron（每 3 分钟）→ 检测主 API 是否可达
 | 你的身份 | 最佳选择 |
 |---------|---------|
 | 个人开发者，自用 | DeepSeek V4 Flash 主力 + Opus 攻坚 |
-| 创业团队，降本 | DeepSeek V4 Flash/Pro（全栈开源） |
+| 创业团队，降本 | DeepSeek V4 Flash/Pro（全栈开源）+ Grok 4.3 |
 | 企业，质量优先 | Claude Opus + GPT-5.5 |
-| 科研/数学 | Gemini 3 Pro |
+| 科研/学术调研 | Perplexity Sonar Deep Research / Gemini 3 Pro |
 | 中文内容创作 | DeepSeek V4 / Qwen3.7 Max |
-| 私有化部署 | DeepSeek V4 Pro（MIT 开源） |
+| 欧洲/数据合规 | Mistral Small 4 / Mistral Medium 3.5 |
+| 私有化部署 | DeepSeek V4 Pro / Mistral Small 4 / Devstral 2（均开源） |
+| 超长文档/代码库 | Grok 4.20（2M ctx） |
 
 **避坑：** MiniMax 系列暂时别碰。跑分和实际体验的差距太大。
 
