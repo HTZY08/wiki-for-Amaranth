@@ -16,6 +16,13 @@ export default defineConfig({
         link: '/',
       },
       {
+        label: '🆓 白嫖指南',
+        collapsed: false,
+        items: [
+          { label: '商汤 SenseNova 免费 API', link: 'freebies/2026-06-10-sensenova-token-plan/' },
+        ],
+      },
+      {
         label: '🤖 Hermes Agent',
         collapsed: false,
         items: [
