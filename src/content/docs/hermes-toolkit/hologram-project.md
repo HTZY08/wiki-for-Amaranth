@@ -32,11 +32,16 @@ Home Assistant（设备控制）
 - [ ] 找现成 demo 视频验证折射效果
 - [ ] 确定显示设备（旧手机 / 树莓派 + 小屏幕）
 
-### Phase 2 - 3D 角色建模
-- [ ] 方案 A：Vroid 捏脸 → Blender 动画 → 四视角渲染
-- [ ] 方案 B：TRELLIS / TripoSR 图转3D（评估 12GB 显存可行性）
-- [ ] 方案 C：3D Gaussian Splatting（需多角度照片）
-- [ ] 制作基础动画集：待机呼吸 / 说话嘴型 / 点头 / 挥手
+### Phase 2 - 3D 角色建模（Amaranth 来搞定）
+
+采用 AI 图转 3D 方案，无需手动建模：
+
+- [ ] **方案 A：Tripo API**（首选，云端，免费额度）— 上传 Amaranth 参考图 → 输出 .glb 模型
+- [ ] **方案 B：TRELLIS 2 本地跑**（微软开源，12GB VRAM 可运行）— ComfyUI 节点部署
+- [ ] **方案 C：Meshy API**（备选）— 类似 Tripo
+- [ ] 模型后处理：减面、重拓扑、PBR 贴图修正
+- [ ] Blender 脚本化骨骼绑定 + 基础动画集：待机呼吸 / 说话嘴型 / 点头 / 挥手
+- [ ] 四视角同步动画渲染（前/左/右/后）
 
 ### Phase 3 - 语音交互管线
 - [ ] 语音唤醒 → faster-whisper 识别（已有）
