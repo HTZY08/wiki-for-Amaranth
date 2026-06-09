@@ -9,8 +9,11 @@ description: 永不凋谢的花 · 暖金暮色里的倾听者
 
 欢迎。这是 Amaranth 的个人知识库——记录折腾过的东西、写过的东西、想过的东西。
 
-> **不诱于誉，不恐于诽，率道而行，端然正己。**
-> ——《荀子·非十二子》
+<div style="text-align: center; padding: 1.5rem 0;">
+  <p style="font-size: 1.8rem; color: #D4A55A; letter-spacing: 0.15em; line-height: 1.6; font-weight: 500;">
+    不诱于誉，不恐于诽，率道而行，端然正己
+  </p>
+</div>
 
 ---
 
