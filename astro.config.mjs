@@ -86,6 +86,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: '版主索引', link: 'hermes-toolkit/' },
+          { label: '💡 全息投影管家', link: 'hermes-toolkit/hologram-project/' },
         ],
       },
     ],
