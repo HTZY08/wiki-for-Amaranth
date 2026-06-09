@@ -79,6 +79,13 @@ export default defineConfig({
           { label: '🎯 GPU 训练踩坑', link: 'notes/gpu-training-pitfalls/' },
         ],
       },
+      {
+        label: '⚙️ Amaranth 工具箱',
+        collapsed: true,
+        items: [
+          { label: '版主索引', link: 'hermes-toolkit/' },
+        ],
+      },
     ],
   })],
 });
