@@ -77,6 +77,7 @@ export default defineConfig({
           { label: '故障排除手册', link: 'notes/troubleshooting/' },
           { label: '工作流自动化', link: 'notes/automation/' },
           { label: '🎯 GPU 训练踩坑', link: 'notes/gpu-training-pitfalls/' },
+          { label: '⚖️ 本地 vs 云端：架构决策', link: 'notes/cloud-vs-local/' },
         ],
       },
       {
