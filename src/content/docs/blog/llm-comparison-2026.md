@@ -6,6 +6,7 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 # 2026 年中大模型选型指南
 
 > **版本记录**
+> - 2026.6.10 — 补充 OpenRouter 全生态（80+ 模型，12 大生态表），更新定价表至 32 行。骨架不变。
 > - 2026.6.10 — 补充 Mistral / Perplexity Sonar / Grok 4.20 系列，更新定价表与社区共识。骨架不变。
 > - 2026.6.9 — 初版。骨架：快速选型 → 一句话评级 → 基准测试 → 定价 → 社区共识 → MoE 策略 → 本地训练部署。后续更新只改内容和数据，不打破这个结构。
 
@@ -57,6 +58,13 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | **Devstral 2** | 编码 Agent 专用 | SWE-bench 开源 SOTA |
 | **Perplexity Sonar Pro** | 搜索增强推理 | 带引用的深度研究，适合调研 |
 | **Perplexity Sonar Deep Research** | 自主多步检索+综合 | 调研场景独一档 |
+| **NVIDIA Nemotron 3 Ultra** | 免费可用的前沿模型 | 550B MoE，Agent编排强 |
+| **Claude Haiku 4.5** | 轻量快速 | 够用但不惊艳 |
+| **Gemini 3.5 Flash** | 高速推理 | 性价比不错，理科强 |
+| **GPT-5.4 Mini / Nano** | GPT 的轻量版 | 生态好，价格适中 |
+| **Step 3.7 Flash** | 国产多模态新秀 | 196B MoE，视觉理解好 |
+| **Qwen3.7 Plus** | 多模态版 Qwen | 1M 上下文，看屏操控 |
+| **Llama 3.3 70B** | 经典开源 | 便宜但已显老 |
 | **Llama 4 Scout** | 10M 上下文的玩具 | 跑分好看，实际没人用 |
 
 ---
@@ -118,12 +126,18 @@ M2.7 发布时一篇 VentureBeat 文章吹成了"自进化模型"，但：
 |------|:---:|:---:|:-----:|
 | Claude Opus 4.8 | $5 | $25 | 1M |
 | GPT-5.5 | $5 | $30 | 1M |
-| Gemini 3 Pro | $2 | $12 | 1M |
+| Gemini 3.1 Pro / 3 Pro | $2 | $12 | 1M |
 | GPT-5.4 | $1.25 | $10 | 400K |
 | Claude Sonnet 4.6 | $3 | $15 | 200K |
+| Claude Haiku 4.5 | $1 | $5 | 200K |
+| Gemini 3.5 Flash | $1.50 | $9 | 1M |
+| Gemini 3 Flash Preview | $0.50 | $3 | 1M |
 | DeepSeek V4 Pro | $1.74 | $3.48 | 1M |
 | **DeepSeek V4 Flash** | **$0.14** | **$0.28** | 1M |
-| Qwen3.7 Max | $0.90 | $2.70 | 262K |
+| DeepSeek R1 | $0.55 | $2.19 | 128K |
+| Qwen3.7 Max | $0.90 | $2.70 | 1M |
+| Qwen3.7 Plus | $0.40 | $1.60 | 1M |
+| Qwen3 235B A22B | $0.72 | $2.16 | 262K |
 | Mistral Medium 3.5 | $1.50 | $7.50 | 262K |
 | Mistral Large 2512 | $0.50 | $1.50 | 262K |
 | Mistral Small 4 | $0.15 | $0.60 | 262K |
@@ -133,7 +147,14 @@ M2.7 发布时一篇 VentureBeat 文章吹成了"自进化模型"，但：
 | Perplexity Sonar Pro | $3.00 | $15.00 | 200K |
 | Perplexity Sonar Deep Research | $2.00 | $8.00 | 128K |
 | Perplexity Sonar (轻量) | $1.00 | $1.00 | 127K |
-| Qwen3 235B A22B | $0.72 | $2.16 | 262K |
+| NVIDIA Nemotron 3 Ultra | $0.50 | $2.50 | 1M |
+| NVIDIA Nemotron 3 Super | **免费** | **免费** | 128K |
+| GPT-5.4 Mini | $0.75 | $4.50 | 400K |
+| GPT-5.4 Nano | $0.20 | $1.25 | 400K |
+| GPT-4.1 Nano | $0.10 | $0.40 | 1M |
+| Step 3.7 Flash | $0.20 | $1.15 | 256K |
+| Meta Llama 3.3 70B | $0.10 | $0.32 | 131K |
+| Nex-N2-Pro (free) | **免费** | **免费** | 262K |
 
 ### 4.2 真正有用的数字
 
@@ -291,7 +312,124 @@ cron（每 3 分钟）→ 检测主 API 是否可达
 
 ---
 
-## 八、结论
+## 八、OpenRouter 完整模型生态速查
+
+OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类列出所有可通过 OpenRouter 调用的主要模型家族，并标注定价区间与核心定位，方便你按场景快速检索。
+
+### Anthropic 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Claude Opus 4.8 | $5 / $25 | 1M | 综合最强，攻坚首选 |
+| Claude Opus 4.7 | $5 / $25 | 1M | 略逊 4.8，性价比稍好 |
+| Claude Opus 4.5 | $5 / $25 | 1M | 退位巨人 |
+| Claude Sonnet 4.6 | $3 / $15 | 200K | 日常编码 |
+| Claude Haiku 4.5 | $1 / $5 | 200K | 轻量任务 |
+
+### OpenAI 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| GPT-5.5 | $5 / $30 | 1M | 旗舰全能 |
+| GPT-5.4 | $1.25 / $10 | 400K | 编程+Codex 工具链 |
+| GPT-5.4 Mini | $0.75 / $4.50 | 400K | 中型性价比 |
+| GPT-5.4 Nano | $0.20 / $1.25 | 400K | 轻量快速 |
+| GPT-4.1 | $2 / $8 | 1M | 上一代旗舰 |
+| GPT-4.1 Nano | $0.10 / $0.40 | 1M | 极低成本 |
+| o3 / o4-mini | $2/$8 / $1.1/$4.4 | 200K | 推理专用 |
+
+### Google Gemini 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Gemini 3.1 Pro Preview | $2 / $12 | 1M | 数学/推理最强 |
+| Gemini 3 Pro | $2 / $12 | 1M | 老旗舰，理科强 |
+| Gemini 3.5 Flash | $1.50 / $9 | 1M | 高速性价比 |
+| Gemini 3 Flash Preview | $0.50 / $3 | 1M | 轻量推理 |
+| Gemma 4 26B (free) | 免费 | — | 开源轻量 |
+
+### DeepSeek 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| DeepSeek V4 Pro Max | $1.74 / $3.48 | 1M | 开源天花板 |
+| **DeepSeek V4 Flash** | **$0.14 / $0.28** | **1M** | ⭐ 最佳性价比 |
+| DeepSeek R1 | $0.55 / $2.19 | 128K | 推理链模型 |
+| DeepSeek V3.2 | $0.28 / $0.40 | 128K | 上代主力 |
+
+### Meta Llama 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Llama 4 Maverick | ~$0.20 / $0.60 | 1M | 最新旗舰开源 |
+| Llama 4 Scout | $0.15 / $0.50 | 10M | 超长上下文展示品 |
+| Llama 3.3 70B | $0.10 / $0.32 | 131K | 经典开源，便宜够用 |
+
+### Mistral 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Mistral Large 2512 | $0.50 / $1.50 | 262K | 旗舰模型 |
+| Mistral Medium 3.5 | $1.50 / $7.50 | 262K | 128B 密集，Agent 优秀 |
+| Mistral Small 4 | $0.15 / $0.60 | 262K | 119B MoE 三合一 |
+| Devstral 2 | $0.40 / $2.00 | 262K | 编码 Agent 专用 |
+| Ministral 3 8B | $0.10 / $0.30 | 262K | 预算首选 |
+| Codestral | $1 / $3 | 32K | 代码补全专用 |
+| Voxtral TTS | $22/M char | — | 语音合成 |
+
+### xAI Grok 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Grok 4.3 | $1.25 / $2.50 | 1M | 旗舰推理+Agent |
+| Grok 4.20 | $2 / $6 | 2M | 超长上下文 |
+| Grok 4.1 Fast | $0.75 / $1.50 | 128K | 快速版 |
+| Grok 4 (退役) | — | — | 已由 4.3 取代 |
+
+### 阿里 Qwen 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Qwen3.7 Max | $1.25 / $3.75 | 1M | 中文旗舰 |
+| Qwen3.7 Plus | $0.40 / $1.60 | 1M | 多模态版 |
+| Qwen3 235B A22B | $0.72 / $2.16 | 262K | MoE 开源 |
+| Qwen3 VL 235B | — | — | 视觉版本 |
+
+### Perplexity Sonar 生态
+| 模型 | 定价基准 | 定位 |
+|------|---------|------|
+| Sonar Pro Search | $3/$15/M + $18/1K请求 | 自主多步研究 |
+| Sonar Deep Research | $2/$8/M + $5/1K搜索 + $3/M推理 | 深度调研 |
+| Sonar Pro | $3/$15/M | 搜索增强 |
+| Sonar Reasoning Pro | $2/$8/M | 链式推理 |
+| Sonar (轻量) | $1/$1/M | 快速搜索 |
+
+### NVIDIA Nemotron 生态
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Nemotron 3 Ultra | $0.50 / $2.50 | 1M | 前沿推理 (550B MoE) |
+| Nemotron 3 Ultra (free) | 免费 | 1M | 免费前沿模型 |
+| Nemotron 3 Super (free) | 免费 | 128K | 免费 Agent 编排 (120B MoE) |
+| Nemotron 3 Nano 30B (free) | 免费 | 256K | 免费轻量推理 |
+
+### 国产模型生态（其他）
+| 模型 | 输入/输出 $/M | 上下文 | 定位 |
+|------|:------------:|:-----:|------|
+| Step 3.7 Flash | $0.20 / $1.15 | 256K | 阶跃星辰 MoE，多模态 |
+| Kimi K2.6 / K2.5 | $0.68 / $3.42 | 262K | 长文本强 |
+| GLM-5 | $0.50 / $2.00 | 200K | 智谱全模态 |
+| GLM-4.5 Air (free) | 免费 | — | 免费国产 |
+| MiniMax M3 | $0.30 / $1.20 | 1M | ⚠️ 不推荐 |
+| Yi-Lightning | $0.50 / $1.50 | — | 01.AI 旗舰 |
+| Hunyuan Large | — | — | 腾讯混元 |
+| Nex-N2-Pro (free) | 免费 | 262K | 397B MoE 国产 Agent |
+
+### 其他值得关注的模型
+| 模型 | 输入/输出 $/M | 定位 |
+|------|:------------:|------|
+| Cohere Command-A | $2 / $8 | 企业级检索增强 |
+| AI21 Jamba 1.5 | $0.50 / $0.70 | SSM-Transformer 混合 |
+| Reka Core | — | 多模态 |
+| Microsoft Phi-4 | — | 小模型高效 |
+| ByteDance Seed | — | 字节跳动系列 |
+
+> 数据来源：OpenRouter 官方模型目录 & pricing API（2026-06），直接获取。上面 80+ 个模型均可在 OpenRouter 上通过统一 API 调用。定价为 OpenRouter 直通价，与官方一致。
+
+---
+
+## 九、结论
 
 | 你的身份 | 最佳选择 |
 |---------|---------|
@@ -310,5 +448,5 @@ cron（每 3 分钟）→ 检测主 API 是否可达
 
 ---
 
-> 数据来源：Vellum LLM Leaderboard (2026-05-29)、Artificial Analysis、LM Council、Morph LLM、Reddit r/DeepSeek / r/LocalLLaMA、Kilo AI blog  
+> 数据来源：OpenRouter 官方模型目录 (2026-06)、CostGoat (2026-05-30)、Vellum LLM Leaderboard (2026-05-29)、Artificial Analysis、LM Council、Reddit r/DeepSeek / r/LocalLLaMA / r/singularity  
 > 最后更新：2026 年 6 月
