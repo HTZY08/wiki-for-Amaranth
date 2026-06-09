@@ -37,7 +37,8 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 
 | 模型 | 一句话评级 | 社区共识 |
 |------|-----------|---------|
-| **Claude Opus 4.8 / 4.7 / 4.6** | 🏆 综合最强，攻坚首选 | Everyone loves it |
+| **Claude Opus 4.8 / 4.6** | 🏆 综合最强，攻坚首选 | 两极分化（4.8烧token，4.6被怀念）|
+| **Claude Opus 4.7** | ⚠️ **社区一致差评** | \"legendarily bad\"、\"比4.6倒退\" |
 | **Claude Sonnet 4.6** | 性价比版 Opus，低延迟 | 日常够用，比 Opus 明显差一档 |
 | **GPT-5.5** | 全能，但贵 | 强但没啥惊喜 |
 | **GPT-5.4 + Codex** | 编程工具链最佳 | Codex CLI 好评 |
@@ -174,50 +175,164 @@ V4 Flash 以 ¥0.0455/M 的有效混合价（DeepSeek 官方国内价）完成�
 
 ## 五、社区共识与冷知识
 
-### 💬 真实用户怎么说
+> 本节所有内容均有来源链接，不凭空总结。以下引用来自 Reddit、Hacker News、X/Twitter 的 2026 年真实帖子。
 
-**关于 DeepSeek V4：**
-- "Benchmarks can be gamed"——Reddit 用户说这很正常，但"V4 Flash 的性价比不靠跑分，靠钱包"
-- "V4 Pro matches Opus on SWE-bench at 1/21x the output cost"——多家评测确认
-- "Flash 日常够了，上强度还是得 Opus"
+### 社区情绪速览
 
-**关于 Claude Opus：**
-- "Opus 4.5 到 4.8 的进步没有数字显示的那么大，但 4.8 在 HLE 上的领先是实打实的"
-- "对于需要多文件理解的复杂重构，Opus 无人能敌"
+| 模型 | 社区情绪 | 核心槽点 |
+|------|---------|---------|
+| Claude Opus 4.8 | 两极分化 | "过度思考烧token"、"4.6被移除很不满" |
+| Claude Opus 4.7 | 🚩 **强烈负面** | "比4.6倒退"、"不守规则"、"legendarily bad" |
+| Claude Sonnet 4.6 | 中性偏正面 | 性价比好但"情感冷淡、不真诚" |
+| GPT-5.5 / 5.4 | 正面 | 5.5正确率领先，5.4稳定可靠 |
+| Gemini 3 Pro | 🚩 **负面为主** | "发布后静默降质"、"长上下文失效" |
+| DeepSeek V4 Flash | 🏆 **非常正面** | "神奇"、"便宜得离谱"、"接近Opus" |
+| MiniMax M2.7 / M3 | 🚩 **偏负面** | "财务危机"、"质量反复"、"自进化是营销" |
+| Qwen 3.7 Max | 中性 | "幻觉多"、"烧钱快" |
+| GLM-5.1 | 偏正面 | SWE-bench领先，社区接受度上升 |
+| Kimi K2.6 | 偏正面 | "值得推荐的Opus替代"但"过度思考严重" |
+| Grok 4 | 混合 | 推理好，编程一般，API快速退役 |
+| Llama 4 Scout | 🚩 **怀疑为主** | "10M上下文过200k后失效"、"营销噱头" |
 
-**关于 GPT-5 系列：**
-- "5.5 没有比 5.4 强多少，但贵了不少"
-- "Codex 的 1M 上下文是真的有用，不是噱头"
+### 💬 真实用户怎么说（带链接）
 
-**关于 MiniMax：**
-- "M2.7 的跑分好看，但你去用一下就知道了"
-- "API 经常崩，返回乱码，自进化是个营销概念"
+**关于 DeepSeek V4 Flash：**
+> "DeepSeek V4 Flash is magical. This is the closest thing to Opus 4.5 since Opus 4.5. Great at instruction following and implementation."
+> — [r/opencode, 2026](https://www.reddit.com/r/opencode/comments/1tu2kz4/deepseek_v4_flash_is_magical/)
 
-**关于 Grok：**
-- "Grok 4.3 的推理确实强，HLE 第三，但 xAI 的 API 生态太差了"——Reddit
-- "Grok 4.3 赢下了13/18个长程Agent任务，总花费 $7.84，换 Opus 要 $71.50" — Towards AI 实测
-- "Grok 4.3 是市场上最便宜的前沿模型" — 多家评测确认
-- "如果你只跑推理题，Grok 性价比不错"
-- "Grok Build 的并行子Agent是亮点，但beta阶段，没有独立基准测试"
+> "DeepSeek-v4-Flash is amazing and cheap as f**k"
+> — [r/hermesagent, 2026](https://www.reddit.com/r/hermesagent/comments/1tn69g2/deepseekv4flash_is_amazing_and_cheap_as_fk/)
 
-**关于 Mistral：**
-- "Mistral Small 4 用一个模型替代了三个（Magistral/Pixtral/Devstral），119B MoE，$0.15/M 输入" — 多家 AI 媒体
-- "Mistral Medium 3.5 的 128B 密集模型在工具调用和 Agentic 工作流上比同价位竞品更可靠" — Reddit r/LocalLLaMA
-- "Devstral 2 在 SWE-bench Verified 上超越所有开源模型，单张 4090 可跑" — Mistral 官方
-- "欧洲那边的朋友主力在用 Mistral，数据合规优势"
+> "DeepSeek v4 pro is unlimited and almost free OMG better than opus"
+> — [r/hermesagent, 2026](https://www.reddit.com/r/hermesagent/comments/1tlmcbl/deepseek_v4_pro_is_unlimited_and_almost_free_omg/)
 
-**关于 Perplexity Sonar：**
-- "Sonar Deep Research 在 Law、Medicine、Academic 场景表现特别好" — Perplexity 官方
-- "Deep Research 跑一次的费用可能到 $0.41，但替代了几十次手动搜索" — Finout 定价分析
-- "Sonar Pro Search 的自主多步推理在调研场景独一档，但每千次额外收 $18，高频用不起" — OpenRouter
-- "Perplexity 做 research 不错，别当常规 LLM 用"
+> "DeepSeek V4 being 17x cheaper got me to actually measure what I send to cloud vs local"
+> — [r/LocalLLaMA, 2026](https://www.reddit.com/r/LocalLLaMA/comments/1t4s6g2/deepseek_v4_being_17x_cheaper_got_me_to_actually/)
 
-**关于 MiniMax：**
+**关于 Claude Opus 4.7：**
+> "Opus 4.7 is legendarily bad. Small unexpected inputs degrade output quality badly. The floor dropped even as the ceiling rose."
+> — [r/ClaudeCode, 2026](https://www.reddit.com/r/ClaudeCode/comments/1so9uta/opus_47_is_legendarily_bad_i_cannot_believe_this/)
 
-1. **SWE-bench 已被污染**——各厂商针对它做了专门优化，跑分和实际体验的差距越来越大
-2. **MiniMax 的跑分是 Benchmark 游戏的最佳案例**——56.2% SWE-Pro 看着吓人，实际体验远不如跑分低 20% 的 DeepSeek V4 Flash
-3. **跑分 80% 和 70% 的区别，在你实际项目里大概率感觉不到**——但价格差 89 倍，你一定能感觉到
-4. **开源模型在 2026 年已经真正追上来了**——DeepSeek V4、Qwen3.5、GLM-5 全部 MIT 开源，可商用
+> "Opus 4.7 is the dumbest Anthropic model I've ever used. It tries shortcuts that aren't allowed."
+> — [r/claude, 2026](https://www.reddit.com/r/claude/comments/1t4qqda/opus_47_is_the_dumbest_anthropic_model_ive_ever/)
+
+> "PSA: Opus 4.7 is much worse at MRCR Long Context than 4.6"
+> — [r/ClaudeAI, 2026](https://www.reddit.com/r/ClaudeAI/comments/1sn6eyd/psa_opus_47_is_much_worse_at_mrcr_long_context/)
+
+> "4.7 burns more tokens, is resilient to rules, often does not do what has been requested"
+> — [r/ClaudeCode, 2026](https://www.reddit.com/r/ClaudeCode/comments/1tcwkgv/opus_47_vs_opus_46_one_month_post_release/)
+
+> "Just use Sonnet 4.6 and stay away from Opus 4.7"
+> — [r/ClaudeCode, 2026](https://www.reddit.com/r/ClaudeCode/comments/1snwk9v/just_use_sonnet_46_and_stay_away_from_opus_47/)
+
+**关于 Claude Opus 4.8（最新，两极分化）：**
+> "Pack it up, boys. Opus 4.8 is officially dead. It spent 400,000 tokens to rewrite a Python script… hallucinated a library that doesn't exist… I spent $12 in API costs for it to confidently break my backend."
+> — [r/ClaudeCode, 2026](https://www.reddit.com/r/ClaudeCode/comments/1tqdysw/pack_it_up_boys_opus_48_is_officially_dead_a/)
+
+> "Opus 4.8 is a clear update from 4.7. Runs longer, hallucinates less, follows detailed guided tasks better."
+> — [r/ClaudeAI, 2026](https://www.reddit.com/r/ClaudeAI/comments/1tr5fxa/here_are_my_thoughts_of_opus_48_and_gpt_55_as_a/)
+
+**关于 GPT-5.5 / 5.4：**
+> "GPT-5.4 is really, really good. Theo (t3.gg) calls it the best general-purpose model."
+> — [r/accelerate, 2026](https://www.reddit.com/r/accelerate/comments/1rmbq8d/gpt54_is_really_really_good_after_a_week_of_use/)
+
+> "GPT 5.4 wins in terms of unlimited usage and VERY reliable uptime."
+> — [r/ClaudeAI, 2026](https://www.reddit.com/r/ClaudeAI/comments/1rwj6g3/users_whove_seriously_used_both_gpt54_and_claude/)
+
+> "GPT-5.5 vs GPT-5.4 vs Opus 4.7 on 56 real coding tasks: GPT-5.5's biggest lead is correctness: 3.16 vs 2.60."
+> — [r/ClaudeCode, 2026](https://www.reddit.com/r/ClaudeCode/comments/1t0xrad/gpt55_vs_gpt54_vs_opus_47_on_56_real_coding_tasks/)
+
+> "GPT 5.5 is not the 'good' version of GPT 5.4. It does hard things that GPT 5.4 can't."
+> — [r/vibecoding, 2026](https://www.reddit.com/r/vibecoding/comments/1tuw8c1/you_keep_burning_through_your_codex_quota_in_an/)
+
+**关于 Gemini 3 Pro：**
+> "Gemini 3 Pro = slow motion downgrade? When 3 Pro dropped in December, it felt great. Fast forward a few weeks and it's like a different product. Coding? I ask it to add a small feature and it spits out random boilerplate."
+> — [r/GeminiAI, 2026](https://www.reddit.com/r/GeminiAI/comments/1qpy7n2/gemini_3_pro_slow_motion_downgrade/)
+
+> "Tried Gemini 3 for coding and it gaslit my entire repo. Gemini 3 pro is the dumbest model ever. The more context you feed it, the worse it gets."
+> — [r/vibecoding, 2026](https://www.reddit.com/r/vibecoding/comments/1p0uers/tried_gemini_3_for_coding_and_i_think_it_just/)
+
+> "Gemini 3.0 Pro has 3 major flaws that make it unusable for Enterprise."
+> — [r/GeminiAI, 2026](https://www.reddit.com/r/GeminiAI/comments/1pe56el/am_i_the_only_one_gemini_30_pro_has_3_major_flaws/)
+
+> "Gemini 3.1 Pro is a massive, massive improvement over Gemini 3 Pro, which was a really terrible model (outside of benchmarks)."
+> — [r/google_antigravity, 2026](https://www.reddit.com/r/google_antigravity/comments/1r9y34d/gemini_31_pro_day_1_review_versus_opus_46_and/)
+
+**关于 MiniMax M2.7 / M3：**
+> "Minimax M2.5 is not worth the hype compared to Kimi 2.5 and GLM 5. Kept hallucinating."
+> — [r/opencodeCLI, 2026](https://www.reddit.com/r/opencodeCLI/comments/1r5vv6g/minimax_m25_is_not_worth_the_hype_compared_to/)
+
+> "MiniMax (0100.HK) plunges 15% after M3 launch amid HK$ 1.8B loss. They cut promotional limits, squeeze API tiers, silently throttle developers."
+> — [r/MiniMax_AI, 2026](https://www.reddit.com/r/MiniMax_AI/comments/1tu9k30/the_real_reason_behind_api_throttling_minimax/)
+
+> "M3 the past two days has turned absolutely stupid."
+> — [r/hermesagent, 2026](https://www.reddit.com/r/hermesagent/comments/1twzbc6/why_are_people_not_using_mimo_v25/)
+
+**关于 Kimi K2.6：**
+> "K2.6 — first model I'd confidently recommend as Opus 4.7 replacement… about 85% of tasks Opus can do."
+> — [r/kimi, 2026](https://www.reddit.com/r/kimi/comments/1sojem0/kimi_k26_worth_it/)
+
+> "Kimi 2.6 Review: Powerful but Needs Double-Checking. First draft ~70% accuracy, after feedback ~95%. Overthinking/looping: talked in circles, burned tokens."
+> — [r/kimi, 2026](https://www.reddit.com/r/kimi/comments/1st69cp/kimi_26_review_powerful_but_needs_doublechecking/)
+
+> "Kimi K2.6 is still not good at analysis."
+> — [r/LocalLLaMA, 2026](https://www.reddit.com/r/LocalLLaMA/comments/1sqzuqd/kimi_k26_is_still_not_good_at_analysis_but_at/)
+
+**关于 GLM-5.1：**
+> "GLM-5.1 topped SWE-Bench Pro (58.4%) and hit #3 on Code Arena — above GPT-5.4 (57.7%) and Opus (57.3%)."
+> — [r/LLM, 2026](https://www.reddit.com/r/LLM/comments/1sm5hty/glm51_topped_swebench_pro_and_hit_3_on_code_arena/)
+
+> "Everyone is switching to GLM-5.1 after the Anthropic ban. Doesn't lose thread after 20-30 messages."
+> — [r/openclaw, 2026](https://www.reddit.com/r/openclaw/comments/1sl5avl/everyone_is_switching_to_glm51_after_the/)
+
+> "GLM 5.1 is what I mostly use now."
+> — [r/opencodeCLI, 2026](https://www.reddit.com/r/opencodeCLI/comments/1stg1is/best_ai_coding_stack_in_2026_for_heavy_users_cost/)
+
+**关于 Grok 4：**
+> "Grok 4.20 is a meh model in terms of intelligence but very good for speed and cost."
+> — [r/singularity, 2026](https://www.reddit.com/r/singularity/comments/1rqrr3k/xai_releases_grok_420_beta_models_via_api/)
+
+> "Grok 4.1 and 4 retirement from API on May 15, 2026."
+> — [r/grok, 2026](https://www.reddit.com/r/grok/comments/1t64nu1/grok_model_41_and_4_retirement_from_api_on_may_15/)
+
+**关于 Llama 4 Scout：**
+> "Unpopular Opinion: I'm Actually Loving Llama-4-Scout… The 10M context window is purely a marketing gimmick."
+> — [r/LocalLLaMA, 2026](https://www.reddit.com/r/LocalLLaMA/comments/1k65cmy/unpopular_opinion_im_actually_loving_llama4scout/)
+
+> "Llama 4 Scout with 10M tokens — It's great (no fall-off) until the 200k token mark."
+> — [r/singularity, 2026](https://www.reddit.com/r/singularity/comments/1jsc7jt/llama_4_scout_with_10m_tokens/)
+
+> "1 million context is a scam, the AI starts hallucinating after 90k."
+> — [r/LocalLLaMA, 2026](https://www.reddit.com/r/LocalLLaMA/comments/1mq19x6/1_million_context_is_the_scam_the_ai_start/)
+
+### 🔥 SWE-bench 污染问题
+
+社区共识：SWE-bench Verified 已被系统性污染，多个独立来源确认。
+
+> "Microsoft 宣布 SWE-Bench Verified 因数据污染基本无用。"
+> — [r/BetterOffline, 2026](https://www.reddit.com/r/BetterOffline/comments/1rabj93/ai_bros_claiming_singularity_again_thanks_to_metr/)
+
+> "The same model that scored ~30% on SWE-Bench Verified dropped to 0-2%. That's when I stopped treating this as a theory."
+> — Reddit 用户 u/OK_Simon_666
+
+> "How is Gemini 3.1 at the top of SWE-bench? — That whole leaderboard is contaminated garbage with baby tasks and leaky tests."
+> — [r/singularity, 2026](https://www.reddit.com/r/singularity/comments/1s2b8ue/how_is_gemini_31_at_the_top_of_swebench/)
+
+> "SWE-Rebench is pretty much contamination free."
+> — [r/LocalLLaMA, 2026](https://www.reddit.com/r/LocalLLaMA/comments/1pozr6f/claude_code_gpt52_deepseek_v32_and_selfhosted/)
+
+> "Claude Mythos memorized exactly 52 invalid tasks… better memorizes tasks from SWE-Bench Pro than Verified/Multilingual."
+> — [r/BetterOffline, 2026](https://www.reddit.com/r/BetterOffline/comments/1sgxc77/thoughts_about_strange_moments_in_claude_mythos)
+
+替代方案：**SWE-Rebench**（去污染版本）和 **DeepSWE**（91 道无污染新题）是目前社区认可的替代基准。
+
+### 一句话总结
+
+1. **SWE-bench 跑分已不可信**——微软、Reddit 社区、独立研究者三方确认污染。看 SWE-Rebench 或 DeepSWE
+2. **Opus 4.7 是 2026 年最大的跑分与实际体验脱节案例**——跑分 83.5% 但社区一致差评
+3. **Gemini 3 Pro 的"数学无敌"跑分与实际体验脱节**——社区普遍反映发布后降质、长上下文失效
+4. **DeepSeek V4 Flash 是年度性价比之王**——价格只有 Opus 的 1/89，社区反馈压倒性正面
+5. **MiniMax M2.7/M3 的跑分和实际体验差距巨大**——加上财务危机和 API 限速，不建议使用
 
 ---
 
