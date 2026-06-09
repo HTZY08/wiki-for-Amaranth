@@ -39,6 +39,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: '论文→代码：Lau博士落地实践', link: 'blog/lau-hermes-implementations/' },
+          { label: '2026 大模型横评', link: 'blog/llm-comparison-2026/' },
         ],
       },
       {
