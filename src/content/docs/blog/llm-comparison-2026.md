@@ -92,10 +92,10 @@ DeepSeek V4 Pro Max 在 SWE-bench Verified 上以 80.6% 追平 Claude Opus 4.6�
 | Claude Opus 4.6 | 68.8% | ✅ 图片理解 |
 | Claude Sonnet 4.6 | 58.3% | ✅ 图片理解 |
 | GPT-5.2 | 52.9% | ✅ 原生多模态 |
-| Gemini 3 Pro | - | ✅ **10M 上下文+多模态** |
+| Gemini 3 Pro | - | ✅ **1M 上下文+多模态** |
 | MiniMax M3 | - | ✅ 新增原生多模态 |
 
-**分析**：GPT-5.5 在 ARC-AGI 2（抽象视觉推理）上一骑绝尘，85% 远超第二名 Claude 的 68.8%。Gemini 3 Pro 凭借 10M token 上下文窗口，在多模态长文档处理上仍是最强选择。
+**分析**：GPT-5.5 在 ARC-AGI 2（抽象视觉推理）上一骑绝尘，85% 远超第二名 Claude 的 68.8%。Gemini 3 Pro 在长上下文多模态处理上仍是强选择，搭配 1M token 窗口足以覆盖绝大多数文档场景。
 
 ### 2.5 多语言/中文能力
 
@@ -119,7 +119,7 @@ DeepSeek V4 Pro Max 在 SWE-bench Verified 上以 80.6% 追平 Claude Opus 4.6�
 |------|:---:|:---:|:-----:|:---------:|
 | **Claude Opus 4.8** | $5 | $25 | 1M | ⭐⭐⭐ |
 | **GPT-5.5** | $5 | $30 | 1M | ⭐⭐⭐ |
-| **Gemini 3 Pro** | $2 | $12 | 10M | ⭐⭐⭐⭐ |
+| **Gemini 3 Pro** | $2 | $12 | 1M | ⭐⭐⭐⭐ |
 | **GPT-5.4** | $1.25 | $10 | 400K | ⭐⭐⭐⭐ |
 | **Claude Sonnet 4.6** | $3 | $15 | 200K | ⭐⭐⭐ |
 | **DeepSeek V4 Pro** | $1.74 | $3.48 | 1M | ⭐⭐⭐⭐⭐ |
@@ -151,7 +151,7 @@ DeepSeek V4 Pro Max 在 SWE-bench Verified 上以 80.6% 追平 Claude Opus 4.6�
 | **数学/理科** | Gemini 3 Pro / GPT-5.2 | AIME 满分、GPQA 领先 |
 | **编程成本敏感** | DeepSeek V4 Flash / MiniMax M3 | 编程能力接近前沿，价格低 1-2 个数量级 |
 | **中文任务** | DeepSeek V4 / Qwen3.7 Max | 中文理解最好，本土场景适配 |
-| **长文档/多模态** | Gemini 3 Pro (10M ctx) / GPT-5.5 | 超长上下文+原生多模态 |
+| **长文档/多模态** | Gemini 3 Pro (1M ctx) / GPT-5.5 | 超长上下文+原生多模态 |
 | **低延迟推理** | Claude Sonnet 4.6 (0.73s TTFT) / GPT-5.3 Codex | 首 token 延迟极低 |
 | **私有部署** | DeepSeek V4 / Qwen3.5 / GLM-5 | 全部 MIT 开源，可自托管 |
 | **自进化 Agent** | MiniMax M2.7 / M3 | 独特的自优化能力（OpenClaw harness） |
@@ -176,7 +176,7 @@ DeepSeek V4 Flash 每百万输出 token 只要 $0.28——这比 2025 年初（G
 ### 4. 上下文窗口军备竞赛
 
 - Llama 4 Scout：10M tokens（可处理整套代码库）
-- Gemini 3 Pro：10M tokens
+- Gemini 3 Pro：1M tokens
 - Claude Opus 4.8 / GPT-5.5 / DeepSeek V4 / Qwen3.7 Max：全部 1M+
 
 ### 5. Agent 化
