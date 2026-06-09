@@ -17,17 +17,16 @@ description: 从64个视频中提取15篇核心论文，筛选出3个可直接�
 ```
 Lau博士64个B站视频 → 15篇核心论文入库
   → 并行问GPT-5.5/Claude Opus/Gemini Pro（御三家）
-    → 共识: 9篇可映射, 3篇P0优先落地
+    → 共识: 9篇可映射, 5篇完成代码
       → 写代码 + README + 推博客
 ```
 
 ## 筛选结果
 
 64个视频中，15篇是真正有技术深度的论文。其中：
-
 - **7篇**与Hermes Agent不相关（模型架构/训练/视觉方向）
-- **5篇**可作为思想参考（需较大适配）
-- **3篇可直接落地**——这就是本文的重点
+- **3篇**可作为思想参考（需较大适配）
+- **5篇可直接落地**——5个独立插件/skill
 
 ## 三个落地实现
 
@@ -75,6 +74,41 @@ results = delegate_task(tasks=sub_tasks)  # 并行
 final = merge_results(results)  # 结构化合并
 ```
 
+### 4. FlyLoRA 隐式Skill路由（NeurIPS 2025）
+
+**核心发现**：果蝇的嗅觉系统用随机投影+赢家通吃实现高效归类，不需要显式训练分类器。
+FlyLoRA把这一机制用于LLM微调的rank路由——冻结一个稀疏随机矩阵，输入经过它
+自动投影到不同"专家"空间，top-k激活。参数仅为LoRA的1/8，但效果全面超越。
+
+**代码实现**：一个`flyroute_router.py`插件。每个skill注册时被分配一个固定的
+随机投影向量（基于skill名字的hash），用户输入被投影到同一空间，通过余弦相似度
+选top-3最匹配的skill。
+
+```python
+# 不再是: 把所有skill描述注入prompt (O(n) token成本)
+# 而是: 预选top-3最相关的skill (O(1) token成本)
+router = FlyRouter()
+router.register_skill("code-review", "代码审查", tags=["code", "review"])
+router.register_skill("research", "网络调研", tags=["research", "search"])
+matched = router.route("帮我审查这段Python代码")
+# → 自动匹配 code-review
+```
+
+### 5. AttnRes 注意力记忆检索（Kimi/Moonshot AI 2026）
+
+**核心发现**：Attention可以用来解决深度方向的信号稀释问题。
+AttnRes把固定等权的残差加法替换为跨层注意力加权聚合——每层不是简单地加1倍前层，
+而是用softmax从前层中选择性地提取信息。
+
+**代码实现**：把记忆池按时间分块（Block AttnRes），计算当前查询与每个块的
+注意力权重，只选择权重最高的块保留完整，其余块压缩。
+
+```python
+retriever = AttentiveMemoryRetriever(block_size=8, top_k_blocks=3)
+# 8条消息一个块，保留注意力最高的3个块 + 固定的首尾
+compressed = retriever.retrieve_weighted(messages, query=user_input)
+```
+
 ## 代码位置
 
 ```
@@ -82,17 +116,19 @@ HTZY08/wiki-for-Amaranth → src/content/docs/projects/lau-hermes-improvements/
 ```
 
 包含：
-- `plugins/sepllm_compressor.py` — SepLLM context engine
-- `plugins/mor_context_engine.py` — MoR自适应深度
-- `plugins/multiverse_mapreduce.py` — Multiverse MapReduce
+- `plugins/sepllm_compressor.py` — SepLLM context engine (P0)
+- `plugins/mor_context_engine.py` — MoR自适应深度 (P0)
+- `plugins/multiverse_mapreduce.py` — Multiverse MapReduce (P0)
+- `plugins/flyroute_router.py` — FlyLoRA隐式skill路由 (P1)
+- `plugins/attnres_memory.py` — AttnRes注意力记忆检索 (P1)
 - `skills/multiverse-mapreduce/SKILL.md` — MapReduce skill
 - `SPEC.md` — 集成指南，含Hermes补丁位置
 
 ## 没落地的（知识库里有）
 
-还有7篇我评价为"不可落地"的论文（CTM、OverLoCK、vHeat、RAEv2、NoProp、DiC、MeanFlow），
-以及5篇P1-P3待续的（FlyLoRA、AttnRes、MUDDFormer、分形生成、LoRI）。
-它们都写好结构化笔记存在vault里了，以后需要再翻出来。
+还有7篇不相关的（CTM、OverLoCK、vHeat、RAEv2、NoProp、DiC、MeanFlow），
+以及3篇P2-P3待续的（MUDDFormer、分形生成、LoRI）。
+它们都写成结构化笔记存在vault里了，以后需要再翻。
 
 ## 一点感受
 
