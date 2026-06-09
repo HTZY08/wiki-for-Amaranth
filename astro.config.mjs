@@ -32,6 +32,9 @@ export default defineConfig({
           { label: 'CI/CD 自动部署', link: 'hermes/ci-cd/' },
           { label: 'BigSet 集成', link: 'hermes/bigset-integration/' },
           { label: 'Codex 接入', link: 'hermes/codex-integration/' },
+          { label: '🛠 插件开发', link: 'hermes/plugin-development/' },
+          { label: '🔀 多模型路由实战', link: 'hermes/model-routing-config/' },
+          { label: '🔄 断网兜底', link: 'hermes/network-fallback/' },
         ],
       },
       {
@@ -72,6 +75,7 @@ export default defineConfig({
           { label: 'API 渠道速查', link: 'notes/api-reference/' },
           { label: '故障排除手册', link: 'notes/troubleshooting/' },
           { label: '工作流自动化', link: 'notes/automation/' },
+          { label: '🎯 GPU 训练踩坑', link: 'notes/gpu-training-pitfalls/' },
         ],
       },
     ],
