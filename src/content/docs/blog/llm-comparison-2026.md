@@ -6,7 +6,7 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 # 2026 年中大模型选型指南
 
 > **版本记录**
-> - 2026.6.9 — 初版。骨架：快速选型 → 一句话评级 → 基准测试 → 定价 → 社区共识 → MoE 策略 → 本地训练部署。后续更新只改内容和数据，不打破这个结构。
+> - 2026.6.9 — 初版。骨架：快速选型 → 一句话评级 → 基准测试 → 定价 → 社区共识 → MoE 策略 → 本地训练部署 → OpenRouter神秘模型 → 已下线模型。后续更新只改内容和数据，不打破这个结构。每日 cron 自动更新数据，每周 cron 更新社区反馈。
 
 **先说明**：这篇文章不会告诉你"某某模型排名第一"。截至 2026 年 6 月，不存在一个在所有场景下都最好的模型。Benchmark 数字越来越没用——很多模型跑分高但不经用，有些跑分低但日常顺手。本文的结构是：先帮你找到自己的场景→再看具体数据和社区风评→最后给一个实际可用的多模型策略。
 
@@ -58,6 +58,8 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | **Perplexity Sonar Pro** | 搜索增强推理 | 带引用的深度研究，适合调研 |
 | **Perplexity Sonar Deep Research** | 自主多步检索+综合 | 调研场景独一档 |
 | **NVIDIA Nemotron 3 Ultra** | 免费可用的前沿模型 | 550B MoE，Agent编排强 |
+| **小米 MiMo-V2.5-Pro** | 开源 Agent 新贵 | MIT 协议，1.02T MoE，性价比超高 |
+| **小米 MiMo-V2.5 Flash** | 轻量开源 Agent | $0.10/$0.30，极致便宜 |
 | **Claude Haiku 4.5** | 轻量快速 | 够用但不惊艳 |
 | **Gemini 3.5 Flash** | 高速推理 | 性价比不错，理科强 |
 | **GPT-5.4 Mini / Nano** | GPT 的轻量版 | 生态好，价格适中 |
@@ -572,3 +574,28 @@ OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类�
 
 > 数据来源：OpenRouter 官方模型目录 (2026-06)、CostGoat (2026-05-30)、Vellum LLM Leaderboard (2026-05-29)、Artificial Analysis、LM Council、Reddit r/DeepSeek / r/LocalLLaMA / r/singularity  
 > 最后更新：2026 年 6 月
+
+## 附录 A：OpenRouter 神秘模型
+
+> 以下模型出现在 OpenRouter 上但来源不明。每日自动检测更新。
+
+| 模型 ID | 解密名称 | 上下文 | 输入/输出价格 |
+|---------|---------|:-----:|:------------:|
+| `riverflow-v2.5-pro` | Sourceful Riverflow 2.5 Pro | 33K | $0/$0 |
+| `owl-alpha` | OpenRouter 自研测试模型 | ? | $0/$0 |
+| `nemotron-3-super-120b-a12b` | NVIDIA Nemotron 3 Super | 128K | $0/$0 |
+| `seedream-4.5` | 字节跳动 Seedream 4.5 | ? | $?/$? |
+
+## 附录 B：已下线模型
+
+| 模型 | 下线日期 |
+|------|---------|
+| Grok 4.1 / Grok 4 | 2026-05-15 |
+| Claude 3 Opus | 2026-04 |
+| Claude 4 Opus / 4 Sonnet | 2026-05 |
+| GPT-4.5 | 2026-04 |
+| GPT-5 | 2026-03 |
+| Gemini 1.5 Pro | 2026-02 |
+| DeepSeek V3 / R1 | 2026-04 |
+
+> 下线日期为 API 停止服务或不再推荐使用的保守估计时间。每日脚本自动检测新下线模型。
