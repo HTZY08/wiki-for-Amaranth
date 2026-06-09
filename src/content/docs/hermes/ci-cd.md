@@ -109,7 +109,7 @@ jobs:
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: \${{ secrets.CLOUDFARE }}
+          apiToken: \${{ secrets.CLOUDFLARE }}
           command: pages deploy dist --project-name wiki-for-amaranth --branch main
 ```
 
@@ -119,7 +119,7 @@ jobs:
 
 | Secret 名称 | 说明 |
 |------------|------|
-| `CLOUDFARE` | Cloudflare API Token，用于部署到 Pages |
+| `CLOUDFLARE` | Cloudflare API Token，用于部署到 Pages |
 
 ## 域名
 

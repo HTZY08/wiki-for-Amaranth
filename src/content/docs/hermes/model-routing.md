@@ -66,11 +66,10 @@ providers:
 
 ```bash
 # 在 CLI 中
-hermes --model claude-opus "帮我分析这个架构的缺陷"
-
-# 在对话中
-使用 GPT 帮我写一段 Python 代码
+hermes --model claude-sonnet-4 "帮我分析这个架构的缺陷"
 ```
+
+手动指定模型仅在当前对话生效。如果频繁需要切换，建议在 `config.yaml` 中调整路由策略。
 
 ## 配置 API 中转
 

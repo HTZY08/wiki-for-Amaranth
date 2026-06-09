@@ -30,7 +30,7 @@ description: 将 OpenAI Codex CLI 接入 Hermes Agent——安装、认证、代
 ## 前置条件
 
 - Hermes Agent 已部署运行
-- ChatGPT Plus 订阅（Codex 通过 OAuth 鉴权，不单独计费）
+- ChatGPT Plus 或 API key 认证（Codex 优先走 OAuth，但也支持 API key 直接认证）
 - 代理（mihomo/Clash）已运行——Codex 连接 chatgpt.com 需要代理
 
 ## 第一步：安装 Codex CLI

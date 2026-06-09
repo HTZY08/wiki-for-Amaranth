@@ -26,5 +26,5 @@ jobs:
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFARE }}
+          apiToken: ${{ secrets.CLOUDFLARE }}
           command: pages deploy dist --project-name wiki-for-amaranth --branch main

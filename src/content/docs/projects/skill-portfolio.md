@@ -9,9 +9,7 @@ description: 自建的 Hermes Skill 生态——从微信机器人到论文编�
 
 ## 🤖 微信接入机器人
 
-将 Hermes 接进个人微信。基于腾讯 iLink Bot API，无需注册开发者账号，扫码即用。
-
-**开箱步骤：**
+微信接入的完整步骤参见 **[微信接入指南](/hermes/gateway-wechat/)**。以下是快速参考（假设基础配置已完成）：
 
 ```bash
 # 安装依赖

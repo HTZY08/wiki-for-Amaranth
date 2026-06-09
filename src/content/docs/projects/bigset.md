@@ -3,7 +3,7 @@ title: BigSet 部署指南
 description: 一句话构建结构化数据集，AI 自动推断 schema + 多 agent 并行填表 + 定时刷新
 ---
 
-> 开源项目 · AGPL-3.0 · [GitHub](https://github.com/tinyfish-io/bigset) · 1.2k Stars
+> 开源项目 · AGPL-3.0 · [GitHub](https://github.com/tinyfish-io/bigset) · ⭐ 查阅时约 1.2k Stars
 
 **BigSet** 是 tinyfish 出品的工具：你输入一句自然语言描述，AI 自动推断表结构 → 编排 agent 搜网页 → 子 agent 并行填数据 → 定时自动刷新 → 导出 CSV/XLSX。
 
@@ -31,7 +31,7 @@ AI 推断 schema（列名/类型/主键）
 
 | 服务 | 用途 | 费用 |
 |------|------|------|
-| **TinyFish** | 网页搜索 + 页面抓取 | Search 5次/分, Fetch 25次/分 免费 |
+| \*\*TinyFish\*\* | 网页搜索 + 页面抓取（免费层：5次/分 Search, 25次/分 Fetch，具体以官方文档为准） |
 | **OpenRouter** | LLM 推理（Claude Sonnet + Qwen） | 按量付费，$5-10 起步 |
 | **Clerk** | 用户登录认证 | 免费 |
 

@@ -95,12 +95,25 @@ services:
 ```bash
 # 重新创建容器（加上了 mihomo 服务）
 docker compose up -d
+```
 
+```bash
 # 验证代理连通性
 docker exec hermes-agent curl -x http://mihomo:7890 -I https://api.openai.com
 ```
 
 应该返回 `HTTP/2 200` 或类似的状态码。
+
+### 配置校验清单
+
+配置完成后逐项检查：
+
+| 检查项 | 命令 | 通过标志 |
+|--------|------|---------|
+| mihomo 进程运行 | `docker compose ps mihomo` | 状态为 `Up` |
+| 代理端口监听 | `curl -x http://127.0.0.1:7890 -I https://www.google.com` | 返回 `200` 或 `3xx` |
+| AI API 可达 | `docker exec hermes-agent curl -x http://mihomo:7890 -I https://api.openai.com` | 返回 `200` 或 `401`（401 说明通到了，是 key 问题） |
+| 规则生效 | `curl -x http://127.0.0.1:7890 -I https://www.baidu.com` | 返回 `200`（国内网站不走代理） |
 
 ## 锁定出口地区（可选）
 

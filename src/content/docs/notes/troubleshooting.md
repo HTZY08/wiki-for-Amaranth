@@ -114,7 +114,7 @@ git config core.sshCommand "ssh -i /正确的/密钥路径"
 ```bash
 # 症状：Actions 部署步骤报 401/403
 # 修复：确认 GitHub Secrets 名称与 workflow 中一致
-# workflow 里写的是 ${{ secrets.CLOUDFLARE_API_TOKEN }}
+# workflow 里写的是 ${{ secrets.CLOUDFLARE }}
 # 就去 Settings → Secrets 检查名字是不是完全一样
 ```
 

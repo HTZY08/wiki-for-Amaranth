@@ -5,7 +5,8 @@ description: AI 驱动的 PPT 美学分析与生成引擎
 
 > 从设计第一原理出发——分析 → 设计 → 生成  
 > 开源 · MIT 协议 · Python  
-> 仓库：`/opt/data/projects/ppt-master/`
+> 仓库：`https://github.com/HTZY08/ppt-master`（私有仓库）  
+> 本地：`/opt/data/projects/ppt-master/`
 
 ---
 

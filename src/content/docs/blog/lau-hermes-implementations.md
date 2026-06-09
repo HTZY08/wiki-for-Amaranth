@@ -112,7 +112,7 @@ compressed = retriever.retrieve_weighted(messages, query=user_input)
 ## 代码位置
 
 ```
-HTZY08/wiki-for-Amaranth → src/content/docs/projects/lau-hermes-improvements/
+HTZY08/wiki-for-Amaranth → projects/lau-hermes-improvements/（仓库根目录下）
 ```
 
 包含：

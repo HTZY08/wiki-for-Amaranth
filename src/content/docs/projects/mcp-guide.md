@@ -27,7 +27,7 @@ MCP Server 是一个独立进程（或远程服务），注册到 Hermes 后，�
 ## 当前配置的 MCP Servers
 
 ```yaml
-# /opt/data/config.yaml
+# `~/.hermes/config.yaml` 中的 `mcp_servers` 配置（示例路径，实际以部署为准）
 mcp_servers:
   mcp_search:          # 统一搜索（自动 fallback 多个后端）
     command: "python3"

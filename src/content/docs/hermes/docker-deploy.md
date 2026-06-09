@@ -7,6 +7,10 @@ description: 从零开始——构建并运行 Hermes Agent 容器
 
 ---
 
+| **说明**
+|------|
+| 本文档假设你已准备好代理配置。如果代理（mihomo）尚未配置，首次 `docker compose up -d` 时只会启动 Hermes 主容器。代理配置完成后需要重新启动（详见[代理配置](/hermes/proxy-setup/)）。 |
+
 ## 前置条件
 
 - ✅ Docker Desktop 已安装并正常运行

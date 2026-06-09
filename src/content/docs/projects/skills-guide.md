@@ -91,7 +91,7 @@ category: devops
 
 ### 模板
 
-```markdown
+````markdown
 ---
 name: my-skill
 description: "做什么用的"
@@ -125,7 +125,7 @@ description: "做什么用的"
 ## 验证
 
 执行后如何确认成功。
-```
+````
 
 ---
 
