@@ -64,7 +64,6 @@ export default defineConfig({
           { label: 'BigSet 部署', link: 'projects/bigset/' },
           { label: '🧰 自定义技能集', link: 'projects/skill-portfolio/' },
           { label: 'ComfyUI 部署与训练', link: 'projects/comfyui/' },
-          { label: '🧬 针心·AI探针设计 Demo', link: 'projects/zhixin-demo/' },
           {
             label: '📖 详解',
             collapsed: true,
