@@ -107,6 +107,9 @@ docker compose logs hermes
 
 ### 图片生成（AI 绘图）用不了
 
-**原因**：默认部署的容器没有 GPU 访问权限。AI 绘图（ComfyUI 等）依赖 GPU 运行。
+**原因**：默认部署的容器没有 GPU 访问权限。
 
-**修复**：参见 [Docker 部署 → 高级配置：GPU 透传](/hermes/docker-deploy/#高级配置gpu-透传)，配置 GPU 后重启容器即可。
+**解决（二选一）**：
+
+- **有独立显卡** → 配置 GPU 透传，参见 [Docker 部署 → 高级配置：GPU 透传](/hermes/docker-deploy/#高级配置gpu-透传)
+- **没有显卡 / 不想折腾** → 配置云端 API 生图，无需 GPU，参见 [云端生图配置](/hermes/cloud-image-gen/)
