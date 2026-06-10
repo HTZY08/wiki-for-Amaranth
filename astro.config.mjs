@@ -41,6 +41,7 @@ export default defineConfig({
           { label: 'Codex 接入', link: 'hermes/codex-integration/' },
           { label: 'BigSet 集成', link: 'hermes/bigset-integration/' },
           { label: '云端生图', link: 'hermes/cloud-image-gen/' },
+          { label: '🧰 完整排障索引', link: 'hermes/troubleshooting-guide/' },
           { label: '🛠 插件开发', link: 'hermes/plugin-development/' },
           { label: '🔀 多模型路由实战', link: 'hermes/model-routing-config/' },
           { label: '🔄 断网兜底', link: 'hermes/network-fallback/' },
