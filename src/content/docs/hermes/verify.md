@@ -104,3 +104,9 @@ docker compose logs hermes
 ### 功能正常但部分工具不能用
 
 某些工具需要额外安装。具体问题具体排查，参考对应的功能手册。
+
+### 图片生成（AI 绘图）用不了
+
+**原因**：默认部署的容器没有 GPU 访问权限。AI 绘图（ComfyUI 等）依赖 GPU 运行。
+
+**修复**：参见 [Docker 部署 → 高级配置：GPU 透传](/hermes/docker-deploy/#高级配置gpu-透传)，配置 GPU 后重启容器即可。

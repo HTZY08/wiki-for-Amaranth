@@ -169,6 +169,38 @@ docker exec hermes-agent curl -I https://api.github.com
 
 如果不通，检查代理配置（参见[代理配置](/hermes/proxy-setup/)）。
 
+## 高级配置：GPU 透传
+
+基础部署只能运行对话和搜索功能。如果你需要使用图片生成（AI 绘图）、语音识别（Whisper GPU 加速）、本地模型推理等能力，需要为容器配置 GPU 访问。
+
+### 修改 docker-compose.yml
+
+在 `docker-compose.yml` 的 `hermes` 服务下添加：
+
+```yaml
+services:
+  hermes:
+    # ... 已有配置 ...
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+```
+
+### 验证 GPU 是否生效
+
+```bash
+docker compose up -d
+docker exec hermes-agent nvidia-smi
+```
+
+应显示 GPU 型号和显存信息。
+
+> 完整 GPU 配置步骤（含 NVIDIA Container Toolkit 安装、常见故障排查）参见 **[GPU 计算](/hermes/gpu-compute/)**。
+
 ---
 
 ## 下一步
