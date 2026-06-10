@@ -207,3 +207,31 @@ HERMES_ALLOW_ROOT_GATEWAY=1 hermes gateway run --replace
 ```
 
 等待 1-2 分钟让计数器复位。
+
+### 图片消息发不出去（"请稍后再试"）
+
+**症状**：Agent 回复中包含图片（如识图结果），但微信侧只显示"请稍后再试"或图片始终加载失败。文本消息正常。
+
+**根因**：gateway 重启后，上传图片用的 `context_token` 是旧会话的过期 token。iLink 返回 session timeout 错误，且 Hermes 当前版本无自动重试机制。
+
+**常见触发场景**：
+- 刚完成扫码配置，首次启动 gateway 后立即发图
+- 按限流修复步骤 `pkill` 重启 gateway 后
+- s6 自动重启 gateway 后
+
+**修复**：
+```bash
+# 1. 清除 stale 状态
+rm -f /opt/data/gateway.lock /opt/data/gateway_state.json
+
+# 2. 去掉代理后重启 gateway
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+HERMES_ALLOW_ROOT_GATEWAY=1 hermes gateway run --replace
+```
+
+等待 **1-2 分钟**让微信侧会话重建，再试图片发送。
+
+**预防**：
+- gateway 重启后，先发一条文本消息确认会话已建立，再发图片
+- 避免短时间内连续发送多张图片（> 3-5 张/分钟可能触发独立限流）
+- 已知上游 [GitHub issue #9738](https://github.com/NousResearch/hermes-agent/issues/9738)，等待上游修复
