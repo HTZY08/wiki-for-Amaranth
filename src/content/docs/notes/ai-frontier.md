@@ -9,6 +9,37 @@ description: 重大 AI 事件、新模型发布、关键架构突破的持续记
 
 ## 2026年6月
 
+### 🧠 Anthropic 发布 Claude Fable 5 / Mythos 5 — 新世代旗舰
+
+**时间**：2026年6月9日  
+**发布方**：Anthropic  
+**官方公告**：[Claude Fable 5 and Claude Mythos 5](https://www.anthropic.com/news/claude-fable-5-mythos-5)
+
+**产品线**：
+- **Claude Fable 5** — Mythos 级能力的安全版，向全量用户开放。已在 claude.com 定价页列为最高档模型
+- **Claude Mythos 5** — 解除安全限制，通过 Project Glasswing 向美国政府/网络防御合作伙伴提供
+
+**定价**：$10/百万输入 tokens，$50/百万输出 tokens（不到 Mythos Preview 的一半）
+
+**离谱的实测案例**：
+
+| 领域 | 表现 |
+|------|------|
+| **软件工程** | Stripe 一天内迁移 5000万行 Ruby 代码库（原估团队 >2个月）；CursorBench SOTA |
+| **知识工作** | Hebbia Finance Benchmark 最高分 |
+| **视觉** | 纯截图打穿 Pokémon FireRed（无地图/导航辅助）；从截图重建 Web App 源码 |
+| **记忆** | Slay the Spire 中持久记忆比 Opus 4.8 好 3 倍 |
+| **药物设计 (Mythos 5)** | 14个蛋白靶点中 9 个出强候选，加速 ~10× |
+| **基因组学** | 自训练 ML 模型击败 *Science* 论文模型，体积小 100× |
+
+**安全机制**：分类器兜底——<5% 会话降级到 Opus 4.8。外部赏金 >1000 小时无通用越狱。UK AISI 在初始窗口内取得部分进展。30 天数据留存策略。
+
+**定位**：Fable 5 是 Anthropic 目前对全量用户开放的最强模型，定位在 Opus 4.8 之上。
+
+**相关**：[官方公告](https://www.anthropic.com/news/claude-fable-5-mythos-5) | [Pricing](https://claude.com/pricing) | [System Card](https://anthropic.com/claude-fable-5-mythos-5-system-card)
+
+---
+
 ### 🏎️ 小米 MiMo-V2.5-Pro UltraSpeed — 1000 TPS
 
 **时间**：2026年6月9日  
