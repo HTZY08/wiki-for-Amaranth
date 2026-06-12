@@ -35,4 +35,17 @@ description: 自用 Hermes Agent 技能包分享合集
 
 ---
 
+## 🔍 Unified Search Routing
+
+Hermes 搜索路由栈 — 多引擎自动降级、模式路由、Key 轮换。
+
+- MCP 统一搜索（9 引擎，按 mode 选首引擎，失败自动降级）
+- Key 轮换（AnySearch/Firecrawl/You/Exa/Tavily 多 Key 自动切换）
+- 公共 API 路由（免 Key 精确查询：书/词典/论文/古籍/汇率）
+- 全降级链：TinyFish → Perplexity → ... → DuckDuckGo
+
+[→ 查看详情](search-routing/)
+
+---
+
 License：CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁止商用

@@ -26,6 +26,7 @@ export default defineConfig({
           { label: '目录', link: 'skill-share/' },
           { label: 'Review Writing', link: 'skill-share/review-writing/' },
           { label: 'Async Delegate', link: 'skill-share/async-delegate/' },
+          { label: 'Search Routing', link: 'skill-share/search-routing/' },
         ],
       },
       {
