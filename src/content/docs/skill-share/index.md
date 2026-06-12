@@ -11,7 +11,7 @@ description: 化学生物综述写作 Hermes Agent 技能包 — 开源可 Fork
 
 **直接下载：** [`review-writing-skill-pack.tar.gz`](https://github.com/HTZY08/wiki-for-Amaranth/raw/main/static/skills/review-writing/review-writing-skill-pack.tar.gz)（126KB，44 文件）
 
-**License：** MIT — 可自由 Fork、修改、商用
+**License：** CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁止商用
 
 ---
 
@@ -131,7 +131,7 @@ tar xzf review-writing-skill-pack.tar.gz -C ~/.hermes/skills/
 | Skill 文件目录 | [static/skills/review-writing/](https://github.com/HTZY08/wiki-for-Amaranth/tree/main/static/skills/review-writing) |
 | 直接下载 tar.gz | [review-writing-skill-pack.tar.gz](https://github.com/HTZY08/wiki-for-Amaranth/raw/main/static/skills/review-writing/review-writing-skill-pack.tar.gz) |
 | Wiki 首页 | [wiki-for-amaranth.pages.dev](https://wiki-for-amaranth.pages.dev) |
-| License | MIT |
+| License | CC BY-NC-SA 4.0 |
 
 ---
 
@@ -143,7 +143,7 @@ tar xzf review-writing-skill-pack.tar.gz -C ~/.hermes/skills/
 
 **直接下载：** [`hermes-async-delegate.tar.gz`](https://github.com/HTZY08/wiki-for-Amaranth/raw/main/static/skills/async-delegate/hermes-async-delegate.tar.gz)（3.4KB）
 
-**License：** MIT — 可自由 Fork、修改、商用
+**License：** CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁止商用
 
 ---
 
@@ -211,4 +211,4 @@ hermes profile create worker --clone
 | Skill 文件目录 | [static/skills/async-delegate/](https://github.com/HTZY08/wiki-for-Amaranth/tree/main/static/skills/async-delegate) |
 | 直接下载 tar.gz | [hermes-async-delegate.tar.gz](https://github.com/HTZY08/wiki-for-Amaranth/raw/main/static/skills/async-delegate/hermes-async-delegate.tar.gz) |
 | Wiki 说明页 | [notes/async-delegate/](https://wiki-for-amaranth.pages.dev/notes/async-delegate/) |
-| License | MIT |
+| License | CC BY-NC-SA 4.0 |
