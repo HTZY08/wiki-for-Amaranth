@@ -4,7 +4,7 @@ description: 从零开始的 Hermes 环境技术时间线 — 自动更新
 ---
 
 从 2026-04-23 到今天，每个技术第一次出现的时间。
-自动每日更新，数据来源：state.db（657 sessions, 51,665 条消息）
+自动每日更新，数据来源：state.db（657 sessions, 51,706 条消息）
 
 ## 技术第一次时间线
 
@@ -14,9 +14,8 @@ description: 从零开始的 Hermes 环境技术时间线 — 自动更新
 | 2026-04-26 | **DeepSeek** | DeepSeek版本查询与确认 |
 | 2026-04-28 | **PPT** | Investigating PPT Task 400 Error |
 | 2026-04-28 | **PDF** | PDF Extraction Lost After Session Reset |
-| 2026-04-30 | **Skill 系统** | OpenRouter Brainstorm Skill Update |
+| 2026-04-30 | **Skill** | OpenRouter Brainstorm Skill Update |
 | 2026-04-30 | **OpenRouter** | OpenRouter Brainstorm Skill Update |
-| 2026-04-30 | **挑战杯** | 挑战杯计划书推进回顾 |
 | 2026-04-30 | **WSL** | Docker commands failing in WSL |
 | 2026-05-01 | **坚果云** | 继续配置坚果云 |
 | 2026-05-03 | **MiniMax** | Old MiniMax Coding Plan Found |
@@ -25,7 +24,6 @@ description: 从零开始的 Hermes 环境技术时间线 — 自动更新
 | 2026-05-11 | **代理** | WSL转写代理修复 |
 | 2026-05-17 | **Tavily** | Tavily key updated ready to search |
 | 2026-05-18 | **知乎** | Zhihu Open Platform Search APIs |
-| 2026-05-19 | **高考** | 2026内蒙古新高考政史地 |
 | 2026-05-26 | **MCP** | MCP代理故障修复 |
 | 2026-05-30 | **TUI** | TUI界面确认与选择 |
 | 2026-06-01 | **微信** | 微信扫码设置方法 |
@@ -40,7 +38,7 @@ description: 从零开始的 Hermes 环境技术时间线 — 自动更新
 | 至今 | 2026-06-12 |
 | 天数 | 50 天 |
 | 总 session 数 | 657 |
-| 总消息数 | 51,665 |
+| 总消息数 | 51,706 |
 | 平均每天 | 13.1 session |
 | 最长 session | 1,200 条（05-30） |
 | 次长 | 1,004 条（05-25） |
@@ -48,4 +46,4 @@ description: 从零开始的 Hermes 环境技术时间线 — 自动更新
 | 最忙一天 | 2026-05-22（173 session） |
 
 ---
-_自动生成于 2026-06-12 19:19_
+_自动生成于 2026-06-12 19:22_
