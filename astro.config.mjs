@@ -21,7 +21,16 @@ export default defineConfig({
       },
       {
         label: '📦 Skill 分享',
-        link: 'skill-share/',
+        collapsed: false,
+        items: [
+          { label: '目录', link: 'skill-share/' },
+          { label: 'Review Writing', link: 'skill-share/review-writing/' },
+          { label: 'Async Delegate', link: 'skill-share/async-delegate/' },
+        ],
+      },
+      {
+        label: '🔧 折腾记录',
+        link: 'notes/tinkering-timeline/',
       },
       {
         label: '🆓 白嫖指南',
