@@ -20,6 +20,10 @@ export default defineConfig({
         items: [{ autogenerate: { directory: 'ai-daily' } }],
       },
       {
+        label: '📦 Skill 分享',
+        link: 'skill-share/',
+      },
+      {
         label: '🆓 白嫖指南',
         collapsed: false,
         items: [
