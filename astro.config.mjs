@@ -16,6 +16,10 @@ export default defineConfig({
         link: '/',
       },
       {
+        label: '☁️ AI云组会',
+        autogenerate: { directory: 'ai-daily' },
+      },
+      {
         label: '🆓 白嫖指南',
         collapsed: false,
         items: [
