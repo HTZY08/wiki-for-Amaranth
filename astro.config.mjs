@@ -88,6 +88,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: '系统架构总览', link: 'notes/architecture/' },
+          { label: '异步任务委派系统', link: 'notes/async-delegate/' },
           { label: '技能索引', link: 'notes/skills-index/' },
           { label: '设计原理摘要', link: 'notes/design-principles/' },
           { label: '配置模板参考', link: 'notes/config-templates/' },
