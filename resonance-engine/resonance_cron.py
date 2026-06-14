@@ -10,6 +10,11 @@ import sys
 import time
 from collections import Counter
 
+# Ensure user site-packages is in path (cron runs with minimal env)
+_USER_SITE = os.path.expanduser("~/.local/lib/python3.13/site-packages")
+if os.path.isdir(_USER_SITE) and _USER_SITE not in sys.path:
+    sys.path.insert(0, _USER_SITE)
+
 import numpy as np
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
