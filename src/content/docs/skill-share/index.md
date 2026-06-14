@@ -49,3 +49,19 @@ Hermes 搜索路由栈 — 多引擎自动降级、模式路由、Key 轮换。
 ---
 
 License：CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁止商用
+
+---
+
+## 🔮 共振引擎（Resonance Engine）
+
+不靠文本搜索、不靠 LLM 路由——一起用的 skill 在空间中靠近，下次自动出现。
+
+- 3 平面（skill/memory/soul）自组织矩阵
+- Hub-penalty 防坍缩 + 冷启动预填充
+- 实测：矩阵构建 ~36ms，共振计算 ~1ms，Precision@5 = 0.912
+- 源码开源，路径全环境变量可配
+
+[→ 查看详情](resonance-engine/)　[↓ 下载 tar.gz](https://github.com/HTZY08/wiki-for-Amaranth/raw/main/static/skills/resonance-engine/resonance-engine.tar.gz)
+
+
+License：CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁止商用

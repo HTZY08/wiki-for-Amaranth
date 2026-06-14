@@ -27,6 +27,7 @@ export default defineConfig({
           { label: 'Review Writing', link: 'skill-share/review-writing/' },
           { label: 'Async Delegate', link: 'skill-share/async-delegate/' },
           { label: 'Search Routing', link: 'skill-share/search-routing/' },
+          { label: '🔮 共振引擎', link: 'skill-share/resonance-engine/' },
         ],
       },
       {
