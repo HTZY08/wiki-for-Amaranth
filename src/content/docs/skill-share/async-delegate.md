@@ -27,6 +27,7 @@ Kanban 是 Hermes 内建的异步任务队列，支持多 profile 协作、依�
 |------|------|
 | **delegate/SKILL.md** | 核心 Skill：架构说明、配置参数、行为规则、Profile 模板 |
 | **delegate/references/worker-SOUL.md** | Worker Profile 的 SOUL.md 模板，含失败处理、路径限制、完成验证 |
+| **kanban-worker/SKILL.md** | Kanban Worker 行为指南，含 Retry 诊断、Block 策略、Recitation 模式 |
 
 ## 快速开始
 
@@ -70,6 +71,7 @@ hermes profile create worker --clone
 - **路径白名单**：限制 Worker 只能写入指定输出目录，防止覆盖系统配置
 - **Stale Timeout**：Worker 崩溃后 10 分钟自动回收，避免任务永久卡死
 - **分层模型**：执行用快速模型，复杂分析调高端模型（Gemini Pro / Claude）
+- **🧠 Recitation 模式（新增）**：复杂任务中 worker 自动在 workspace 维护 `todo.md`，每步更新全局目标到上下文末尾，对抗 "lost in the middle"。详见 kanban-worker/SKILL.md
 
 ## 链接
 
