@@ -48,6 +48,18 @@ Hermes 搜索路由栈 — 多引擎自动降级、模式路由、Key 轮换。
 
 ---
 
+## 📱 社媒 MCP 接入
+
+通过 Docker MCP 将小红书、抖音等国内社交媒体接入 Hermes Agent。
+
+- 小红书：13 个 MCP 工具（搜索/看帖/评论/发布），扫码登录，Cookies 持久化
+- 抖音：待接入，同架构复用
+- B 站/Twitter/Reddit：CLI 工具已配
+
+[→ 查看详情](social-mcp/)
+
+---
+
 License：CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁止商用
 
 ---
