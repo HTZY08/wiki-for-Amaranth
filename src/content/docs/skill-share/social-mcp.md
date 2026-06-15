@@ -103,12 +103,45 @@ docker run -d \
 
 ## 📺 B 站 (bilibili)
 
-无需 Docker MCP，已有更轻量的 CLI 工具：
+已接入，通过 `bili-cli` 运行。
 
-- `bili-cli` — 搜索、热门、排行榜、视频信息
-- `yt-dlp` — 视频/字幕下载（兼容 B 站）
+### 安装
 
-Agent-Reach 已配置 B 站渠道。
+```bash
+pip install bilibili-cli
+```
+
+### 可用命令
+
+| 命令 | 功能 |
+|:----|:-----|
+| `bili search --type video <关键词>` | 搜索视频（返回标题/UP主/播放量/时长） |
+| `bili hot` | 热门视频 |
+| `bili feed` | 动态时间线 |
+| `bili history` | 观看历史 |
+| `bili favorites` | 收藏夹 |
+| `bili like/coin` | 点赞/投币 |
+| `bili audio` | 下载音频（ASR-ready WAV） |
+
+### 搜索示例
+
+```bash
+bili search --type video "AI工具推荐" --yaml
+```
+
+输出示例：
+```yaml
+- id: BV1wvDmBaETB
+  title: 2026超好用的十大 AI 工具！避免你被时代淘汰！
+  author: 小邓Talk
+  play: 141700
+  duration: '12:38'
+- id: BV1Q2iXBtEme
+  title: 从夯到拉，锐评2026全球通用AI助手排名
+  author: 软件侠何二
+  play: 900960
+  duration: '6:14'
+```
 
 ---
 
