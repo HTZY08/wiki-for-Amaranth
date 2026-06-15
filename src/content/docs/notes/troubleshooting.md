@@ -1,34 +1,25 @@
 ---
-title: 故障排除手册
-description: 一个月踩过的坑和修复方法
+title: 排障手册
+description: 组件级故障排查——按频率排序，30 秒定位
 ---
 
-> 所有故障按频率排序——最常见的排最前面。
+> 所有故障按频率排序，最常见的排最前面。
 
----
+## 微信网关
 
-## 🥇 微信网关篇
+### 连不上 / 消息发不出
 
-### 微信连不上 / 消息发不出去
+**症状：** 消息发出去没回复，日志出现 `Cannot connect to host ilinkai.weixin.qq.com` 或 `rate limited`
 
-**症状：** 消息发出去没回复，或者日志里出现 `Cannot connect to host ilinkai.weixin.qq.com`
-
-**诊断排序（30 秒内定位）：**
+**30 秒定位：**
 
 ```bash
-# ① 进程活着吗？（2 秒）
-ps aux | grep "hermes gateway run"
-
-# ② 连接状态？（1 秒）
-cat /opt/data/gateway_state.json | python3 -m json.tool
-
-# ③ 最新错误？（3 秒）
-tail -20 /opt/data/logs/agent.log
+ps aux | grep "hermes gateway run"                  # ① 进程活着吗？
+cat /opt/data/gateway_state.json | python3 -m json.tool    # ② 连接状态？
+tail -20 /opt/data/logs/agent.log                    # ③ 最新错误？
 ```
 
-**#1 原因：代理冲突** — gateway 继承了代理环境变量
-
-**修复：** 去掉代理重新启动
+**#1 原因：代理冲突** — gateway 继承了代理环境变量，连不上国内微信服务器
 
 ```bash
 pkill -f "hermes gateway run"
@@ -37,173 +28,93 @@ unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
 HERMES_ALLOW_ROOT_GATEWAY=1 /opt/hermes/.venv/bin/hermes gateway run --replace
 ```
 
-**#2 原因：限流**
+永久修复：修改 s6 run 脚本（`find /run -name "run" -path "*/gateway*/run"`），在 `exec` 前加 `unset http_proxy`。
 
-**症状：** 日志出现 `rate limited`，消息能收到但发不出回复
+**#2 原因：iLink 限流** — 日志出现 `rate limited`，消息能收到但发不出回复
 
-**修复：** 重启 gateway 断开限流循环（同上），然后等 1-2 分钟让计数器复位
+重启 gateway（同上），等 1-2 分钟让限流计数器复位。不要在限流期间连续重发，会加剧问题。
 
-**#3 原因：s6 环境变量丢失**
+**#3 原因：s6 路径/环境问题**
 
-**症状：** `.env` 里配好了但 gateway 读不到
+- HOME 路径不对 → 确认 s6 run 脚本中 `HOME` 指向实际 home 目录（含 `.env` 的位置）
+- 锁文件被 root 抢占 → `rm -f /opt/data/gateway.lock /opt/data/gateway_state.json` 后重启
+- state.json 引用僵尸 PID → 对照 `ps aux` 确认 PID 存活
 
-**修复：** 修改 s6 run 脚本，在 `exec` 前显式注入变量。脚本路径：
+## Docker / 容器
 
-```bash
-find /run /opt/data -name "run" -path "*/gateway*/run"
-```
-
----
-
-## 🥈 Docker / 容器篇
-
-### Docker 连不上（权限问题）
+### 权限问题
 
 ```bash
-# 症状：docker: permission denied
-# 修复：把用户加入 docker 组
 sudo usermod -aG docker $USER
-# 然后退出重新登录
+# 退出重新登录
 ```
 
 ### 容器内 GPU 不可用
 
 ```bash
-# 症状：nvidia-smi 报错 "could not select device driver"
-# 修复：安装 NVIDIA Container Toolkit
+# 安装 NVIDIA Container Toolkit
 sudo apt-get install -y nvidia-container-toolkit
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-### 容器映射目录不见了
+### 容器映射目录为空
+
+检查 Docker Desktop → Settings → Resources → WSL Integration，确保对应发行版已开启集成。
+
+## 网络与代理
+
+### 代理启动顺序
+
+mihomo 启动时若订阅 URL 尚未拉取完成，容器虽运行但无可用节点。启动后检查：
 
 ```bash
-# 症状：容器内 /opt/data 为空
-# 修复：检查 Docker Desktop WSL 集成设置
-# Docker Desktop → Settings → Resources → WSL Integration
-# 确保 Ubuntu 开关是开的
+docker compose logs mihomo | tail -20
 ```
 
----
-
-## 🥉 SSH / Git 篇
-
-### SSH 推送失败
+### 订阅链接过期
 
 ```bash
-# 症状：git push 报 Permission denied
-# 诊断：确认密钥路径
-ls -la ~/.ssh/id_*
-
-# 常见原因：HOME 环境变量导致 SSH 找错路径
-# 修复：在仓库内指定 SSH 命令
-git config core.sshCommand "ssh -i /正确的/密钥路径"
+curl -x http://127.0.0.1:7890 -I https://api.openai.com
 ```
 
-### Actions 构建失败
+过期则所有海外 API 调用失败。
+
+### 日本节点带宽限速
+
+日本节点 ping 低但流式响应易超时（Codex / PackyAPI 大 payload SSL EOF）。切到美国节点：
 
 ```bash
-# 症状：GitHub Actions 报 Node.js 版本不支持
-# 修复：workflow 中指定 Node 版本 ≥ 22
-# actions/setup-node@v4 → node-version: 22
+curl -X PUT http://127.0.0.1:9090/proxies/Proxies \
+  -d '{"name": "US"}'
+curl -X PUT http://127.0.0.1:9090/proxies/US \
+  -d '{"name": "🇺🇸 美国实验性 IEPL 专线 1"}'
 ```
 
-### Secret 名不对
+## Hermes Agent
 
-```bash
-# 症状：Actions 部署步骤报 401/403
-# 修复：确认 GitHub Secrets 名称与 workflow 中一致
-# workflow 里写的是 ${{ secrets.CLOUDFLARE }}
-# 就去 Settings → Secrets 检查名字是不是完全一样
-```
+### Docker 部署顺序
 
----
+一次性启动全部容器时，mihomo 可能尚未就绪。分步启动或等 mihomo 日志显示节点已加载再发请求。
 
-## 🏅 网络 / 代理篇
+### CI Secret 名不一致
 
-### 国内 API 连不上
+GitHub Actions 中 Secret 名必须与 workflow 文件完全一致。本站使用 "CLOUDFARE"（非标准拼写）。
 
-```bash
-# 症状：curl 到 siliconflow.cn 超时
-# 原因：走了代理（国内 API 不能走代理）
-# 修复：去掉代理环境变量
-unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
-```
+### Codex 认证方式
 
-### 海外 API 连不上
+Codex 同时支持 ChatGPT Plus OAuth 和 API Key 两种认证，不是只能 OAuth。
 
-```bash
-# 症状：curl 到 openai.com 超时
-# 原因：代理挂了或者路由不对
-# 诊断：
-curl -x http://127.0.0.1:7890 -s -o /dev/null -w "%{http_code}" https://www.google.com/generate_204
-# 如果不是 204，说明代理坏了
-```
+## GPU / ComfyUI
 
----
+### `--force-fp16` 参数必须开启
 
-## 🎨 生图篇
+SDXL 默认 FP32 推理，12GB 显存直接 OOM。启动 ComfyUI 时必须加 `--force-fp16`。
 
-### 图片太暗看不清
+### 自定义节点版本冲突
 
-```bash
-# 原因：Qwen-Image 默认出图偏暗
-# 修复：在 prompt 里加 "画面明亮清晰，曝光正常"
-```
+ComfyUI 自定义节点的依赖互相覆盖时，用 venv 隔离或 docker 分装。
 
-### 人脸崩了（AI 假脸感）
+### Docker 内 torch 装不上
 
-```bash
-# 原因：SiliconFlow 模型不擅长写实人像
-# 修复：换 API Yi 的 chatgpt-image-latest（贵但脸不崩）
-```
-
-### 图片在微信里发不出去
-
-```bash
-# 原因：图片太大（微信限制 ~1MB）
-# 修复：压缩
-python3 -c "
-from PIL import Image
-img = Image.open('原图.png').convert('RGB')
-img.thumbnail((1200, 1200))
-img.save('压缩后.jpg', 'JPEG', quality=85)
-"
-```
-
----
-
-## 📝 写作/论文篇
-
-### 怎么调用古籍库
-
-```bash
-# 古籍在：/opt/data/references/Chinese-Classical-Texts/
-# 15,694 篇，用 grep / find 搜索
-grep -r "关键词" /opt/data/references/Chinese-Classical-Texts/ -l
-```
-
-### 查文献表征数据
-
-```bash
-# 通过 Amaranth 的 material-characterization-query skill
-# 告诉她 "查 AuNP 的 TEM 数据" 即可
-```
-
----
-
-## 📋 通用诊断流程
-
-任何问题先做这三步：
-
-```bash
-# 1. 看日志
-tail -50 /opt/data/logs/errors.log
-
-# 2. 看进程
-ps aux | grep -E "hermes|mihomo|python" | grep -v grep
-
-# 3. 看磁盘
-df -h /opt/data
-```
+WSL2 + Docker 容器内 `pip install torch` 可能挂死，手动下载 wheel 安装。详见 `notes/gpu-training-pitfalls`。

@@ -1,44 +1,79 @@
 ---
 title: 多模型路由
-description: 配置多个 AI 模型，按任务自动选择最合适的模型
+description: 从 backbone 到 fallback 到 custom provider 的完整配置方案
 ---
 
-Hermes 支持同时配置多个 AI 模型，根据任务类型自动选择最合适的模型。这样既能省钱（简单任务用便宜模型），又能保证质量（复杂任务用好模型）。
+Hermes 支持同时配置多个 AI 模型，按任务自动路由。目的：简单任务用便宜模型省钱，复杂任务用好模型保证质量。
 
----
+## 三层路由机制
 
-## 为什么需要多个模型
+Hermes 没有显式的 `model_router` 配置节——路由通过以下三层隐式实现：
 
-不同 AI 模型各有专长：
+### 第一层：主模型（backbone）
 
-| 模型 | 特点 | 适合做什么 |
-|------|------|-----------|
-| DeepSeek V4 Flash | 响应快、价格低 | 日常对话、简单查询、常规任务 |
-| GPT-5.x | 编程能力强 | 写代码、重构、调试 |
-| Claude Opus | 分析深度好 | 架构设计、复杂分析、长文本 |
-| Gemini Pro | 上下文窗口大 | 处理超长文档、多模态输入 |
+```yaml
+model:
+  provider: deepseek
+  default: deepseek-v4-flash
+  base_url: https://api.deepseek.com/v1
+  vision:
+    provider: custom
+    model: gpt-4o-mini
+    base_url: https://api.apiyi.com/v1
+```
 
-## 配置多模型
+`vision` 子配置单独指定视觉模型——当 backbone 无原生视觉能力时路由到别的模型。
 
-在 `~/.hermes/config.yaml` 中配置多个 provider：
+### 第二层：Fallback Provider（断网兜底）
+
+```yaml
+fallback_providers:
+  - provider: qwen-cpt
+    model: qwen3-8b-cpt
+```
+
+触发条件：429（限流）、529/503（不可用）、连接失败（DNS/超时）。本地部署的模型作为最后一层兜底。
+
+注意：Fallback 配置修改需要新会话才能生效，不能热加载。
+
+### 第三层：Custom Provider（额外 API）
+
+```yaml
+custom_providers:
+  - name: qwen-cpt
+    base_url: http://127.0.0.1:8001/v1
+    api_key: not-needed
+  - name: xiaomi
+    base_url: https://token-plan-cn.xiaomimimo.com/v1
+    api_key_env: XIAOMI_API_KEY
+    models:
+      - mimo-v2.5-pro
+      - mimo-v2.5
+      - mimo-v2-omni
+```
+
+`custom_providers` 可以注册任意 OpenAI 兼容的 API。注册后可在 skill 或代码中通过 `model: xiaomi/mimo-v2.5` 引用。
+
+## 各模型定位
+
+| 模型 | 角色 | 调用占比 | 用途 |
+|------|------|---------|------|
+| DeepSeek V4 Flash | backbone | ~80% | 日常对话、中文、轻量编码 |
+| Claude Opus 4.x | 攻坚 | ~10% | 复杂架构、高难度调试 |
+| Gemini 3 Pro / GPT 5.x | 多模态 | ~10% | 数学、长文档、图片理解 |
 
 ```yaml
 providers:
-  # 主力模型——处理 80% 的日常任务
   deepseek:
     api_key: ${DEEPSEEK_API_KEY}
     models:
-      - name: deepseek-chat
+      - name: deepseek-v4-flash
         type: chat
-
-  # 代码专家——只有写代码时才调用
   openai:
     api_key: ${OPENAI_API_KEY}
     models:
-      - name: gpt-4o
+      - name: gpt-5.4
         type: chat
-
-  # 深度推理——复杂问题使用
   anthropic:
     api_key: ${ANTHROPIC_API_KEY}
     models:
@@ -46,70 +81,25 @@ providers:
         type: chat
 ```
 
-## 路由策略
-
-配置好后，Hermes 会自动按策略选择模型：
-
-```
-你发来一个请求
-    │
-    ├── 日常聊天/简单问题 → DeepSeek（成本最低）
-    ├── 编写代码/调试     → GPT（编程最强）
-    ├── 深度分析/架构设计 → Claude（分析最深）
-    ├── 处理长文档        → Gemini（上下文最大）
-    └── 实验性任务        → 其他模型（按配置）
-```
-
 ## 手动指定模型
 
-你也可以在对话中临时指定用哪个模型：
+临时切换，仅当前对话生效：
 
 ```bash
-# 在 CLI 中
 hermes --model claude-sonnet-4 "帮我分析这个架构的缺陷"
 ```
 
-手动指定模型仅在当前对话生效。如果频繁需要切换，建议在 `config.yaml` 中调整路由策略。
+## API 中转配置
 
-## 配置 API 中转
-
-如果直接连接海外 API 不稳定，可以使用中转服务：
+直连海外 API 不稳定时：
 
 ```yaml
 providers:
   openai:
     api_key: ${OPENAI_API_KEY}
-    base_url: "https://你的中转地址/v1"  # 替换为你的中转 URL
+    base_url: "https://你的中转地址/v1"
     models:
-      - name: gpt-4o
+      - name: gpt-5.4
 ```
 
-## 故障排查
-
-### 某个模型报错
-
-```yaml
-# 临时禁用有问题的模型
-providers:
-  openai:
-    enabled: false  # 先关掉
-```
-
-### 所有模型都超时
-
-检查网络代理是否正常。尝试直接 ping API 地址：
-
-```bash
-curl -I https://api.openai.com
-```
-
-如果不通，检查[代理配置](/hermes/proxy-setup/)。
-
-### 想切换主力模型
-
-修改 `config.yaml` 中的 `default_model`：
-
-```yaml
-agent:
-  default_model: gpt-4o  # 把主力模型改成 GPT
-```
+中转服务常见选项：API Yi、PackyAPI、OpenRouter。中转地址不带 `/v1` 会导致 404。

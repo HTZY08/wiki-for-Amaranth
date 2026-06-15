@@ -43,12 +43,12 @@ src/content/docs/
     ├── env-prep.md             # 环境准备
     ├── docker-deploy.md        # Docker 部署
     ├── proxy-setup.md          # 代理配置
-    ├── basic-config.md         # 基础配置
+    ├── configuration.md        # 配置指南
     ├── verify.md               # 验证运行
     ├── gpu-compute.md          # GPU 透传
     ├── model-routing.md        # 多模型路由
     ├── gateway-wechat.md       # 微信接入
-    ├── skills-system.md        # 技能系统
+    ├── skills.md               # 技能系统
     ├── cron-background.md      # 定时任务
     ├── memory-system.md        # 持久记忆
     └── ci-cd.md                # 本页

@@ -164,4 +164,4 @@ curl -x http://127.0.0.1:7890 -o /dev/null -s -w "%{time_total}s\n" https://www.
 
 ## 下一步
 
-配置完成后，进入 **[基础配置](/hermes/basic-config/)** 设置 API Key。
+配置完成后，进入 **[配置指南](/hermes/configuration/)** 设置 API Key。
