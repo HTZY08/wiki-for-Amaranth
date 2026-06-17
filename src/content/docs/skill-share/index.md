@@ -76,4 +76,18 @@ License：CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁�
 [→ 查看详情](resonance-engine/)　[↓ 下载 tar.gz](https://github.com/HTZY08/wiki-for-Amaranth/raw/main/static/skills/resonance-engine/resonance-engine.tar.gz)
 
 
+---
+
+## 🛠️ Ops — 系统运维 Kanban Worker Profile
+
+Hermes Kanban 系统运维 Worker — 带错误记录协议和已知缺陷清单。
+
+- 错误记录协议：[现象→原因→修复→避坑] 四段式，运维知识库自动积累
+- 已知缺陷清单：Docker WSL2 bug、代理节点陷阱、代码执行模型坑点
+- 系统架构速查：代理配置、Docker 布局、关键路径
+- 执行流程：诊断→计划→代码执行→验证→记录 五步法
+
+[→ 查看详情](ops-profile/)　[↓ 下载 tar.gz](https://github.com/HTZY08/wiki-for-Amaranth/raw/main/static/skills/ops-profile/ops-profile.tar.gz)
+
+
 License：CC BY-NC-SA 4.0 — 仅供个人学习、研究、开发使用，禁止商用
