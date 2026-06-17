@@ -6,6 +6,7 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 # 2026 年中大模型选型指南
 
 > **版本记录**
+> - 2026.6.17 — 更新：新增 AI Index 智能排行 TOP 20，更新国产模型格局（GLM-5.2 Max / Qwen3.7 Max / DeepSeek V4 Pro / MiMo-V2.5），补充 Claude Fable 5 登顶信息，刷新定价表。
 > - 2026.6.9 — 初版。骨架：快速选型 → 一句话评级 → 基准测试 → 定价 → 社区共识 → MoE 策略 → 本地训练部署 → OpenRouter神秘模型 → 已下线模型。后续更新只改内容和数据，不打破这个结构。每日 cron 自动更新数据，每周 cron 更新社区反馈。
 
 **先说明**：这篇文章不会告诉你"某某模型排名第一"。截至 2026 年 6 月，不存在一个在所有场景下都最好的模型。Benchmark 数字越来越没用——很多模型跑分高但不经用，有些跑分低但日常顺手。本文的结构是：先帮你找到自己的场景→再看具体数据和社区风评→最后给一个实际可用的多模型策略。
@@ -19,17 +20,83 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | 你的情况 | 关键指标 | 推荐方向 |
 |---------|---------|---------|
 | **预算紧张，调用量大** | API 价格 | 国产模型：DeepSeek V4 Flash / V4 Pro |
-| **写代码，尤其是修复杂 bug** | 代码质量、多文件理解 | Claude Opus 4.5+ 或 DeepSeek V4 Pro |
-| **理科/数学/推理** | 数学竞赛、科学 QA | Gemini 3 Pro / GPT-5.2+ |
+| **写代码，尤其是修复杂 bug** | 代码质量、多文件理解 | Claude Opus 4.8 / GPT-5.5 |
+| **理科/数学/推理** | 数学竞赛、科学 QA | Gemini 3.5 Flash / 3.1 Pro |
 | **中文内容和日常对话** | 中文质量、成本 | DeepSeek V4 Flash / Qwen3.7 Max |
-| **长文档/多模态** | 上下文窗口、视觉理解 | Gemini 3 Pro (1M ctx) / GPT-5.5 |
+| **长文档/多模态** | 上下文窗口、视觉理解 | GPT-5.5 / Gemini 3.1 Pro (1M ctx) |
 | **自己部署/私有化** | 开源协议、硬件要求 | DeepSeek V4 / Qwen3.5 / GLM-5 |
-| **Agent / 自动化流程** | Function Calling、指令遵循 | GPT-5.4 / DeepSeek V4 |
+| **Agent / 自动化流程** | Function Calling、指令遵循 | GPT-5.4 / DeepSeek V4 / MiMo-V2.5 |
 
 **一句话版**：
-- 有钱上 Opus，没钱上 DeepSeek V4 Flash
+- 有预算上 Opus/Fable，日常 DeepSeek V4 Flash
 - 数学和长文档找 Gemini
-- 日常主力用 Flash，攻坚上 Opus，偶尔 GPT-5.5
+- 国产场景：GLM-5.2 Max 性价比极高
+- 极致低价大批量：DeepSeek V4 Flash（$0.06/百万token）
+
+---
+
+## 一'、AI Index 智能排行 TOP 20（2026 年 6 月）
+
+> 数据来源：[Artificial Analysis Intelligence Index](https://artificialanalysis.ai/leaderboards/models)，综合评估智能、速度、价格。*标记为同家族估算值。
+
+| 排名 | 模型 | 公司 | 智能分 | 价格 $/1M tok | 速度 tok/s |
+|:----|:-----|:-----:|:-----:|:-------------:|:----------:|
+| 1 | Claude Fable 5 (with fallback) | Anthropic | **60** | $7.70 | — |
+| 2 | Claude Opus 4.8 (max) | Anthropic | 56 | $3.85 | 62 |
+| 3 | GPT-5.5 (xhigh) | OpenAI | 55 | $4.35 | 61 |
+| 4 | Claude Opus 4.7 (max) | Anthropic | 54 | $3.85 | 50 |
+| 5 | GPT-5.5 (high) | OpenAI | 53 | $4.35 | 54 |
+| 6 | **GLM-5.2 (max)** | **智谱 Z AI** | **51** | **$0.90** | **108** |
+| 7 | Gemini 3.5 Flash | Google | 50 | $1.31 | 153 |
+| 8 | Claude Sonnet 4.6 (max) | Anthropic | 47 | $2.31 | 55 |
+| 9 | GPT-5.5 (medium) | OpenAI | 47\* | $4.35 | 54 |
+| 10 | Gemini 3.1 Pro Preview | Google | 46 | $1.74 | 122 |
+| 11 | **Qwen3.7 Max** | **阿里** | **46** | **$1.43** | **101** |
+| 12 | Gemini 3.5 Flash (medium) | Google | 45\* | $1.31 | 160 |
+| 13 | **MiniMax-M3** | **MiniMax** | **44** | **$0.22** | **62** |
+| 14 | **DeepSeek V4 Pro (Max)** | **DeepSeek** | **44** | **$0.18** | **62** |
+| 15 | GPT-5.3 Codex (xhigh) | OpenAI | 44\* | $1.87 | 77 |
+| 16 | Muse Spark | Meta | 43 | — | — |
+| 17 | Kimi K2.6 | Kimi | 43 | $0.70 | 45 |
+| 18 | Claude Opus 4.7 (Non-reasoning, high) | Anthropic | 43\* | $3.85 | 47 |
+| 19 | **MiMo-V2.5-Pro** | **小米** | **42** | **$0.18** | **34** |
+| 20 | Kimi K2.7 Code | Kimi | 42 | $0.70 | 50 |
+
+**关键结论**：
+- **智能最高**：Claude Fable 5（60分）但$7.70/百万token，是第二名两倍
+- **国产首次入围第一梯队**：GLM-5.2 Max（51分，$0.90）智能追平 Gemini
+- **国产性价比标杆**：MiniMax-M3（44分，$0.22）和 DeepSeek V4 Pro（44分，$0.18）
+- **极致低价**：DeepSeek V4 Flash（40分，**$0.06/百万token**）大批量任务首选
+- **速度之王**：Step 3.7 Flash（363 tok/s），Mercury 2（937 tok/s 但智能仅25分）
+
+### 第一梯队（智能 50+）：Claude 独大，国产首次入围
+
+| 模型 | 价格 $/1M | 评价 |
+|:----|:---------:|:-----|
+| Claude Fable 5 | $7.70 | ⭐ 智能最高，价格是第二名两倍 |
+| Claude Opus 4.8 | $3.85 | 综合最强旗舰，62 tok/s 可接受 |
+| GPT-5.5 | $4.35 | 智能略低于 Opus 4.8，速度相当 |
+| **GLM-5.2 Max** | **$0.90** | 🏆 **性价比之王**——智能 51 分，价格为第一梯队最低 |
+| Gemini 3.5 Flash | $1.31 | 智能 50 + 速度 153 tok/s，均衡之选 |
+
+### 第二梯队（智能 44-47）：国产爆发区
+
+| 模型 | 价格 $/1M | 速度 | 亮点 |
+|:----|:---------:|:----:|:-----|
+| Qwen3.7 Max | $1.43 | 101 | 阿里旗舰，智能追平 Gemini 3.1 Pro |
+| MiniMax-M3 | **$0.22** | 62 | 🏆 智能 44 分，价格仅 $0.22 |
+| DeepSeek V4 Pro (Max) | **$0.18** | 62 | 智能 44 分，价格 $0.18 |
+| Kimi K2.6 | $0.70 | 45 | 智能 43 分，月之暗面旗舰 |
+
+### 第三梯队（智能 30-42）：中段主力
+
+| 模型 | 价格 $/1M | 速度 | 评价 |
+|:----|:---------:|:----:|:-----|
+| DeepSeek V4 Flash (Max) | **$0.06** | 96 | ⭐ 智能 40，价格最低——大批量任务首选 |
+| MiMo-V2.5 | **$0.06** | 74 | 小米旗舰，智能 40，价格与 Flash 持平 |
+| GPT-5.4 mini (xhigh) | $0.65 | 170 | OpenAI 中端，速度快 |
+| GPT-5.4 nano (xhigh) | **$0.18** | 154 | OpenAI 低价小模型 |
+| Step 3.7 Flash | $0.18 | **363** | 🚀 阶跃星辰，速度极快 |
 
 ---
 
@@ -125,22 +192,32 @@ M2.7 发布时一篇 VentureBeat 文章吹成了"自进化模型"，但：
 
 | 模型 | 输入 | 输出 | 上下文 |
 |------|:---:|:---:|:-----:|
+| Claude Fable 5 | $7.70 | $7.70 | 1M |
 | Claude Opus 4.8 | $5 | $25 | 1M |
-| GPT-5.5 | $5 | $30 | 1M |
-| Gemini 3.1 Pro / 3 Pro | $2 | $12 | 1M |
-| GPT-5.4 | $1.25 | $10 | 400K |
+| Claude Opus 4.7 | $5 | $25 | 1M |
 | Claude Sonnet 4.6 | $3 | $15 | 200K |
 | Claude Haiku 4.5 | $1 | $5 | 200K |
+| GPT-5.5 | $5 | $30 | 1M |
+| GPT-5.4 | $1.25 | $10 | 400K |
+| GPT-5.4 Mini | $0.75 | $4.50 | 400K |
+| GPT-5.4 Nano | $0.20 | $1.25 | 400K |
+| GPT-4.1 Nano | $0.10 | $0.40 | 1M |
+| Gemini 3.1 Pro Preview | $2 | $12 | 1M |
 | Gemini 3.5 Flash | $1.50 | $9 | 1M |
 | Gemini 3 Flash Preview | $0.50 | $3 | 1M |
-| DeepSeek V4 Pro | $1.74 | $3.48 | 1M |
+| **DeepSeek V4 Pro** | **$1.74** | **$3.48** | 1M |
 | **DeepSeek V4 Flash** | **$0.14** | **$0.28** | 1M |
 | DeepSeek R1 | $0.55 | $2.19 | 128K |
-| Qwen3.7 Max | $0.90 | $2.70 | 1M |
+| **GLM-5.2 Max** | **$0.90** | **$2.70** | 1M |
+| **Qwen3.7 Max** | $0.90 | $2.70 | 1M |
 | Qwen3.7 Plus | $0.40 | $1.60 | 1M |
-| Qwen3 235B A22B | $0.72 | $2.16 | 262K |
-| Mistral Medium 3.5 | $1.50 | $7.50 | 262K |
+| **MiniMax-M3** | **$0.22** | **$0.66** | 1M |
+| **MiMo-V2.5-Pro** | **$0.18** | **$0.54** | 1M |
+| **MiMo-V2.5 Flash** | **$0.10** | **$0.30** | 1M |
+| Kimi K2.6 | $0.70 | $2.10 | 128K |
+| Step 3.7 Flash | $0.20 | $1.15 | 256K |
 | Mistral Large 2512 | $0.50 | $1.50 | 262K |
+| Mistral Medium 3.5 | $1.50 | $7.50 | 262K |
 | Mistral Small 4 | $0.15 | $0.60 | 262K |
 | Devstral 2 | $0.40 | $2.00 | 262K |
 | Grok 4.3 | $1.25 | $2.50 | 1M |
@@ -150,19 +227,17 @@ M2.7 发布时一篇 VentureBeat 文章吹成了"自进化模型"，但：
 | Perplexity Sonar (轻量) | $1.00 | $1.00 | 127K |
 | NVIDIA Nemotron 3 Ultra | $0.50 | $2.50 | 1M |
 | NVIDIA Nemotron 3 Super | **免费** | **免费** | 128K |
-| GPT-5.4 Mini | $0.75 | $4.50 | 400K |
-| GPT-5.4 Nano | $0.20 | $1.25 | 400K |
-| GPT-4.1 Nano | $0.10 | $0.40 | 1M |
-| Step 3.7 Flash | $0.20 | $1.15 | 256K |
+| Meta Llama 4 Maverick | ~$0.20 | ~$0.60 | 1M |
 | Meta Llama 3.3 70B | $0.10 | $0.32 | 131K |
 | Nex-N2-Pro (free) | **免费** | **免费** | 262K |
 
 ### 4.2 真正有用的数字
 
 - **DeepSeek V4 Flash** 的输出价格是 Claude Opus 4.8 的 **1/89**
-- Claude Opus 4.8 跑一次的任务，Flash 能跑 **89 次**还多出几毛钱
-- 跑分有争议但价格没争议——Flash 的性价比全网公认
-- 即使 V4 Pro，输出价格也只是 Opus 的 1/7，但 SWE-bench 只差 8 个百分点
+- Claude Fable 5 比 Opus 4.8 还贵一倍，智能只高 4 分
+- **MiMo-V2.5 Flash**（$0.10/$0.30）与 DeepSeek V4 Flash 价格持平，同为极致性价比
+- **GLM-5.2 Max** 以 $0.90 的价格提供 51 分的智能——第一梯队最便宜
+- **MiniMax-M3**（$0.22）和 **DeepSeek V4 Pro**（$0.18）是第二梯队性价比之王
 
 #### 本站真实账单
 
@@ -183,17 +258,20 @@ V4 Flash 以 ¥0.0455/M 的有效混合价（DeepSeek 官方国内价）完成�
 
 | 模型 | 社区情绪 | 核心槽点 |
 |------|---------|---------|
+| Claude Fable 5 | ❓ 新发布，待观察 | "价格翻倍但智能只高4分" |
 | Claude Opus 4.8 | 两极分化 | "过度思考烧token"、"4.6被移除很不满" |
 | Claude Opus 4.7 | 🚩 **强烈负面** | "比4.6倒退"、"不守规则"、"legendarily bad" |
 | Claude Sonnet 4.6 | 中性偏正面 | 性价比好但"情感冷淡、不真诚" |
 | GPT-5.5 / 5.4 | 正面 | 5.5正确率领先，5.4稳定可靠 |
-| Gemini 3 Pro | 🚩 **负面为主** | "发布后静默降质"、"长上下文失效" |
+| Gemini 3.1 Pro | 🟡 好于3.0 | 3.0负面较多，3.1大幅改善 |
 | DeepSeek V4 Flash | 🏆 **非常正面** | "神奇"、"便宜得离谱"、"接近Opus" |
-| MiniMax M2.7 / M3 | 🚩 **偏负面** | "财务危机"、"质量反复"、"自进化是营销" |
-| Qwen 3.7 Max | 中性 | "幻觉多"、"烧钱快" |
-| GLM-5.1 | 偏正面 | SWE-bench领先，社区接受度上升 |
+| DeepSeek V4 Pro Max | 🏆 **非常正面** | "unlimited and almost free OMG better than opus" |
+| GLM-5.2 Max | 🆕 上升趋势 | SWE-bench Pro 58.4%，社区接受度快速上升 |
+| Qwen3.7 Max | 中性 | "幻觉多"、"烧钱快" |
+| MiniMax-M3 | 🚩 **偏负面** | "财务危机"、"M3发布后变蠢"、API限速 |
+| MiMo-V2.5-Pro | 🟢 口碑不错 | MIT开源，Agent场景评价好 |
 | Kimi K2.6 | 偏正面 | "值得推荐的Opus替代"但"过度思考严重" |
-| Grok 4 | 混合 | 推理好，编程一般，API快速退役 |
+| Grok 4.3 | 混合 | 推理好，编程一般 |
 | Llama 4 Scout | 🚩 **怀疑为主** | "10M上下文过200k后失效"、"营销噱头" |
 
 ### 💬 真实用户怎么说（带链接）
@@ -330,11 +408,12 @@ V4 Flash 以 ¥0.0455/M 的有效混合价（DeepSeek 官方国内价）完成�
 
 ### 一句话总结
 
-1. **SWE-bench 跑分已不可信**——微软、Reddit 社区、独立研究者三方确认污染。看 SWE-Rebench 或 DeepSWE
-2. **Opus 4.7 是 2026 年最大的跑分与实际体验脱节案例**——跑分 83.5% 但社区一致差评
-3. **Gemini 3 Pro 的"数学无敌"跑分与实际体验脱节**——社区普遍反映发布后降质、长上下文失效
-4. **DeepSeek V4 Flash 是年度性价比之王**——价格只有 Opus 的 1/89，社区反馈压倒性正面
-5. **MiniMax M2.7/M3 的跑分和实际体验差距巨大**——加上财务危机和 API 限速，不建议使用
+1. **SWE-bench 跑分已不可信**——看 SWE-Rebench 或 DeepSWE
+2. **Claude Fable 5 智能最高但太贵**——$7.70，比 Opus 4.8 贵一倍，适合不差钱的攻坚场景
+3. **GLM-5.2 Max 国产突围**——智能 51 分进入第一梯队，$0.90 价格极具竞争力
+4. **DeepSeek V4 Flash 仍是性价比之王**——$0.06/百万token，社区压倒性正面
+5. **MiMo-V2.5 值得关注**——MIT 开源、Agent 场景评价好，价格与 Flash 持平
+6. **MiniMax M3 跑分与实际脱节**——财务危机 + API 限速，不建议投入
 
 ---
 
@@ -343,19 +422,18 @@ V4 Flash 以 ¥0.0455/M 的有效混合价（DeepSeek 官方国内价）完成�
 这是目前开发者社区里最主流的打法，也是本站在实际使用的方案：
 
 ```
-80% 调用 → DeepSeek V4 Flash（日常：问答、中文、轻量编码）
-10% 调用 → Claude Opus 4.7/4.8（攻坚：复杂架构、高难度调试）
- 5% 调用 → Gemini 3 Pro / GPT-5.4（多模态、数学、长文档）
- 5% 调用 → Grok 4.3 / Perplexity Sonar / Mistral（实验、对比、特定场景）
+75% 调用 → DeepSeek V4 Flash（日常：问答、中文、轻量编码）
+10% 调用 → DeepSeek V4 Pro / GLM-5.2 Max（攻坚：代码、推理、国产场景）
+ 8% 调用 → Claude Opus 4.8 / GPT-5.5（硬骨头：多文件重构、架构决策）
+ 4% 调用 → Gemini 3.5 Flash / 3.1 Pro（多模态、数学、长文档）
+ 3% 调用 → MiMo-V2.5 / Perplexity Sonar / Grok 4.3（实验、Agent、调研）
 ```
 
 **为什么这么配？**
-- Flash 承担 80% 的流量，年成本控制在 $20-50
-- Opus 只用来解决 Flash 搞不定的硬骨头——推理、多文件重构、架构决策
-- 偶尔用 Gemini/GPT 补多模态和数学场景
-- Grok 适合长程 Agent 任务和性价比敏感的高频迭代
-- Perplexity Sonar 在调研/文献检索场景无可替代
-- Mistral 是欧洲数据合规场景下的可靠备选
+- Flash 承担 75% 的流量，年成本控制在 $20-50
+- V4 Pro / GLM-5.2 Max 替代部分原 Opus 的攻坚场景——便宜 7-14 倍
+- Opus/GPT 只留给真正的硬骨头——推理、架构、多文件
+- MiMo-V2.5 在 Agent 场景的表现值得更多测试
 
 **成本对比**：如果全用 Opus 4.8，同样流量年花费约 $5,000-10,000。上述组合将成本压到 1/100 以下，质量损失不到 5%。
 
