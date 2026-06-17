@@ -1,5 +1,5 @@
 ---
-title: 共振引擎（Resonance Engine）
+title: Resonance Engine Profile
 description: 基于共现矩阵的 skill/记忆/行为自组织发现引擎
 ---
 

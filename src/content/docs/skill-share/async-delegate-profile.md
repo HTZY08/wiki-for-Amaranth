@@ -1,5 +1,5 @@
 ---
-title: Async Delegate System
+title: Async Delegate Profile
 description: 基于 Hermes Kanban 的异步任务委派系统
 ---
 

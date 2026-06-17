@@ -24,10 +24,12 @@ export default defineConfig({
         collapsed: false,
         items: [
           { label: '目录', link: 'skill-share/' },
-          { label: 'Review Writing', link: 'skill-share/review-writing/' },
-          { label: 'Async Delegate', link: 'skill-share/async-delegate/' },
-          { label: 'Search Routing', link: 'skill-share/search-routing/' },
-          { label: '🔮 共振引擎', link: 'skill-share/resonance-engine/' },
+          { label: 'Review Writing', link: 'skill-share/review-writing-profile/' },
+          { label: 'Async Delegate', link: 'skill-share/async-delegate-profile/' },
+          { label: 'Search Routing', link: 'skill-share/search-routing-profile/' },
+          { label: 'Social MCP', link: 'skill-share/social-mcp-profile/' },
+          { label: '🔮 共振引擎', link: 'skill-share/resonance-engine-profile/' },
+          { label: '🛠️ Ops', link: 'skill-share/ops-profile/' },
         ],
       },
       {

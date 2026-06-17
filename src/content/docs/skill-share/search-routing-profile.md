@@ -1,5 +1,5 @@
 ---
-title: Unified Search Routing
+title: Search Routing Profile
 description: Hermes 搜索路由栈 — 多引擎自动降级、模式路由、Key 轮换
 ---
 

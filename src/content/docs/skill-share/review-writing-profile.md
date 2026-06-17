@@ -1,5 +1,5 @@
 ---
-title: Review Writing Skills
+title: Review Writing Profile
 description: 化学生物综述写作 Hermes Agent 技能包
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: 社媒 MCP 接入指南
+title: Social MCP Profile
 description: 小红书、抖音等国内社交媒体通过 MCP 接入 Hermes Agent 的方法
 ---
 
