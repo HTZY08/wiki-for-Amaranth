@@ -112,4 +112,4 @@ nvidia-smi
 | Docker 运行 | `docker run hello-world` | 打印欢迎信息 |
 | GPU（如有） | `nvidia-smi` | 显示 GPU 信息 |
 
-全部通过？下一步进入 **[Docker 部署](/hermes/docker-deploy/)**。
+全部通过？下一步进入 **[Docker 部署](/hermes/部署/docker-deploy/)**。

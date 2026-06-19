@@ -46,7 +46,7 @@ Hermes：需要先获取当前时间...
 你：帮我查一下今天的天气
 ```
 
-应该能联网搜索并返回天气信息。如果报错提示网络问题，检查[代理配置](/hermes/proxy-setup/)。
+应该能联网搜索并返回天气信息。如果报错提示网络问题，检查[代理配置](/hermes/部署/proxy-setup/)。
 
 ---
 
@@ -111,5 +111,5 @@ docker compose logs hermes
 
 **解决（二选一）**：
 
-- **有独立显卡** → 配置 GPU 透传，参见 [Docker 部署 → 高级配置：GPU 透传](/hermes/docker-deploy/#高级配置gpu-透传)
-- **没有显卡 / 不想折腾** → 配置云端 API 生图，无需 GPU，参见 [云端生图配置](/hermes/cloud-image-gen/)
+- **有独立显卡** → 配置 GPU 透传，参见 [Docker 部署 → 高级配置：GPU 透传](/hermes/部署/docker-deploy/#高级配置gpu-透传)
+- **没有显卡 / 不想折腾** → 配置云端 API 生图，无需 GPU，参见 [云端生图配置](/hermes/部署/cloud-image-gen/)

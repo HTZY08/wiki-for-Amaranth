@@ -9,7 +9,7 @@ description: 从零开始——构建并运行 Hermes Agent 容器
 
 | **说明**
 |------|
-| 本文档假设你已准备好代理配置。如果代理（mihomo）尚未配置，首次 `docker compose up -d` 时只会启动 Hermes 主容器。代理配置完成后需要重新启动（详见[代理配置](/hermes/proxy-setup/)）。 |
+| 本文档假设你已准备好代理配置。如果代理（mihomo）尚未配置，首次 `docker compose up -d` 时只会启动 Hermes 主容器。代理配置完成后需要重新启动（详见[代理配置](/hermes/部署/proxy-setup/)）。 |
 
 ## 前置条件
 
@@ -167,7 +167,7 @@ sudo lsof -i :7890
 docker exec hermes-agent curl -I https://api.github.com
 ```
 
-如果不通，检查代理配置（参见[代理配置](/hermes/proxy-setup/)）。
+如果不通，检查代理配置（参见[代理配置](/hermes/部署/proxy-setup/)）。
 
 ## 高级配置：GPU 透传
 
@@ -199,10 +199,10 @@ docker exec hermes-agent nvidia-smi
 
 应显示 GPU 型号和显存信息。
 
-> 完整 GPU 配置步骤（含 NVIDIA Container Toolkit 安装、常见故障排查）参见 **[GPU 计算](/hermes/gpu-compute/)**。
+> 完整 GPU 配置步骤（含 NVIDIA Container Toolkit 安装、常见故障排查）参见 **[GPU 计算](/hermes/部署/gpu-compute/)**。
 
 ---
 
 ## 下一步
 
-容器正常运行后，去配置 **[网络代理](/hermes/proxy-setup/)**。
+容器正常运行后，去配置 **[网络代理](/hermes/部署/proxy-setup/)**。

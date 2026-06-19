@@ -32,7 +32,7 @@ docker compose logs hermes
 
 **为什么**：Docker Desktop 在 Windows 上通过 WSL2 后端运行。如果 WSL Integration 没开，Linux 子系统里的 docker 命令找不到 Docker 守护进程。
 
-**相关文档**：[Docker 部署 → 故障排查](/hermes/docker-deploy/#故障排查)
+**相关文档**：[Docker 部署 → 故障排查](/hermes/部署/docker-deploy/#故障排查)
 
 ---
 
@@ -53,7 +53,7 @@ docker compose ps
 
 **为什么**：Hermes 的简单配置下（`hermes.chat` 等）用的是你家宽带的 DNS 和 IP，出不了墙——必须跑一个代理容器。但反过来，**微信网关不能走代理**（见下文）。
 
-**相关文档**：[代理配置](/hermes/proxy-setup/)
+**相关文档**：[代理配置](/hermes/部署/proxy-setup/)
 
 ---
 
@@ -112,7 +112,7 @@ set -a; source .env; set +a
 
 **为什么**：`xargs` 把 `@` 和 `:` 当成分隔符处理了。
 
-**相关文档**：[微信接入 → Token 验证失败](/hermes/gateway-wechat/#token-验证失败)
+**相关文档**：[微信接入 → Token 验证失败](/hermes/集成/gateway-wechat/#token-验证失败)
 
 ---
 
@@ -181,7 +181,7 @@ curl -s --proxy http://127.0.0.1:7890 https://ilinkai.weixin.qq.com/ilink/bot/ge
 
 **为什么**：Hermes 容器内默认设置了 http_proxy 环境变量指向 mihomo（127.0.0.1:7890，美国出口）。微信 iLink 是国内 CDN，美国 IP 连不上甚至被主动丢弃。必须让 gateway 进程**直连**。
 
-**相关文档**：[微信接入 → 连不上 iLink 服务器](/hermes/gateway-wechat/#连不上-ilink-服务器)
+**相关文档**：[微信接入 → 连不上 iLink 服务器](/hermes/集成/gateway-wechat/#连不上-ilink-服务器)
 
 ---
 
@@ -209,7 +209,7 @@ HERMES_ALLOW_ROOT_GATEWAY=1 hermes gateway run --replace
 
 **为什么**：每次 gateway 重启，它与 iLink 服务器的会话会获得一个新的 `context_token`。但如果重启太快，新进程拿到的还是上一个会话的 token。微信 CDN 收到这个 token 时发现会话已过期 → 拒收图片 → 无重试 → 用户看到"请稍后再试"。
 
-**相关文档**：[微信接入 → 图片消息发不出去](/hermes/gateway-wechat/#图片消息发不出去请稍后再试)
+**相关文档**：[微信接入 → 图片消息发不出去](/hermes/集成/gateway-wechat/#图片消息发不出去请稍后再试)
 
 ---
 
@@ -248,7 +248,7 @@ HERMES_ALLOW_ROOT_GATEWAY=1 hermes gateway run --replace
 
 **为什么**：限流不是永久封禁，是短时间高频请求后的临时阻断。重启 gateway 相当于断开旧的限流计数器，新建一个会话重新开始计数。
 
-**相关文档**：[微信接入 → 限流](/hermes/gateway-wechat/#限流)
+**相关文档**：[微信接入 → 限流](/hermes/集成/gateway-wechat/#限流)
 
 ---
 
@@ -276,12 +276,12 @@ HERMES_ALLOW_ROOT_GATEWAY=1 hermes gateway run --replace
 
 **解决（二选一）**：
 
-- **有独立显卡** → [配置 GPU 透传](/hermes/docker-deploy/#高级配置gpu-透传)
-- **没有显卡** → [配置云端 API 生图](/hermes/cloud-image-gen/)，无需 GPU，注册即用
+- **有独立显卡** → [配置 GPU 透传](/hermes/部署/docker-deploy/#高级配置gpu-透传)
+- **没有显卡** → [配置云端 API 生图](/hermes/部署/cloud-image-gen/)，无需 GPU，注册即用
 
 **为什么**：Hermes 本身不内置图像生成模型。生图要么调用本地 ComfyUI（需要 GPU），要么调云端 API。两者都没配就会掉到 Python 代码执行路径——那条路需要 Docker socket，没挂 socket 就报错。
 
-**相关文档**：[云端生图配置](/hermes/cloud-image-gen/) | [GPU 计算](/hermes/gpu-compute/)
+**相关文档**：[云端生图配置](/hermes/部署/cloud-image-gen/) | [GPU 计算](/hermes/部署/gpu-compute/)
 
 ---
 
@@ -302,7 +302,7 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-**相关文档**：[GPU 计算 → NVIDIA Container Toolkit](/hermes/gpu-compute/#第二步nvidia-container-toolkitdocker-gpu-透传)
+**相关文档**：[GPU 计算 → NVIDIA Container Toolkit](/hermes/部署/gpu-compute/#第二步nvidia-container-toolkitdocker-gpu-透传)
 
 ---
 
@@ -360,10 +360,10 @@ curl -s https://api.deepseek.com/models | head -c 100
 
 如果这里没覆盖你的情况，先去对应功能页面查看详细文档：
 
-- [Docker 部署](/hermes/docker-deploy/)
-- [代理配置](/hermes/proxy-setup/)
-- [基础配置](/hermes/basic-config/)
-- [GPU 透传](/hermes/gpu-compute/)
-- [微信接入](/hermes/gateway-wechat/)
-- [云端生图](/hermes/cloud-image-gen/)
-- [多模型路由](/hermes/model-routing/)
+- [Docker 部署](/hermes/部署/docker-deploy/)
+- [代理配置](/hermes/部署/proxy-setup/)
+- [基础配置](/hermes/配置/configuration/)
+- [GPU 透传](/hermes/部署/gpu-compute/)
+- [微信接入](/hermes/集成/gateway-wechat/)
+- [云端生图](/hermes/部署/cloud-image-gen/)
+- [多模型路由](/hermes/配置/model-routing/)

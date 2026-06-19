@@ -228,5 +228,5 @@ Hindsight Lite（SQLite）→ 持久记忆层
 - **定位**：Amaranth 的轻量云端搭档，专注时效信息维护与文字交互
 - **代码共享**：与 Amaranth 共用 SOUL 体系、Skills、Kanban 系统
 
-详细配置见 [cloud-server-config 补充块](/hermes/cloud-server-config/#补充)。
+详细配置见 [cloud-server-config 补充块](/hermes/运维/cloud-server-config/#补充)。
 

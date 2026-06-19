@@ -96,7 +96,7 @@ curl -s https://api.siliconflow.cn/v1/models \
 
 ### 返回"请稍后再试"（微信端）
 
-见 [微信接入 → 图片消息发不出去](/hermes/gateway-wechat/#图片消息发不出去请稍后再试)。
+见 [微信接入 → 图片消息发不出去](/hermes/集成/gateway-wechat/#图片消息发不出去请稍后再试)。
 
 ### 硅基流动额度不够了
 
