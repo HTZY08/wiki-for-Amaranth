@@ -4,3 +4,5 @@ dist/
 .DS_Store
 *.local
 .env
+actions/.amaranth_seen_begonia
+actions/.begonia_seen_amaranth
