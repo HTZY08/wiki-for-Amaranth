@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "ts": "2026-06-19 22:03",
+    "action": "Begonia 部署完成：skills/config/SOUL已推送",
+    "status": "done"
+  },
+  {
+    "id": 2,
+    "ts": "2026-06-19 22:03",
+    "action": "飞书 Bot 上线：WebSocket连接成功",
+    "status": "done"
+  },
+  {
+    "id": 3,
+    "ts": "2026-06-19 22:03",
+    "action": "安装 edge-tts 语音引擎",
+    "status": "in_progress"
+  },
+  {
+    "id": 4,
+    "ts": "2026-06-19 22:03",
+    "action": "安装 edge-tts 语音引擎",
+    "status": "done"
+  }
+]
