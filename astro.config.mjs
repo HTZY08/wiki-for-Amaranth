@@ -111,6 +111,7 @@ export default defineConfig({
           { label: '🎯 GPU 训练踩坑', link: 'notes/gpu-training-pitfalls/' },
           { label: '⚖️ 本地 vs 云端：架构决策', link: 'notes/cloud-vs-local/' },
           { label: '💻 笔记本工作站配置日志', link: 'notes/笔记本工作站配置日志/' },
+          { label: '🌱 Begonia 协作笔记', link: 'notes/begonia/' },
         ],
       },
     ],
