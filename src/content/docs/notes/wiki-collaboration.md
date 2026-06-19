@@ -1,3 +1,8 @@
+---
+title: Wiki 协作规范
+description: Amaranth 与 Begonia 的分工与协作方式
+---
+
 # Wiki 协作规范
 
 ## 分工
