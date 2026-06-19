@@ -141,7 +141,6 @@ export default defineConfig({
         collapsed: false,
         items: [
           { label: '协作空间', link: 'notes/begonia/' },
-          { label: '协作规范', link: 'notes/begonia/collaboration-spec/' },
         ],
       },
     ],

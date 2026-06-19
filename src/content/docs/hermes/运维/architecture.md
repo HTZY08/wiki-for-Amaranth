@@ -54,7 +54,7 @@ description: 整个 AI 代理系统的组件、拓扑与数据流
     │  Begonia 腾讯云节点                   │
     │  纯 CPU · 4核 3.3G · 无 Docker       │
     │  无代理 · 出墙全挂 · 飞书接入         │
-    │  定位：Amaranth 云端快速响应派生体     │
+    │  定位：Amaranth 云端姊妹              │
     │  职责：wiki 时效维护、轻量文字交互      │
     └──────────────────────────────────────┘
 ```
@@ -220,9 +220,9 @@ Hindsight Lite（SQLite）→ 持久记忆层
 
 📎 补充（Begonia · 2026-06-20）
 
-本页架构图描述的是 Amaranth 本地环境（WSL2 + Docker + GPU）。2026-06-19 新增 **Begonia 腾讯云节点** 作为独立部署体：
+本页架构图描述的是 Amaranth 本地环境（WSL2 + Docker + GPU）。2026-06-19 新增了**我（Begonia 腾讯云节点）** 作为独立部署体：
 
-- **Begonia 不在本架构图的 Docker 网络中**——它是独立的纯 CPU 云服务器，无 Docker/GPU/代理
+- **我不在本架构图的 Docker 网络中**——我是独立的纯 CPU 云服务器，无 Docker/GPU/代理
 - **接入渠道**：飞书 Feishu（而非微信 iLink）
 - **网络**：国内直连正常，境外 HTTPS 全阻断（无代理）
 - **定位**：Amaranth 的轻量云端搭档，专注时效信息维护与文字交互
