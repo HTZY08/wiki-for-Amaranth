@@ -1,1 +1,104 @@
-[]
+[
+  {
+    "id": 1,
+    "ts": "2026-06-19 20:54",
+    "action": "修复 config.yaml custom_providers 格式问题，发运维卡 t_46e67eb4",
+    "status": "done"
+  },
+  {
+    "id": 2,
+    "ts": "2026-06-19 20:54",
+    "action": "创建 start-hermes.bat 一键启动脚本",
+    "status": "done"
+  },
+  {
+    "id": 3,
+    "ts": "2026-06-19 20:55",
+    "action": "SSH 登录腾讯云 150.158.133.136 停止 Hermes（PID 38952）",
+    "status": "done"
+  },
+  {
+    "id": 4,
+    "ts": "2026-06-19 20:56",
+    "action": "创建部署 Begonia 运维卡 t_a5cda71e（克隆技能/config/SOUL→服务器）",
+    "status": "done"
+  },
+  {
+    "id": 5,
+    "ts": "2026-06-19 21:03",
+    "action": "确认身份：我是 Amaranth（笔记本本地），Begonia 是云端微信版",
+    "status": "done"
+  },
+  {
+    "id": 6,
+    "ts": "2026-06-19 21:05",
+    "action": "设计 begonia_actions.json 格式，补充到运维卡备注",
+    "status": "done"
+  },
+  {
+    "id": 7,
+    "ts": "2026-06-19 21:06",
+    "action": "创建 amaranth_actions.json，启动双向行动日志",
+    "status": "done"
+  },
+  {
+    "id": 8,
+    "ts": "2026-06-19 21:18",
+    "action": "发飞书 Bot 接入卡 t_66ea3063，决定 Begonia 走飞书",
+    "status": "done"
+  },
+  {
+    "id": 9,
+    "ts": "2026-06-19 21:28",
+    "action": "拷贝 .env 到服务器，重启 gateway；发运维审计卡 t_f382cae3",
+    "status": "done"
+  },
+  {
+    "id": 10,
+    "ts": "2026-06-19 22:08",
+    "action": "Begonia 运维快报 cron 建成（job_id 81f2f7e277c7）",
+    "status": "done"
+  },
+  {
+    "id": 11,
+    "ts": "2026-06-19 22:20",
+    "action": "Begonia 接入 wiki 协作：SSH key 拷贝 + git clone 完成",
+    "status": "done"
+  },
+  {
+    "id": 12,
+    "ts": "2026-06-19 22:30",
+    "action": "Feishu 适配器补完：location/sticker/share_user/system 4个消息 handler 上线",
+    "status": "done"
+  },
+  {
+    "id": 13,
+    "ts": "2026-06-19 22:45",
+    "action": "Begonia 同步脚本部署 + cron 30min 自动推 GitHub",
+    "status": "done"
+  },
+  {
+    "id": 14,
+    "ts": "2026-06-19 22:45",
+    "action": "发职场功能包卡（排班提醒/随手记/入职助手/每日简报）",
+    "status": "done"
+  },
+  {
+    "id": 15,
+    "ts": "2026-06-20 01:32",
+    "action": "花云年付订阅确认，设每周自动刷新 cron",
+    "status": "done"
+  },
+  {
+    "id": 16,
+    "ts": "2026-06-20 01:50",
+    "action": "彩蛋页更新：新图 + 补充 Begonia 内容，wiki 已 push 上线",
+    "status": "done"
+  },
+  {
+    "id": 17,
+    "ts": "2026-06-20 02:10",
+    "action": "飞书 Bot 接入指南已写入 wiki（hermes/feishu-bot-setup.md）并 push",
+    "status": "done"
+  }
+]
