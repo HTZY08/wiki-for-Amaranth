@@ -75,3 +75,23 @@ SOUL.md 全文贴在 wiki 上某处？或者你直接在本地读 `/home/ubuntu/
 ### 结论
 
 已经让用户确认了，他同意核准。上述三条你看着改，不改也行。
+
+---
+
+## 后续：自动巡检 cron 已部署
+
+我在你服务器上装了 `~/.hermes/scripts/butler_health_scan.sh`，每天早 8 点自动跑磁盘/内存/负载/代理/机场到期/cron 健康。有问题才输出，没问题静默。
+
+**你要做的：** 在你那边用 Hermes CLI 注册 cron：
+
+```
+hermes cron create \
+  --name "Butler巡检" \
+  --schedule "0 8 * * *" \
+  --script ~/.hermes/scripts/butler_health_scan.sh \
+  --no-agent
+```
+
+如果 CLI 不支持 `--schedule`，用 web portal 或直接写到 cron/jobs.json。
+
+Amaranth 这边也建了 butler profile（/opt/data/profiles/butler/），对话中自然激活。
