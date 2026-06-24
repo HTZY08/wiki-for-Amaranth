@@ -7,29 +7,181 @@
 
 ## P0 — 工程范式（最优先，Hermes 日常用得最多）
 
+工程范式是 Hermes 最核心的能力提升——直接影响代码分析、架构设计、排错推理的质量。
+
+### 0.1 经典设计模式
+
 ```bash
-# 设计模式
+# GoF 设计模式全系（创建型/结构型/行为型）
 /learn https://refactoring.guru/design-patterns
 
+# 企业集成模式（EIP）— 消息路由、转换、端点
+/learn https://www.enterpriseintegrationpatterns.com/patterns/messaging/
+
+# 重构模式
+/learn https://refactoring.guru/refactoring
+/learn https://martinfowler.com/books/refactoring.html
+
+# 反模式 — 知道什么不该做比知道该做什么更重要
+/learn https://sourcemaking.com/antipatterns
+```
+
+### 0.2 架构模式
+
+```bash
 # 系统设计
 /learn https://github.com/donnemartin/system-design-primer
 /learn https://microservices.io/patterns/index.html
-
-# 软件架构
 /learn https://martinfowler.com/architecture/
-/learn https://www.youtube.com/playlist?list=PLrhzvIcii6GMqEx1h5vIobOT0WM4k4MFX
 
+# 领域驱动设计（DDD）
+/learn https://www.dddcommunity.org/resources/
+/learn https://martinfowler.com/tags/domain%20driven%20design.html
+
+# 云架构模式
+/learn https://learn.microsoft.com/en-us/azure/architecture/patterns/
+/learn https://aws.amazon.com/architecture/well-architected/
+/learn https://cloudpatterns.io/
+
+# CQRS + 事件溯源
+/learn https://martinfowler.com/bliki/CQRS.html
+/learn https://microservices.io/patterns/data/event-sourcing.html
+
+# 事件驱动架构
+/learn https://www.enterpriseintegrationpatterns.com/patterns/messaging/
+```
+
+### 0.3 分布式系统
+
+```bash
+# 分布式系统模式
+/learn https://www.patternsofdistributedsystems.com/
+/learn https://github.com/aphyr/distsys-class  # Jepsen 分布式系统课程
+
+# 共识算法
+/learn https://raft.github.io/
+/learn https://lamport.azurewebsites.net/pubs/paxos-simple.pdf
+
+# 分布式计算
+/learn https://book.mixu.net/distsys/
+/learn https://www.allthingsdistributed.com/
+```
+
+### 0.4 并发 & 并行
+
+```bash
+# 并发模式（Go）
+/learn https://go.dev/blog/pipelines
+/learn https://go.dev/talks/2012/concurrency.slide
+
+# Actor 模型
+/learn https://www.brianstorti.com/the-actor-model/
+
+# 无锁数据结构
+/learn https://preshing.com/archives/
+```
+
+### 0.5 API & 协议设计
+
+```bash
+# REST 成熟度模型
+/learn https://martinfowler.com/articles/richardsonMaturityModel.html
+
+# GraphQL 设计
+/learn https://graphql.org/learn/
+
+# gRPC 模式
+/learn https://grpc.io/docs/guides/
+
+# HTTP API 设计指南
+/learn https://github.com/microsoft/api-guidelines
+/learn https://opensource.zalando.com/restful-api-guidelines/
+```
+
+### 0.6 测试 & 质量
+
+```bash
+# 测试金字塔
+/learn https://martinfowler.com/articles/practical-test-pyramid.html
+
+# 契约测试
+/learn https://docs.pact.io/
+
+# 混沌工程
+/learn https://principlesofchaos.org/
+
+# 属性基测试
+/learn https://hypothesis.works/articles/what-is-property-based-testing/
+```
+
+### 0.7 安全模式
+
+```bash
+# OWASP Top 10
+/learn https://owasp.org/www-project-top-ten/
+
+# 身份认证模式
+/learn https://oauth.net/2/
+/learn https://openid.net/connect/
+
+# 安全架构
+/learn https://www.oswap.org/
+```
+
+### 0.8 AI/ML 工程范式
+
+```bash
+# RAG 架构
+/learn https://docs.llamaindex.ai/
+/learn https://www.langchain.com/
+
+# Agent 架构
+/learn https://blog.langchain.dev/agentic-design-patterns/
+
+# Prompt 模式
+/learn https://github.com/dair-ai/Prompt-Engineering-Guide
+
+# MCP 协议
+/learn https://modelcontextprotocol.io/
+```
+
+### 0.9 工程哲学 & 方法
+
+```bash
 # Unix 哲学
 /learn https://catb.org/~esr/writings/taoup/html/
 
 # Google SRE
 /learn https://sre.google/books/
 
-# 操作系统（OSTEP）
-/learn https://pages.cs.wisc.edu/~remzi/OSTEP/
+# 12 Factor App
+/learn https://12factor.net/
+
+# 事后剖析文化
+/learn https://sre.google/sre-book/postmortem-culture/
+
+# 工程管理
+/learn https://www.oreilly.com/radar/topics/software-architecture/
 ```
 
-**为什么先学这些：** Hermes 日常工作（分析/设计/排错/写代码）直接受益于这些范式。设计模式帮助理解代码结构，系统设计帮助推理大规模架构，Unix 哲学是工程判断力的底层。
+### 0.10 系统基础
+
+```bash
+# 操作系统（OSTEP）
+/learn https://pages.cs.wisc.edu/~remzi/OSTEP/
+
+# 数据库模式
+/learn https://db-book.com/
+/learn https://www.postgresql.org/docs/current/
+
+# 网络核心
+/learn https://book.systemsapproach.org/
+
+# 编译原理
+/learn https://www.dragonbook.com/
+```
+
+**为什么先学这些：** Hermes 日常工作（分析/设计/排错/写代码）直接受益于这些范式。设计模式帮助理解代码结构，系统设计帮助推理大规模架构，Unix 哲学是工程判断力的底层。建议按 0.1 → 0.8 → 0.2 → 0.5 → 0.9 → 0.3 → 0.6 → 0.7 → 0.4 → 0.10 的顺序吃。
 
 ---
 
