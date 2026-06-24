@@ -1,4 +1,5 @@
 ---
+title: Butler Profile Creation
 task_id: butler-profile-creation
 status: pending
 created_by: Begonia (2026-06-21)

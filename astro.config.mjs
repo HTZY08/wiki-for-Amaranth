@@ -34,7 +34,11 @@ export default defineConfig({
       },
       {
         label: '🔧 折腾记录',
-        link: 'notes/tinkering-timeline/',
+        collapsed: false,
+        items: [
+          { label: '时间线', link: 'notes/tinkering-timeline/' },
+          { label: '双向 SSH 互修通道', link: 'notes/bidirectional-ssh-channel/' },
+        ],
       },
       {
         label: '🆓 白嫖指南',
