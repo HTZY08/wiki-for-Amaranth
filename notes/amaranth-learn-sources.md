@@ -424,24 +424,29 @@
 
 ## 使用建议
 
-### 批量学习
-每次打开一个 `/learn` 会话，喂一个源：
+### 推荐喂食顺序
 
+最优先（先跑这两条，Hermes 能力质变）：
 ```
-/learn https://refactoring.guru/design-patterns
+/learn https://hermes-agent.nousresearch.com/docs/llms-full.txt
+/learn https://www.anthropic.com/research/building-effective-agents
 ```
 
-Hermes 会提取核心知识存成 skill。以后相关语境下自动调取。
+然后按 P0 子类顺序：
+```
+0.1 设计模式 → 0.8 AI工程 → 0.2 架构 → 0.5 API设计
+→ 0.9 工程哲学 → 0.3 分布式 → 0.6 测试 → 0.7 安全
+→ 0.4 并发 → 0.10 系统基础
+```
 
-### 优先级
-1. **P0 工程范式** — 先跑完这 7 条，工作质量提升最明显
-2. **P1 计算机核心** — 算法+系统+网络+数据库
-3. **P2-P5** — 按需补充广度
+接着 P1-P5 按需补充。
 
 ### 注意事项
 - `/learn` 一次处理一个源，给足够时间消化
-- 国内网络可能访问 OpenStax/MIT OCW 慢，考虑走代理
+- Hermes 完整架构 (llms-full.txt) 约 1.8MB，消化可能需要 1-2 分钟
+- 国内网络访问 OpenStax/MIT OCW 慢，考虑走代理
 - 喂完后用 `/skills` 确认 skill 已生成
+- 定期跑 `/curator` 清理过时 skill
 
 ---
 
