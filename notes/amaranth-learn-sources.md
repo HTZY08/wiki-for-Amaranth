@@ -185,6 +185,147 @@
 
 ---
 
+## 0.11 Hermes 场景设计（Agent 工程范式）
+
+> 区别于通用工程范式，这部分专攻 **AI Agent 本身的设计模式**——Hermes 的架构哲学、Agent 工作流模式、skill/记忆/工具的设计策略。
+
+### 0.11.1 Hermes 自身架构（先了解自己）
+
+```bash
+# Hermes 完整架构文档（1.8MB，一键喂入）
+/learn https://hermes-agent.nousresearch.com/docs/llms-full.txt
+
+# Hermes 架构总览
+/learn https://hermes-agent.nousresearch.com/docs/contributing/architecture
+```
+
+这是最优先的一条——让 Hermes 完整理解自己的全部能力、限制和扩展点。
+
+### 0.11.2 Agent 通用设计模式（Anthropic 框架）
+
+```bash
+# 构建有效 Agent（Anthropic — 2024年最权威的Agent设计文章）
+/learn https://www.anthropic.com/research/building-effective-agents
+
+# Agent 工作流模式
+/learn https://github.com/anthropics/anthropic-cookbook/tree/main/patterns/agents
+```
+
+覆盖 7 种核心模式：Prompt Chaining / Routing / Parallelization / Orchestrator-Workers / Evaluator-Optimizer / Autonomous Agents / Augmented LLM
+
+### 0.11.3 Hermes Skill 设计范式
+
+```bash
+# Hermes Skill 系统
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+
+# Curator — 技能自动维护
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/features/curator
+```
+
+**Skill 设计原则：**
+- 一个 skill 解决一个明确的问题域
+- 触发条件要精准（不泛化不过窄）
+- 包含验证步骤和常见陷阱
+- 定期用 curator 清理过时的 skill
+
+### 0.11.4 记忆策略
+
+```bash
+# Hermes 记忆系统
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/features/memory
+
+# 记忆提供者
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/features/memory-providers
+```
+
+**记忆设计原则：**
+- USER.md：存不可变事实（姓名/角色/环境）
+- MEMORY.md：存习惯性偏好和约束
+- 不存临时状态、任务进度、已完成的工作日志
+- 定期用 curator 清理过时的记忆
+
+### 0.11.5 工具组合模式
+
+```bash
+# Hermes 工具系统
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/features/tools
+```
+
+**典型组合模式：**
+- 调研：`web_search` → `web_extract` → 综合分析
+- 开发：`delegate_task` (并行子任务) → 汇总验证
+- 排错：`terminal` → `read_file` → `search_files` → 根因定位
+
+### 0.11.6 多 Agent 编排
+
+```bash
+# 多 Agent 配置与协调
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/profiles
+
+# 代码工作流（Git Worktrees）
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/git-worktrees
+```
+
+**编排模式：**
+- 主 Agent（Orchestrator）拆任务
+- 子 Agent（Worker）并行执行
+- 每个 Worker 走独立 session + 独立终端
+- 适合：大型重构 / 多文件调研 / 多维度分析
+
+### 0.11.7 SOUL.md 人格设计
+
+```bash
+# Hermes 人格与 SOUL.md
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/features/personality
+```
+
+**SOUL.md 设计原则：**
+- Identity & Core Posture：明确你是谁、你的判断框架
+- Hard Constraints：不可违反的硬约束
+- Style：语言风格、输出结构偏好
+- Context Awareness：任务模式切换（分析/创意/闲聊）
+
+### 0.11.8 Platform & Gateway 模式
+
+```bash
+# 消息网关
+/learn https://hermes-agent.nousresearch.com/docs/user-guide/messaging/
+```
+
+**多平台策略：**
+- 飞书：深度工作 + 文档协作
+- 微信：轻量通知 + 快速问答
+- Telegram：后台任务 + 定时报告
+- 每个平台绑定不同的 personality
+
+---
+
+### 0.11.x Agent 学习循环（进阶）
+
+```bash
+# /learn 指令本身
+# 已经在你当前的 Hermes 里了
+
+# 闭环学习模式：
+# 1. 遇到新问题
+# 2. 分析 → 解决 → 反思
+# 3. /learn 存为 skill
+# 4. 下次同类问题自动调取
+# 5. Curator 定期优化 stale skill
+```
+
+---
+
+**建议：这一整节只用跑前两条就够了：**
+
+1. **Hermes 完整架构** → `/learn https://hermes-agent.nousresearch.com/docs/llms-full.txt`
+2. **Anthropic Agent 模式** → `/learn https://www.anthropic.com/research/building-effective-agents`
+
+这两个喂完之后，Hermes 对自己是谁、Agent 系统怎么设计就有了完整的认知框架。剩下的 section 11.3-11.8 是按需补充。
+
+---
+
 ## P1 — 计算机科学核心
 
 ```bash
