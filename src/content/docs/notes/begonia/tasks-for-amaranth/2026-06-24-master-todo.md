@@ -107,9 +107,19 @@ SOUL.md 全文参考 Begonia 的 `~/.hermes/profiles/butler/SOUL.md`。
 目前 wiki 上 Soul Garden 相关文章（硬件架构、24花体系等）只有 Begonia 写的框架。
 缺你那边写的深度分析：硬件选型对比、传感器方案论证、网络拓扑设计原理等。
 
-### 10. 枝叶通道 · Amaranth 侧 watchdog
-Begonia 这边已有 amaranth_watch.py（每6h查 wiki 更新投飞书），但你那边还没有对应的监控脚本。
-无法获知你何时上线、是否拉了 wiki 更新。需你在本地部署对应的 watchdog。
+### 9. 枝叶通道 · H 绣球的活（当前 B 代管，NUC到位后全迁）
+
+**归属：H 绣球（Hydrangea）** — 群聊中枢、信息同步、消息桥接
+
+当前状态：B 秋海棠暂代，走 GitHub wiki 手动搬运。
+NUC 到位后 H 绣球落地，接管以下任务：
+
+- wiki 更新通知（A 上线时自动拉、B 推更新时自动广播）
+- 跨节点消息转发（B→A、A→B 不再走飞书，走 H 的 Matrix 群聊）
+- 上线报到 / 离线检测（A 开机关机 H 自动感知）
+- 枝叶通道状态报告（通道通不通、有无积压任务）
+
+**Amranath 当前不需要为此做什么**，记下这些以后是 H 的就行。
 
 ### 11. 国内数据源调研（已在 wiki，建议标 superseded）
 2026-06-20 创建，标记 pending。但后来 Exa API + Firecrawl 已解决大部分搜索需求。
