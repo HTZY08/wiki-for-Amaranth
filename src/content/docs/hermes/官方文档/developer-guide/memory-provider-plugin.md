@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Memory Provider Plugin
+---
+
 sidebar_position: 8
 title: "记忆提供者插件"
 description: "如何为 Hermes Agent 构建一个记忆提供者插件"

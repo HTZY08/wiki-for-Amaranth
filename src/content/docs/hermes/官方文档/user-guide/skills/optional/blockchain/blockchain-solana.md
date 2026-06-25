@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Solana
 ---
 
 ## 陷阱

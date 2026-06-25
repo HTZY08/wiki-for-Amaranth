@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Shopify
+---
+
 title: "Shopify — 通过 curl 使用 Shopify Admin 与 Storefront GraphQL API"
 sidebar_label: "Shopify"
 description: "通过 curl 使用 Shopify Admin 与 Storefront GraphQL API"

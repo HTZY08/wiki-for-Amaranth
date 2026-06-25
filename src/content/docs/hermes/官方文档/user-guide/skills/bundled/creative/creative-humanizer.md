@@ -1,3 +1,7 @@
+---
+title: "Humanizer"
+---
+
 # Humanizer
 
 人性化文本：去除AI痕迹，注入真实声音。

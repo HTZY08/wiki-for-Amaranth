@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Use Voice Mode With Hermes
+---
+
 sidebar_position: 8
 title: "使用Hermes语音模式"
 description: "关于在CLI、Telegram、Discord以及Discord语音频道中设置和使用Hermes语音模式的实用指南"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Openhue
+---
+
 title: "Openhue — 通过 OpenHue CLI 控制 Philips Hue 灯、场景和房间"
 sidebar_label: "Openhue"
 description: "通过 OpenHue CLI 控制 Philips Hue 灯、场景和房间"

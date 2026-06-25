@@ -1,3 +1,7 @@
+---
+title: "Neuroskill Bci"
+---
+
 ## 示例交互（Example Interactions）
 
 **"我现在状态如何？"**

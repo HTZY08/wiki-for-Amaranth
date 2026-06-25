@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Excel Author
+---
+
 title: "Excel 建模师"
 sidebar_label: "Excel 建模师"
 description: "使用 openpyxl 以无头模式构建可审计的 Excel 工作簿——遵循蓝/黑/绿单元格约定、公式优先于硬编码、命名区域、平衡检查、敏感性分析表。适用于金融模型、审计输出、对账。"

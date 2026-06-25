@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Multi Profile Gateways
+---
+
 sidebar_position: 4
 ---
 

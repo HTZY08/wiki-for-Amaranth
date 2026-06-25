@@ -1,3 +1,7 @@
+---
+title: "Programmatic Integration"
+---
+
 ## 模型热切换（Model hot-swapping）
 
 会话中的模型切换适用于所有界面 —— 其底层是通过 `/model` 斜杠命令实现的。

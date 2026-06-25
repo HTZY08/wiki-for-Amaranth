@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Darwinian Evolver
+---
+
 title: "达尔文进化器（Darwinian Evolver）—— 使用 Imbue 的进化循环优化提示词/正则表达式/SQL/代码"
 sidebar_label: "达尔文进化器（Darwinian Evolver）"
 description: "使用 Imbue 的进化循环优化提示词/正则表达式/SQL/代码"

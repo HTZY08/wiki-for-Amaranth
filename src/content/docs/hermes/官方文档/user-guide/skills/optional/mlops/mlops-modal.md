@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Modal
+---
+
 title: "Modal Serverless Gpu — 用于运行 ML 工作负载的无服务器 GPU 云平台"
 sidebar_label: "Modal Serverless Gpu"
 description: "用于运行机器学习工作负载的无服务器 GPU 云平台"

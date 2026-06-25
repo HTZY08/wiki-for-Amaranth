@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Blender Mcp
+---
+
 title: "Blender Mcp — 通过 socket 连接 blender-mcp 插件，从 Hermes 直接控制 Blender"
 sidebar_label: "Blender Mcp"
 description: "通过 socket 连接 blender-mcp 插件，从 Hermes 直接控制 Blender"

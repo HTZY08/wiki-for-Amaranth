@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Cli
+---
+
 title: "Inference Sh Cli — 通过推理运行 150+ 个 AI 应用"
 sidebar_label: "Inference Sh Cli"
 description: "通过推理运行 150+ 个 AI 应用"

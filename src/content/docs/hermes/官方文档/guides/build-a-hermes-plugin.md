@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Build A Hermes Plugin
+---
+
 sidebar_position: 9
 sidebar_label: "构建插件"
 title: "构建 Hermes 插件"

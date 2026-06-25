@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Delegation
+---
+
 sidebar_position: 7
 title: "子代理委托（Subagent Delegation）"
 description: "通过 delegate_task 为并行工作流生成隔离的子代理"

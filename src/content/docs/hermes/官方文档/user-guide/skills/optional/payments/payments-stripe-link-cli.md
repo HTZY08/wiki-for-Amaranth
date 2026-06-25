@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Stripe Link Cli
+---
+
 title: "Stripe Link Cli — 通过Stripe Link进行代理支付 — 信用卡、SPT、审批"
 sidebar_label: "Stripe Link Cli"
 description: "通过Stripe Link进行代理支付 — 信用卡、SPT、审批"

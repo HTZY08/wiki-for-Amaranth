@@ -1,17 +1,9 @@
 ---
-title: Windows WSL2 快速开始
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/windows-wsl-quickstart.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/windows-wsl-quickstart.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
-title: "Windows (WSL2) Guide"
-description: "Run Hermes Agent on Windows via WSL2 — setup, filesystem access between Windows and Linux, networking, and common pitfalls"
-sidebar_label: "Windows (WSL2)"
+description: Run Hermes Agent on Windows via WSL2 — setup, filesystem access between
+  Windows and Linux, networking, and common pitfalls
+sidebar_label: Windows (WSL2)
 sidebar_position: 2
+title: Windows (WSL2) Guide
 ---
 
 # Windows (WSL2) Guide

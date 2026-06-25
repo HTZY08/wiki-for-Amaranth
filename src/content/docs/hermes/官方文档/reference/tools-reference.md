@@ -1,16 +1,7 @@
 ---
-title: 工具参考
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`reference/tools-reference.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/tools-reference.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
+description: Authoritative reference for Hermes built-in tools, grouped by toolset
 sidebar_position: 3
-title: "Built-in Tools Reference"
-description: "Authoritative reference for Hermes built-in tools, grouped by toolset"
+title: Built-in Tools Reference
 ---
 
 # Built-in Tools Reference

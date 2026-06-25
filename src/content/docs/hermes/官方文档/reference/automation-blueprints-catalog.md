@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Automation Blueprints Catalog
+---
+
 sidebar_position: 7
 title: "自动化蓝图目录（Automation Blueprints Catalog）"
 description: "即开即用的自动化蓝图（Blueprint）——通过仪表板、CLI、TUI、任意即时通讯软件或桌面应用即可设置。"

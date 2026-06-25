@@ -1,3 +1,7 @@
+---
+title: "Sherlock"
+---
+
 {/* 本页面由技能目录下的 SKILL.md 文件通过 website/scripts/generate-skill-docs.py 自动生成。请编辑源文件 SKILL.md，而非本页面。 */}
 
 # Sherlock

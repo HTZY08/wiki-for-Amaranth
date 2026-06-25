@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Index
+---
+
 sidebar_position: 1
 title: "消息网关（Messaging Gateway）"
 description: "通过 Telegram、Discord、Slack、WhatsApp、Signal、短信、电子邮件、Home Assistant、Mattermost、Matrix、钉钉、元宝、Microsoft Teams、LINE、Raft、Webhooks 或任何兼容 OpenAI 的前端（通过 API 服务器）与 Hermes 聊天——架构与设置概述"

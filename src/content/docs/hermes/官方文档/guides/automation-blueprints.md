@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Automation Blueprints
 ---
 
 ## 多技能工作流（Multi-Skill Workflows）

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Himalaya
+---
+
 title: "Himalaya — Himalaya CLI：通过终端管理IMAP/SMTP电子邮件"
 sidebar_label: "Himalaya"
 description: "Himalaya CLI：通过终端管理IMAP/SMTP电子邮件的命令行工具"

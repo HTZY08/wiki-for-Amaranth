@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Google Workspace
+---
+
 sidebar_position: 2
 sidebar_label: "Google Workspace"
 title: "Google Workspace — Gmail、日历、云端硬盘、表格和文档"

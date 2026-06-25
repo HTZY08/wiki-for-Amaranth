@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Python Debugpy
+---
+
 title: "Python Debugpy — 调试 Python：pdb REPL + debugpy 远程（DAP）"
 sidebar_label: "Python Debugpy"
 description: "调试 Python：pdb REPL + debugpy 远程（DAP）"

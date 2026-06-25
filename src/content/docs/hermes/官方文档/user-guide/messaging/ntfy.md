@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Ntfy
+---
+
 title: ntfy
 description: Hermes Agent 官方文档汉化版
 ---

@@ -1,6 +1,6 @@
-```markdown
 ---
 sidebar_position: 2
+title: Profiles
 ---
 
 # 配置文件（Profiles）：运行多个代理（Agent）

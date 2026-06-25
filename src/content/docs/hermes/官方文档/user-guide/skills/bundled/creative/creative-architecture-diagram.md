@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Architecture Diagram
+---
+
 title: "架构图（Architecture Diagram）—— 深色主题SVG架构/云/基础设施图表，以HTML呈现"
 sidebar_label: "架构图（Architecture Diagram）"
 description: "深色主题SVG架构/云/基础设施图表，以HTML呈现"

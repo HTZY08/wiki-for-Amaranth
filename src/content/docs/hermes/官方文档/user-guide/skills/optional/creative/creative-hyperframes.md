@@ -1,8 +1,7 @@
-```markdown
 ---
-title: "超帧（Hyperframes）"
-sidebar_label: "超帧（Hyperframes）"
-description: "使用超帧（Hyperframes）创建基于HTML的视频合成、动画标题卡、社交媒体覆盖层、带字幕的谈话头视频、音频反应式视觉和着色器过渡。"
+description: 使用超帧（Hyperframes）创建基于HTML的视频合成、动画标题卡、社交媒体覆盖层、带字幕的谈话头视频、音频反应式视觉和着色器过渡。
+sidebar_label: 超帧（Hyperframes）
+title: 超帧（Hyperframes）
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}

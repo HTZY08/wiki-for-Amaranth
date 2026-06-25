@@ -1,14 +1,8 @@
 ---
-title: Creative Touchdesigner Mcp
-description: Hermes Agent 官方技能文档
----
-
-> 本文档基于官方文档克隆，自用汉化版
-
----
-title: "Touchdesigner Mcp"
-sidebar_label: "Touchdesigner Mcp"
-description: "Control a running TouchDesigner instance via twozero MCP — create operators, set parameters, wire connections, execute Python, build real-time visuals"
+description: Control a running TouchDesigner instance via twozero MCP — create operators,
+  set parameters, wire connections, execute Python, build real-time visuals
+sidebar_label: Touchdesigner Mcp
+title: Touchdesigner Mcp
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}

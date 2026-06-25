@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Ascii Art
+---
+
 title: "ASCII 艺术 — ASCII 艺术：pyfiglet、cowsay、boxes、image-to-ascii"
 sidebar_label: "ASCII 艺术"
 description: "ASCII 艺术：pyfiglet、cowsay、boxes、image-to-ascii"

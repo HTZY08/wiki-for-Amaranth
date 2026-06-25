@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Models Segment Anything
+---
+
 title: "Segment Anything Model — SAM：通过点、框、遮罩实现零样本图像分割"
 sidebar_label: "Segment Anything Model"
 description: "SAM：通过点、框、遮罩实现零样本图像分割"

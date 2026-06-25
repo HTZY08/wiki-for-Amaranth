@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Gateway Internals
+---
+
 sidebar_position: 7
 title: "网关内部机制"
 description: "消息网关如何启动、授权用户、路由会话和传递消息"

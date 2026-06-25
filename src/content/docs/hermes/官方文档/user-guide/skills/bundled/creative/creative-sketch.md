@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Sketch
+---
+
 title: "草图（Sketch）——可丢弃的HTML原型：2-3个设计变体以供比较"
 sidebar_label: "Sketch"
 description: "可丢弃的HTML原型：2-3个设计变体以供比较"

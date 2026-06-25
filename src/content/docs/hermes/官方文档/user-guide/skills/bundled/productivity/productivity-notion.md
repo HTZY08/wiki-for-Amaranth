@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Notion
+---
+
 title: "Notion — Notion API + ntn CLI：页面（pages）、数据库（databases）、Markdown、Workers"
 sidebar_label: "Notion"
 description: "Notion API + ntn CLI：页面（pages）、数据库（databases）、Markdown、Workers"

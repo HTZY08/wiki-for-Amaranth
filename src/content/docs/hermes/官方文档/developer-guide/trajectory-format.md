@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Trajectory Format
+---
+
 title: 轨迹格式
 description: Hermes Agent 官方文档汉化版
 ---

@@ -1,3 +1,7 @@
+---
+title: "Spotify"
+---
+
 # Spotify
 
 Hermes 可以直接控制 Spotify —— 播放、队列、搜索、播放列表、已保存的曲目/专辑以及收听历史 —— 使用 Spotify 的官方 Web API 和 PKCE OAuth。令牌存储在 `~/.hermes/auth.json` 中，并在遇到 401 时自动刷新；每台机器只需登录一次（刷新令牌约 6 个月后过期；过期后重新运行 `hermes auth spotify`）。

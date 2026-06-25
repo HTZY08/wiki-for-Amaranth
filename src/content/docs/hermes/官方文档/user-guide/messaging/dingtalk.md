@@ -1,16 +1,7 @@
 ---
-title: 钉钉
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/messaging/dingtalk.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/messaging/dingtalk.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
+description: Set up Hermes Agent as a DingTalk chatbot
 sidebar_position: 10
-title: "DingTalk"
-description: "Set up Hermes Agent as a DingTalk chatbot"
+title: DingTalk
 ---
 
 # DingTalk Setup

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Training Trl Fine Tuning
+---
+
 title: "使用 TRL 进行微调 — TRL：用于 LLM RLHF 的 SFT、DPO、PPO、GRPO、奖励建模"
 sidebar_label: "使用 TRL 进行微调"
 description: "TRL：用于 LLM RLHF 的 SFT、DPO、PPO、GRPO、奖励建模"

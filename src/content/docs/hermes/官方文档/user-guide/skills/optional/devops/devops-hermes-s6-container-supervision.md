@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Hermes S6 Container Supervision
+---
+
 title: "Hermes S6 容器监督"
 sidebar_label: "Hermes S6 容器监督"
 description: "修改、调试或扩展 Hermes Agent Docker 镜像内部的 s6-overlay 监督树——添加新服务、调试按配置文件（profile）的网关（gateway）、理解架构 B 的主程序模式。"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Mcporter
+---
+
 title: "Mcporter"
 sidebar_label: "Mcporter"
 description: "使用 mcporter CLI 直接列出、配置、认证和调用 MCP 服务器/工具（HTTP 或 stdio），包括临时服务器、配置编辑以及 CLI/类型生成。"

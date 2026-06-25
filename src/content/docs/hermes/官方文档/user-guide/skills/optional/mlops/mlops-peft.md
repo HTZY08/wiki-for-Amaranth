@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Peft
+---
+
 title: "PEFT微调 — 使用LoRA、QLoRA等25+方法对LLM进行参数高效微调"
 sidebar_label: "Peft Fine Tuning"
 description: "使用LoRA、QLoRA等25+方法对LLM进行参数高效微调"

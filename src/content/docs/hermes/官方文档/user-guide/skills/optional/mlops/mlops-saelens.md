@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Saelens
+---
+
 title: "稀疏自编码器训练"
 sidebar_label: "稀疏自编码器训练"
 description: "提供使用 SAELens 训练和分析稀疏自编码器（SAE）的指导，以将神经网络激活分解为可解释的特征。"

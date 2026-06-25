@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Deliverable Mode
+---
+
 title: 交付模式（聊天中的工件）
 sidebar_label: 交付模式
 description: 智能体如何将生成的图表、PDF、电子表格及其他文件作为消息平台的原生附件交付。

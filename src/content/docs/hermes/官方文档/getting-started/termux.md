@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Termux
 ---
 
 ## 故障排除

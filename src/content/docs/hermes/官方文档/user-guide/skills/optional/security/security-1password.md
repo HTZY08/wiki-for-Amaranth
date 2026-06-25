@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: 1Password
+---
+
 title: "1Password — 设置并使用 1Password CLI (op)"
 sidebar_label: "1Password"
 description: "设置并使用 1Password CLI (op)"

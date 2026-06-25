@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Chroma
+---
+
 title: "Chroma —— 面向AI应用的开源嵌入数据库"
 sidebar_label: "Chroma"
 description: "面向AI应用的开源嵌入数据库"

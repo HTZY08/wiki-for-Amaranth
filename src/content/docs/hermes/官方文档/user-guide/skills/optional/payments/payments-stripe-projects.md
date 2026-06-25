@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Stripe Projects
+---
+
 title: "Stripe Projects — 通过 Stripe Projects 配置 SaaS 服务并同步凭据"
 sidebar_label: "Stripe Projects"
 description: "通过 Stripe Projects 配置 SaaS 服务并同步凭据"

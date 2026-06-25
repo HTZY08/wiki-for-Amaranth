@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Google Workspace
+---
+
 title: "Google Workspace — 通过 gws CLI 或 Python 操作 Gmail、日历、云端硬盘、文档、表格"
 sidebar_label: "Google Workspace"
 description: "通过 gws CLI 或 Python 操作 Gmail、日历、云端硬盘、文档、表格"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Domain Intel
+---
+
 {/* 此页面由网站脚本 scripts/generate-skill-docs.py 基于技能目录中的 SKILL.md 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}
 
 # 域名情报（Domain Intel）

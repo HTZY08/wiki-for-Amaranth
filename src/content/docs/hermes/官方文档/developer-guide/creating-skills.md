@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Creating Skills
+---
+
 name: my-skill
 description: 简短描述（在技能搜索结果中显示）
 version: 1.0.0

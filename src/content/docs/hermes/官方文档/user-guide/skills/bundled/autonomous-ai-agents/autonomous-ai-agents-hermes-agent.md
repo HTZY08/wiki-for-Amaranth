@@ -1,43 +1,7 @@
---- frontmatter ---
 ---
-### 上下文窗口（context window）显示大小错误
-
-如果 Hermes 报告的上下文窗口小于你的本地模型实际支持的尺寸（例如，当 `llama-server` 设置了 `-c 262144` 时，Hermes 却显示 128k）：
-
-**请检查 `model.context_length` 是否被显式设置。** Hermes 使用多源解析链（优先级从高到低）：
-
-1. `model.context_length` 在 config.yaml 中 — **如果设置了此值，会阻止自动检测**
-2. 每个模型的自定义提供者（Provider）设置
-3. 持久化缓存（重启后仍然存在）
-4. 来自你的服务器的 `/v1/models` 端点 — 当以上项目未被覆盖时，自动检测会使用此值
-
-**解决方法：** 清除覆盖设置，以便自动检测可以生效：
-
+title: Hermes Agent
 ---
 
-## 资源查找指南
-
-| 查找内容 | 位置 |
-|----------|------|
-| 配置选项 | `hermes config edit` 或 [配置文档](https://hermes-agent.nousresearch.com/docs/user-guide/configuration) |
-| 可用工具（Tool） | `hermes tools list` 或 [工具参考](https://hermes-agent.nousresearch.com/docs/reference/tools-reference) |
-| 斜杠命令（Slash command） | 会话中输入 `/help` 或 [斜杠命令参考](https://hermes-agent.nousresearch.com/docs/reference/slash-commands) |
-| 技能（Skill）目录 | `hermes skills browse` 或 [技能目录](https://hermes-agent.nousresearch.com/docs/reference/skills-catalog) |
-| 提供者设置 | `hermes model` 或 [提供者指南](https://hermes-agent.nousresearch.com/docs/integrations/providers) |
-| 平台设置 | `hermes gateway setup` 或 [消息平台文档](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/) |
-| MCP 服务器 | `hermes mcp list` 或 [MCP 指南](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) |
-| 配置文件（Profile） | `hermes profile list` 或 [配置文件文档](https://hermes-agent.nousresearch.com/docs/user-guide/profiles) |
-| 定时任务（Cron job） | `hermes cron list` 或 [定时任务文档](https://hermes-agent.nousresearch.com/docs/user-guide/features/cron) |
-| 记忆（Memory） | `hermes memory status` 或 [记忆文档](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory) |
-| 环境变量（Env variable） | `hermes config env-path` 或 [环境变量参考](https://hermes-agent.nousresearch.com/docs/reference/environment-variables) |
-| CLI 命令 | `hermes --help` 或 [CLI 参考](https://hermes-agent.nousresearch.com/docs/reference/cli-commands) |
-| 网关（Gateway）日志 | `~/.hermes/logs/gateway.log` |
-| 会话文件 | `hermes sessions browse`（读取 state.db） |
-| 源代码 | `~/.hermes/hermes-agent/` |
-
----
-
---- body ---
 ## 贡献者快速参考
 
 适用于偶尔贡献者和 PR 作者。完整的开发者文档：https://hermes-agent.nousresearch.com/docs/developer-guide/

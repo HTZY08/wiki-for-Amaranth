@@ -1,8 +1,8 @@
-```yaml
 ---
-title: Codex App-Server 运行时（可选）
 sidebar_label: Codex App-Server Runtime
+title: Codex App-Server 运行时（可选）
 ---
+
 ```
 
 # Codex App-Server 运行时

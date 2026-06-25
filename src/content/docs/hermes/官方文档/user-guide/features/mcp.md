@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Mcp
+---
+
 sidebar_position: 4
 title: "MCP (模型上下文协议)"
 description: "通过 MCP 将 Hermes Agent 连接到外部工具服务器，并精确控制 Hermes 加载哪些 MCP 工具"

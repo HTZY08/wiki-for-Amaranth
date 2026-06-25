@@ -1,14 +1,7 @@
 ---
-title: Yuanbao Yuanbao
-description: Hermes Agent 官方技能文档
----
-
-> 本文档基于官方文档克隆，自用汉化版
-
----
-title: "Yuanbao — Yuanbao (元宝) groups: @mention users, query info/members"
-sidebar_label: "Yuanbao"
-description: "Yuanbao (元宝) groups: @mention users, query info/members"
+description: 'Yuanbao (元宝) groups: @mention users, query info/members'
+sidebar_label: Yuanbao
+title: 'Yuanbao — Yuanbao (元宝) groups: @mention users, query info/members'
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}

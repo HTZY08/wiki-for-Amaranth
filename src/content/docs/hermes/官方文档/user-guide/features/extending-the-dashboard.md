@@ -1,3 +1,7 @@
+---
+title: "Extending The Dashboard"
+---
+
 # API 参考
 
 ## 主题端点

@@ -1,7 +1,5 @@
---- frontmatter ---
-title: "Polymarket — 查询 Polymarket：市场、价格、订单簿、历史"
-sidebar_label: "Polymarket"
-description: "查询 Polymarket：市场、价格、订单簿、历史"
+---
+title: Polymarket
 ---
 
 --- body ---

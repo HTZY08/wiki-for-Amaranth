@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Code Wiki
+---
+
 title: "Code Wiki — 为任何代码库生成 Wiki 文档 + Mermaid 图表"
 sidebar_label: "Code Wiki"
 description: "为任何代码库生成 Wiki 文档 + Mermaid 图表"

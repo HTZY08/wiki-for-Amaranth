@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Meme Generation
+---
+
 title: "迷因生成 — 通过选择模板并使用 Pillow 叠加文本来生成真实的迷因图片"
 sidebar_label: "迷因生成"
 description: "通过选择模板并使用 Pillow 叠加文本来生成真实的迷因图片"

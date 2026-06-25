@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Qdrant
+---
+
 title: "Qdrant 向量搜索 — 高性能向量相似度搜索引擎，用于 RAG 和语义搜索"
 sidebar_label: "Qdrant 向量搜索"
 description: "高性能向量相似度搜索引擎，用于 RAG 和语义搜索"

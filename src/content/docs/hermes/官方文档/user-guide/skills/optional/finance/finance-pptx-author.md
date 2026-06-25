@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Pptx Author
+---
+
 title: "Pptx Author — 使用 python-pptx 以无头模式构建 PowerPoint 演示文稿"
 sidebar_label: "Pptx Author"
 description: "使用 python-pptx 以无头模式构建 PowerPoint 演示文稿"

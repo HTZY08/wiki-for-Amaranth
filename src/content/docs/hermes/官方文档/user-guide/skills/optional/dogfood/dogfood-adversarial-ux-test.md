@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Adversarial Ux Test
+---
+
 title: "对抗性用户体验测试（Adversarial UX Test）——扮演产品中最难缠、最抗拒技术的用户"
 sidebar_label: "对抗性用户体验测试（Adversarial Ux Test）"
 description: "扮演产品中最难缠、最抗拒技术的用户"

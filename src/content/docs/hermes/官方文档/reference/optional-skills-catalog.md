@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Optional Skills Catalog
 ---
 
 # 可选技能目录（Optional Skills Catalog）

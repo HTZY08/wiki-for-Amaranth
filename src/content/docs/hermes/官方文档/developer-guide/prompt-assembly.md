@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Prompt Assembly
+---
+
 sidebar_position: 5
 title: "提示组装（Prompt Assembly）"
 description: "Hermes 如何构建系统提示（system prompt）、保持缓存稳定性以及注入临时层（ephemeral layers）"

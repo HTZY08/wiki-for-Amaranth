@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Pixel Art
+---
+
 title: "像素艺术 — 带有复古时代调色板的像素艺术（NES、Game Boy、PICO-8）"
 sidebar_label: "像素艺术"
 description: "带有复古时代调色板的像素艺术（NES、Game Boy、PICO-8）"

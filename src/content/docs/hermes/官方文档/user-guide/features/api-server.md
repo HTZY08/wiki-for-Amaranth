@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Api Server
+---
+
 sidebar_position: 14
 title: "API 服务器"
 description: "将 hermes-agent 暴露为兼容 OpenAI 的 API，供任何前端使用"

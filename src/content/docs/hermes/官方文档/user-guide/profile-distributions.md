@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Profile Distributions
 ---
 
 ## 配方（Recipes）

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Dogfood
+---
+
 title: "Dogfood — 网页应用探索性QA：发现漏洞、证据、报告"
 sidebar_label: "Dogfood"
 description: "网页应用的探索性QA：发现漏洞、证据、报告"

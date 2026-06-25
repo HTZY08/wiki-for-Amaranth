@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Web Dashboard
+---
+
 sidebar_position: 15
 title: "Web Dashboard"
 description: "基于浏览器的管理面板，用于管理配置、API 密钥、MCP 服务器、消息配对、Webhooks、网关、内存、凭证、会话、日志、分析、定时任务和技能"

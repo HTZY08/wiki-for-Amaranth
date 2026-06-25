@@ -1,5 +1,5 @@
---- frontmatter ---
-sidebar_position: 3
+---
+title: Configuring Models
 ---
 
 --- body ---

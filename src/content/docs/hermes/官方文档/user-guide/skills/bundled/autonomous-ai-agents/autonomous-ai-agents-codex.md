@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Codex
+---
+
 title: "Codex — 将编码委托给 OpenAI Codex CLI（功能、PR）"
 sidebar_label: "Codex"
 description: "将编码委托给 OpenAI Codex CLI（功能、PR）"

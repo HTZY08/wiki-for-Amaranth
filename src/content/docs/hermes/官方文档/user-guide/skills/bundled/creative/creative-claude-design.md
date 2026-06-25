@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Claude Design
+---
+
 title: "Claude 设计 — 设计一次性 HTML 制品（着陆页、幻灯片、原型）"
 sidebar_label: "Claude 设计"
 description: "设计一次性 HTML 制品（着陆页、幻灯片、原型）"

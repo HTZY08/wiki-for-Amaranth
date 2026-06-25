@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Training Axolotl
+---
+
 title: "Axolotl — Axolotl：YAML LLM 微调（LoRA, DPO, GRPO）"
 sidebar_label: "Axolotl"
 description: "Axolotl：YAML LLM 微调（LoRA, DPO, GRPO）"

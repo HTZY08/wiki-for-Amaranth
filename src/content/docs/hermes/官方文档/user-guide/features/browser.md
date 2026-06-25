@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Browser
+---
+
 title: 浏览器自动化
 description: 通过多种后端服务控制浏览器：通过 CDP 控制本地 Chromium 系列浏览器，或使用云浏览器进行网页交互、表单填写、数据抓取等。
 sidebar_label: 浏览器

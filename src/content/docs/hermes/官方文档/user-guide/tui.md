@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Tui
+---
+
 sidebar_position: 2
 title: "TUI（终端用户界面）"
 description: "启动 Hermes 的现代终端用户界面——支持鼠标操作、丰富覆盖层和非阻塞输入。"

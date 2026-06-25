@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Model Provider Plugin
+---
+
 sidebar_position: 10
 title: "模型提供插件"
 description: "如何为 Hermes Agent 构建模型提供者（推理后端）插件"

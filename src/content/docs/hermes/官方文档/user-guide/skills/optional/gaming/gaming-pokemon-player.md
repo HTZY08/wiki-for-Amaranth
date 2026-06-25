@@ -1,4 +1,6 @@
---- frontmatter ---
+---
+title: "Pokemon Player"
+---
 
 --- body ---
 

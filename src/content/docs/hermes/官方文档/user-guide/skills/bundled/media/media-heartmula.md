@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Heartmula
+---
+
 title: "Heartmula — HeartMuLa：类似Suno的从歌词+标签生成歌曲"
 sidebar_label: "Heartmula"
 description: "HeartMuLa：类似Suno的从歌词+标签生成歌曲"

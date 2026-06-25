@@ -1,3 +1,7 @@
+---
+title: "Ascii Video"
+---
+
 /* 此页面由 website/scripts/generate-skill-docs.py 从技能的 SKILL.md 自动生成。请编辑源文件 SKILL.md，而非此页面。 */
 
 # 字符视频（Ascii Video）

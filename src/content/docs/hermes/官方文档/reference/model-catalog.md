@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Model Catalog
+---
+
 sidebar_position: 11
 title: 模型目录
 description: 通过远程托管的清单驱动 OpenRouter 和 Nous Portal 的精选模型选择列表。

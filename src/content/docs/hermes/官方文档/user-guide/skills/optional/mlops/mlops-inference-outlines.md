@@ -1,13 +1,9 @@
-下面是您请求的中文翻译版本。所有 Markdown 格式、代码块、行内代码、URL、YAML 键名、HTML 标签等均已保留。专业术语首次出现时在括号内保留了英文原文。
-
---- frontmatter ---
 ---
-title: "Outlines — Outlines：结构化 JSON/regex/Pydantic LLM 生成"
-sidebar_label: "Outlines"
-description: "Outlines：结构化 JSON/regex/Pydantic LLM 生成"
+description: Outlines：结构化 JSON/regex/Pydantic LLM 生成
+sidebar_label: Outlines
+title: Outlines — Outlines：结构化 JSON/regex/Pydantic LLM 生成
 ---
 
---- body ---
 {/* 此页面由 website/scripts/generate-skill-docs.py 从技能的 SKILL.md 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}
 
 # Outlines

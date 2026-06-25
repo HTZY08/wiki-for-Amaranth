@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Bluebubbles
+---
+
 title: BlueBubbles
 description: Hermes Agent 官方文档汉化版
 ---

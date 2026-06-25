@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Jupyter Live Kernel
+---
+
 title: "Jupyter Live Kernel — 通过实时 Jupyter 内核进行迭代 Python 编程 (hamelnb)"
 sidebar_label: "Jupyter Live Kernel"
 description: "通过实时 Jupyter 内核进行迭代 Python 编程 (hamelnb)"

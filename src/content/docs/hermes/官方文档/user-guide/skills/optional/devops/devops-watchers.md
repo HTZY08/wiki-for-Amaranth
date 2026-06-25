@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Watchers
+---
+
 title: "Watchers — 带水印去重的 RSS、JSON API 和 GitHub 轮询"
 sidebar_label: "Watchers"
 description: "使用水印去重技术轮询 RSS、JSON API 和 GitHub"

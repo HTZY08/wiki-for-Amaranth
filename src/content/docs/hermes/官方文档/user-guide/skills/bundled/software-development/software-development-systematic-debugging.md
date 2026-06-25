@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Systematic Debugging
 ---
 
 ## 阶段 4：实施（Implementation）

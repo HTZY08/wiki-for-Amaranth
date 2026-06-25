@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Searxng Search
+---
+
 title: "Searxng 搜索 — 通过 SearXNG 免费元搜索 — 聚合 70 多个搜索引擎的结果"
 sidebar_label: "Searxng 搜索"
 description: "通过 SearXNG 免费元搜索 — 聚合 70 多个搜索引擎的结果"

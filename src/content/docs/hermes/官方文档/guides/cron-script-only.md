@@ -1,5 +1,6 @@
---- frontmatter ---
-
+---
+title: "Cron Script Only"
+---
 
 --- body ---
 # 仅脚本定时任务（无 LLM）

@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Github Issues
 ---
 
 {/* 此页面由 skill 的 SKILL.md 通过 website/scripts/generate-skill-docs.py 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}

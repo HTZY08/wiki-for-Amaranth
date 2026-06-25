@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Github Pr Workflow
 ---
 
 {/* 此页面由技能中的 SKILL.md 通过网站脚本 generate-skill-docs.py 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}

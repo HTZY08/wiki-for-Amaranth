@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Grok
+---
+
 title: "Grok — 将编码任务委托给 xAI Grok Build CLI（功能、PR）"
 sidebar_label: "Grok"
 description: "将编码任务委托给 xAI Grok Build CLI（功能、PR 审查）"

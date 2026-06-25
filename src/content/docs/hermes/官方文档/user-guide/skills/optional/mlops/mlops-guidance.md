@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Guidance
+---
+
 title: "指导 (Guidance)"
 sidebar_label: "指导 (Guidance)"
 description: "使用正则表达式和语法控制LLM输出，保证有效的JSON/XML/代码生成，强制执行结构化格式，并使用Guidance（微软研究院的约束生成框架）构建多步骤工作流程。"

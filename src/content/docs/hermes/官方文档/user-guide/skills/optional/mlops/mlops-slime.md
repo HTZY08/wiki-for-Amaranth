@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Slime
 ---
 
 ## 高级主题（Advanced Topics）

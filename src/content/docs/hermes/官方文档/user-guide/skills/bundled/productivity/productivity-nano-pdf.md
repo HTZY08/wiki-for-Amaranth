@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Nano Pdf
+---
+
 title: "Nano Pdf — 通过 nano-pdf CLI（自然语言提示）编辑 PDF 文本/错别字/标题"
 sidebar_label: "Nano Pdf"
 description: "通过 nano-pdf CLI（自然语言提示）编辑 PDF 文本/错别字/标题"

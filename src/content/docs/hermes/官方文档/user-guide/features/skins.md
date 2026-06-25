@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Skins
+---
+
 sidebar_position: 10
 title: "皮肤与主题"
 description: "使用内置和用户自定义皮肤自定义 Hermes CLI"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Osint Investigation
+---
+
 title: "开源情报调查"
 sidebar_label: "开源情报调查"
 description: "公共记录开源情报调查框架 —— SEC EDGAR 备案、USAspending 合同、参议院游说、OFAC 制裁、ICIJ 离岸泄漏、纽约市房产记录..."

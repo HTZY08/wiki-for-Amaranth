@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Tool Search
+---
+
 title: 工具搜索（Tool Search）
 sidebar_position: 95
 ---

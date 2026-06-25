@@ -1,8 +1,7 @@
-```markdown
 ---
+description: Hermes如何检测和响应原生JS对话框，并通过持久化的CDP连接与跨源iframe交互。
 sidebar_position: 18
-title: "浏览器CDP监管器 (Browser CDP Supervisor)"
-description: "Hermes如何检测和响应原生JS对话框，并通过持久化的CDP连接与跨源iframe交互。"
+title: 浏览器CDP监管器 (Browser CDP Supervisor)
 ---
 
 # 浏览器CDP监管器

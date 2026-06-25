@@ -1,8 +1,7 @@
-```markdown
 ---
-title: "Tensorrt Llm — 使用 NVIDIA TensorRT 优化 LLM 推理，实现最大吞吐量和最低延迟"
-sidebar_label: "Tensorrt Llm"
-description: "使用 NVIDIA TensorRT 优化 LLM 推理，实现最大吞吐量和最低延迟"
+description: 使用 NVIDIA TensorRT 优化 LLM 推理，实现最大吞吐量和最低延迟
+sidebar_label: Tensorrt Llm
+title: Tensorrt Llm — 使用 NVIDIA TensorRT 优化 LLM 推理，实现最大吞吐量和最低延迟
 ---
 
 {/* 此页面由 website/scripts/generate-skill-docs.py 从技能的 SKILL.md 自动生成。请编辑源文件 SKILL.md，而非本页面。 */}

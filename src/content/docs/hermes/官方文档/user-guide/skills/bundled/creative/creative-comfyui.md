@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Comfyui
 ---
 
 ### 方法 E：手动安装（高级/不受支持的硬件）

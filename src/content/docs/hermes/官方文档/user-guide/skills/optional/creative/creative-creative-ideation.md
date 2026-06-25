@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Creative Ideation
+---
+
 title: "创意构思（Creative Ideation）——通过命名方法从创意实践中产生想法"
 sidebar_label: "创意构思（Creative Ideation）"
 description: "通过命名方法从创意实践中产生想法"

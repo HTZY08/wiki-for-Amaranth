@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Apple Notes
+---
+
 title: "Apple Notes — 通过 memo CLI 管理 Apple Notes：创建、搜索、编辑"
 sidebar_label: "Apple Notes"
 description: "通过 memo CLI 管理 Apple Notes：创建、搜索、编辑"

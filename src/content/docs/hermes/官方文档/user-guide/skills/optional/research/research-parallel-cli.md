@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Parallel Cli
+---
+
 title: "Parallel Cli 命令行工具"
 sidebar_label: "Parallel Cli"
 description: "Parallel CLI 的可选供应商技能——代理原生（agent-native）的网络搜索、提取、深度研究、丰富化（enrichment）、FindAll 和监控"

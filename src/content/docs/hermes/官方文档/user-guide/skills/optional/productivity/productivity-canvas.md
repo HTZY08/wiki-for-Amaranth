@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Canvas
+---
+
 title: "Canvas — Canvas LMS集成 — 使用API令牌认证获取已注册课程和作业"
 sidebar_label: "Canvas"
 description: "Canvas LMS集成 — 使用API令牌（API token）认证获取已注册课程和作业"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Clip
+---
+
 title: "Clip — 连接视觉与语言的OpenAI模型"
 sidebar_label: "Clip"
 description: "OpenAI的连接视觉与语言的模型"

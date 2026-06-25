@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Homeassistant
+---
+
 title: Home Assistant
 description: 通过 Home Assistant 集成，使用 Hermes Agent 控制您的智能家居。
 sidebar_label: Home Assistant

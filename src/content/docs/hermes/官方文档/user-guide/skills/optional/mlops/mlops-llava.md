@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Llava
+---
+
 title: "Llava — 大型语言与视觉助手"
 sidebar_label: "Llava"
 description: "大型语言与视觉助手"

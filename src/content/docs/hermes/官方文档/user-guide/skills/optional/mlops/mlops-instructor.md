@@ -1,3 +1,7 @@
+---
+title: "Instructor"
+---
+
 # Instructor
 
 使用 Pydantic 验证从 LLM 响应中提取结构化数据，自动重试失败的提取，通过类型安全解析复杂 JSON，并使用 Instructor（经过实战检验的结构化输出库）流式传输部分结果。

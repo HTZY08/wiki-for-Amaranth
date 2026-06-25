@@ -1,16 +1,7 @@
 ---
-title: 企业微信
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/messaging/wecom.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/messaging/wecom.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
+description: Connect Hermes Agent to WeCom via the AI Bot WebSocket gateway
 sidebar_position: 14
-title: "WeCom (Enterprise WeChat)"
-description: "Connect Hermes Agent to WeCom via the AI Bot WebSocket gateway"
+title: WeCom (Enterprise WeChat)
 ---
 
 # WeCom (Enterprise WeChat)

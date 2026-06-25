@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Page Agent
+---
+
 title: "页面代理（Page Agent）"
 sidebar_label: "页面代理"
 description: "将 alibaba/page-agent 嵌入到你自己的 Web 应用程序中 —— 一个纯 JavaScript 的页面内 GUI 代理，以单个 <script> 标签或 npm 包形式交付，让你的网站最终用户能够用自然语言驱动界面（“点击登录，填入用户名 John”）。无需 Python、无头浏览器或扩展。当用户是一位希望给自己的 SaaS / 管理面板 / B2B 工具添加 AI 助手、让传统 Web 应用支持自然语言交互、或基于本地（Ollama）或云端（Qwen / OpenAI / OpenRouter）LLM 评估 page-agent 的 Web 开发者时，使用此技能。不适用于服务端浏览器自动化 —— 这类用户应指向 Hermes 内置的浏览器工具。"

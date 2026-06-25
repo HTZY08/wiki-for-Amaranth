@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Blackbox
+---
+
 title: "Blackbox — 将编码任务委托给 Blackbox AI CLI 代理"
 sidebar_label: "Blackbox"
 description: "将编码任务委托给 Blackbox AI CLI 代理"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Provider Routing
+---
+
 title: 提供商路由
 description: 配置 OpenRouter 提供商偏好，以优化成本、速度或质量。
 sidebar_label: Provider Routing

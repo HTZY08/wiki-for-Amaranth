@@ -1,14 +1,9 @@
-以下是根据您的要求翻译的中文文档：
-
---- frontmatter ---
 ---
-title: "Blogwatcher — 通过 blogwatcher-cli 工具监控博客和 RSS/Atom 订阅"
-sidebar_label: "Blogwatcher"
-description: "通过 blogwatcher-cli 工具监控博客和 RSS/Atom 订阅"
+description: 通过 blogwatcher-cli 工具监控博客和 RSS/Atom 订阅
+sidebar_label: Blogwatcher
+title: Blogwatcher — 通过 blogwatcher-cli 工具监控博客和 RSS/Atom 订阅
 ---
 
---- body ---
---- body ---
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}
 
 # Blogwatcher

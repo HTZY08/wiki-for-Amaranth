@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Minecraft Modpack Server
+---
+
 title: "Minecraft 模组包服务器 — 托管修改版 Minecraft 服务器（CurseForge、Modrinth）"
 sidebar_label: "Minecraft Modpack Server"
 description: "托管修改版 Minecraft 服务器（CurseForge、Modrinth）"

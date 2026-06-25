@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Azure Foundry
+---
+
 sidebar_position: 15
 title: "微软 Foundry"
 description: "使用 Hermes Agent 与 Microsoft Foundry — OpenAI 风格和 Anthropic 风格的端点，自动检测传输方式和已部署的模型"

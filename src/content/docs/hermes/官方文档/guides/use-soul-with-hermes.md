@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Use Soul With Hermes
+---
+
 sidebar_position: 7
 title: "使用 SOUL.md 与 Hermes"
 description: "如何使用 SOUL.md 塑造 Hermes Agent 的默认语气，其中应包含的内容，以及它与 AGENTS.md 和 /personality 的区别"

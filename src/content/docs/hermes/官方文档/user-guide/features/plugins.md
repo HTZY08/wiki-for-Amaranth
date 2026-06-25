@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Plugins
+---
+
 sidebar_position: 11
 sidebar_label: "插件"
 title: "插件"

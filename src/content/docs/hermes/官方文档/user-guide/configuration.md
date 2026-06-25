@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Configuration
+---
+
 sidebar_position: 2
 title: "配置"
 description: "配置 Hermes Agent — config.yaml、提供商、模型、API 密钥等"

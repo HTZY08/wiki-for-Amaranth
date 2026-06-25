@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Whisper
+---
+
 title: "Whisper — OpenAI 的通用语音识别模型（Whisper）"
 sidebar_label: "Whisper"
 description: "OpenAI 的通用语音识别模型（General-purpose Speech Recognition Model）"

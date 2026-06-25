@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Nix Setup
 ---
 
 ## 更新

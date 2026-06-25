@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Huggingface Tokenizers
+---
+
 title: "Huggingface Tokenizers — 为研究和生产优化的快速分词器（Tokenizer）"
 sidebar_label: "Huggingface Tokenizers"
 description: "为研究和生产优化的快速分词器（Tokenizer）"

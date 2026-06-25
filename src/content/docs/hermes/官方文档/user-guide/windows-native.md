@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Windows Native
+---
+
 title: "Windows (原生) 指南"
 description: "在 Windows 10 / 11 上原生运行 Hermes Agent — 安装、特性矩阵、UTF-8 控制台、Git Bash、作为计划任务的网关、编辑器处理、PATH、卸载及常见问题"
 sidebar_label: "Windows (原生)"

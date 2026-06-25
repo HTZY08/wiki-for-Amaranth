@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Flash Attention
+---
+
 title: "优化注意力 Flash"
 sidebar_label: "优化注意力 Flash"
 description: "使用 Flash Attention 优化 Transformer 注意力，实现 2-4 倍加速和 10-20 倍内存缩减"

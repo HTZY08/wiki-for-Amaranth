@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Imessage
+---
+
 title: "Imessage — 通过 macOS 上的 imsg CLI 发送和接收 iMessages/SMS"
 sidebar_label: "Imessage"
 description: "通过 macOS 上的 imsg CLI 发送和接收 iMessages/SMS"

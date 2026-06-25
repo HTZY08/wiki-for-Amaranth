@@ -1,3 +1,7 @@
+---
+title: "Profile Commands"
+---
+
 # 配置文件（Profile）命令参考
 
 本页面涵盖与 [Hermes 配置文件](../user-guide/profiles.md) 相关的所有命令。通用 CLI 命令请参阅 [CLI 命令参考](./cli-commands.md)。

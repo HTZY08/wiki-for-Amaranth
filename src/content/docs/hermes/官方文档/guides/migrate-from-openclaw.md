@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Migrate From Openclaw
+---
+
 sidebar_position: 10
 title: "从 OpenClaw 迁移"
 description: "将您的 OpenClaw / Clawdbot 设置迁移到 Hermes Agent 的完整指南 —— 包括迁移内容、配置映射方式以及迁移后需要检查的项目。"

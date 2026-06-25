@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Pytorch Lightning
+---
+
 title: "PyTorch Lightning 框架"
 sidebar_label: "PyTorch Lightning"
 description: "高级 PyTorch 框架，包含 Trainer 类、自动分布式训练（DDP/FSDP/DeepSpeed）、回调系统，以及极少的样板代码。同一份代码可从笔记本扩展到超级计算机。当您希望使用内置最佳实践来编写简洁的训练循环时，请使用它。"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Tools
+---
+
 sidebar_position: 1
 title: "工具与工具集"
 description: "Hermes 代理工具的概览——可用工具、工具集工作原理及终端后端"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Discord
+---
+
 sidebar_position: 3
 title: "Discord"
 description: "将 Hermes Agent 设置为 Discord 机器人"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Simplex
+---
+
 title: SimpleX
 description: Hermes Agent 官方文档汉化版
 ---

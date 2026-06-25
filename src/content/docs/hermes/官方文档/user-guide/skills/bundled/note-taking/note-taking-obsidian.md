@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Obsidian
+---
+
 title: "Obsidian — 在 Obsidian 仓库中阅读、搜索、创建和编辑笔记"
 sidebar_label: "Obsidian"
 description: "在 Obsidian 仓库中阅读、搜索、创建和编辑笔记"

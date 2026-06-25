@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Credential Pools
+---
+
 title: 凭证池（Credential Pools）
 description: 为每个提供商聚合多个 API 密钥或 OAuth 令牌，实现自动轮换和速率限制恢复。
 sidebar_label: 凭证池（Credential Pools）

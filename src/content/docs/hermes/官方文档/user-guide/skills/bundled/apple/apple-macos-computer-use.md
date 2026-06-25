@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Macos Computer Use
+---
+
 title: "Macos 计算机使用"
 sidebar_label: "Macos 计算机使用"
 description: "在后台操作 macOS 桌面——截图、鼠标、键盘、滚动、拖拽——而不占用用户的鼠标、键盘焦点或 Space"

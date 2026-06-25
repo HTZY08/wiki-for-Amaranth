@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Adding Providers
+---
+
 sidebar_position: 5
 title: "添加提供者"
 description: "如何向 Hermes Agent 添加新的推理提供者——身份验证、运行时解析、CLI 流程、适配器、测试和文档"

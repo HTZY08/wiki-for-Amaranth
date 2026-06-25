@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Adding Platform Adapters
 ---
 
 # 添加平台适配器

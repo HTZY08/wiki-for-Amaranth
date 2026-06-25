@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Memento Flashcards
+---
+
 title: "Memento Flashcards — 间隔重复抽认卡系统"
 sidebar_label: "Memento Flashcards"
 description: "间隔重复抽认卡系统"

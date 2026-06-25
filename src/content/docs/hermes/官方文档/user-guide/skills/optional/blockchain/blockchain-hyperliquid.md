@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Hyperliquid
 ---
 
 ## 陷阱（Pitfalls）

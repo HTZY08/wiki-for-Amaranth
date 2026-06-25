@@ -1,3 +1,7 @@
+---
+title: "Voice Mode"
+---
+
 ## 配置参考
 
 ### config.yaml

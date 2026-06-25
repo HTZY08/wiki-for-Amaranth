@@ -1,12 +1,9 @@
-```markdown
---- frontmatter ---
 ---
-title: "分布式大语言模型预训练 TorchTitan"
-sidebar_label: "分布式大语言模型预训练 TorchTitan"
-description: "提供使用 TorchTitan 的 PyTorch 原生分布式大语言模型预训练，支持四维并行（FSDP2、TP、PP、CP）"
+description: 提供使用 TorchTitan 的 PyTorch 原生分布式大语言模型预训练，支持四维并行（FSDP2、TP、PP、CP）
+sidebar_label: 分布式大语言模型预训练 TorchTitan
+title: 分布式大语言模型预训练 TorchTitan
 ---
 
---- body ---
 {/* 本页面由技能目录中的 SKILL.md 通过 website/scripts/generate-skill-docs.py 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}
 
 # 分布式大语言模型预训练 TorchTitan

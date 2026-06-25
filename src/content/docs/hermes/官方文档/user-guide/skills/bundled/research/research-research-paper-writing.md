@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Research Paper Writing
 ---
 
 ## 常见问题及解决方案

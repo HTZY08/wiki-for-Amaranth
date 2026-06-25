@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Pinecone
+---
+
 title: "Pinecone — 面向生产级AI应用的托管向量数据库"
 sidebar_label: "Pinecone"
 description: "面向生产级AI应用的托管向量数据库"

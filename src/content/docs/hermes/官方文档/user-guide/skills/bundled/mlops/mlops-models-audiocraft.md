@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Models Audiocraft
+---
+
 title: "Audiocraft 音频生成 — AudioCraft: MusicGen 文本转音乐、AudioGen 文本转声音"
 sidebar_label: "Audiocraft 音频生成"
 description: "AudioCraft: MusicGen 文本转音乐、AudioGen 文本转声音"

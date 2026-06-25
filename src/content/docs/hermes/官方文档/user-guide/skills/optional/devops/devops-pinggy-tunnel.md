@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Pinggy Tunnel
+---
+
 title: "Pinggy Tunnel — 通过 SSH 实现零安装的 localhost 隧道（Pinggy）"
 sidebar_label: "Pinggy Tunnel"
 description: "通过 SSH 实现零安装的 localhost 隧道（Pinggy）"

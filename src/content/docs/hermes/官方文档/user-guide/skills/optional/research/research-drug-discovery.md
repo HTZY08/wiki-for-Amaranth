@@ -1,14 +1,9 @@
-以下是您提供的文档，它已经是中文，因此直接原文输出，无需翻译。
-
-```markdown
---- frontmatter ---
 ---
-title: "药物发现——药物发现工作流的制药研究助手"
-sidebar_label: "Drug Discovery"
-description: "药物发现工作流的制药研究助手"
+description: 药物发现工作流的制药研究助手
+sidebar_label: Drug Discovery
+title: 药物发现——药物发现工作流的制药研究助手
 ---
 
---- body ---
 {/* 此页面由技能中的 SKILL.md 通过 website/scripts/generate-skill-docs.py 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}
 
 # 药物发现

@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Delegation Patterns
 ---
 
 ## 提示

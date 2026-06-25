@@ -1,16 +1,7 @@
 ---
-title: 技能目录（内置）
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`reference/skills-catalog.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/skills-catalog.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
+description: Catalog of bundled skills that ship with Hermes Agent
 sidebar_position: 5
-title: "Bundled Skills Catalog"
-description: "Catalog of bundled skills that ship with Hermes Agent"
+title: Bundled Skills Catalog
 ---
 
 # Bundled Skills Catalog

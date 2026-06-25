@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Mattermost
+---
+
 sidebar_position: 8
 title: "Mattermost"
 description: "将 Hermes Agent 设置为 Mattermost 机器人"

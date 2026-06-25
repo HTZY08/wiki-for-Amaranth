@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Signal
 ---
 
 ## 安全性

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Powerpoint
+---
+
 ## 转换为图像（Converting to Images）
 
 将演示文稿转换为单独的幻灯片图像以进行视觉检查：

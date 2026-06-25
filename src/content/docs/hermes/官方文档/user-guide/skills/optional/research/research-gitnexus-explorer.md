@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Gitnexus Explorer
+---
+
 title: "Gitnexus Explorer"
 sidebar_label: "Gitnexus Explorer"
 description: "使用 GitNexus 索引代码库，并通过 Web UI + Cloudflare 隧道提供交互式知识图谱服务"

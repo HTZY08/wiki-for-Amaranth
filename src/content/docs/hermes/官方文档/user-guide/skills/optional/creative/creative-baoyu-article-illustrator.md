@@ -1,14 +1,8 @@
 ---
-title: Creative Baoyu Article Illustrator
-description: Hermes Agent 官方技能文档
----
-
-> 本文档基于官方文档克隆，自用汉化版
-
----
-title: "Baoyu Article Illustrator — Article illustrations: type × style × palette consistency"
-sidebar_label: "Baoyu Article Illustrator"
-description: "Article illustrations: type × style × palette consistency"
+description: 'Article illustrations: type × style × palette consistency'
+sidebar_label: Baoyu Article Illustrator
+title: 'Baoyu Article Illustrator — Article illustrations: type × style × palette
+  consistency'
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}

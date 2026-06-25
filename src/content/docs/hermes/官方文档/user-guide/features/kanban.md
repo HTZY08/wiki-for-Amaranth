@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Kanban
+---
+
 sidebar_position: 12
 title: "看板（多智能体看板）"
 description: "基于 SQLite 的持久化任务板，用于协调多个 Hermes 配置文件的协作"

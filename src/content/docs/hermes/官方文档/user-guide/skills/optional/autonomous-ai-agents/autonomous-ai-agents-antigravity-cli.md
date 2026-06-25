@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Antigravity Cli
+---
+
 title: "Antigravity Cli – 操作 Antigravity CLI (agy)：插件、认证、沙箱"
 sidebar_label: "Antigravity Cli"
 description: "操作 Antigravity CLI (agy)：插件、认证、沙箱"

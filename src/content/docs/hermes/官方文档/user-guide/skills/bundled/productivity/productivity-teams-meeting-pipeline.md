@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Teams Meeting Pipeline
+---
+
 title: "Teams 会议流水线"
 sidebar_label: "Teams 会议流水线"
 description: "通过 Hermes CLI 操作 Teams 会议摘要流水线 — 汇总会议、检查流水线状态、重放任务、管理 Microsoft Graph 订阅"

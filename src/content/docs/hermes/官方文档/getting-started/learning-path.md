@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Learning Path
+---
+
 sidebar_position: 3
 title: '学习路径'
 description: '根据您的经验水平和目标，选择通过 Hermes Agent 文档的学习路径。'

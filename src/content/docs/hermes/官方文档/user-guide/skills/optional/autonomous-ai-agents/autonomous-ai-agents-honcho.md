@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Honcho
+---
+
 title: "Honcho"
 sidebar_label: "Honcho"
 description: "配置并使用 Honcho 记忆系统与 Hermes 集成 —— 跨会话用户建模、多配置文件对等体隔离、观察配置、辩证推理、会话摘要及上下文预算控制。用于设置 Honcho、排查记忆问题、使用 Honcho 对等体管理配置文件，或调整观察、回忆及辩证设置。"

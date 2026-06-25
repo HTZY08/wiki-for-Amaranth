@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: P5Js
 ---
 
 {/* 此页面由 website/scripts/generate-skill-docs.py 根据技能 SKILL.md 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}

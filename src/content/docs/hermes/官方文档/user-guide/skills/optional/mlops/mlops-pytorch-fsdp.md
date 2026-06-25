@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Pytorch Fsdp
+---
+
 title: "Pytorch FSDP"
 sidebar_label: "Pytorch FSDP"
 description: "使用PyTorch FSDP进行全分片数据并行训练的专家指南——参数分片（parameter sharding）、混合精度（mixed precision）、CPU卸载（CPU offloading）、FSDP2"

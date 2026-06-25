@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Nous Portal
+---
+
 sidebar_position: 1
 title: "Nous Portal"
 description: "一个订阅，300+前沿模型，工具网关和Nous Chat——运行 Hermes Agent 的推荐方式"

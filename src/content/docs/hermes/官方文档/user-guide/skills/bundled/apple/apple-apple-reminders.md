@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Apple Reminders
+---
+
 title: "Apple 提醒事项 — 通过 remindctl 管理 Apple 提醒事项：添加、列出、完成"
 sidebar_label: "Apple 提醒事项"
 description: "通过 remindctl 管理 Apple 提醒事项：添加、列出、完成"

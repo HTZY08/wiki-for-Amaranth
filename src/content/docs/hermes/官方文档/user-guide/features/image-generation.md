@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Image Generation
+---
+
 title: 图像生成
 description: 通过 FAL.ai 生成图像 — 11 种模型，包括 FLUX 2、GPT Image (1.5 & 2)、Nano Banana Pro、Ideogram、Recraft V4 Pro、Krea 2 等，可通过 `hermes tools` 选择。
 sidebar_label: 图像生成

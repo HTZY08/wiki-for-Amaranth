@@ -1,3 +1,7 @@
+---
+title: "Github Repo Management"
+---
+
 {/* 此页面由 website/scripts/generate-skill-docs.py 根据技能文件 SKILL.md 自动生成。请编辑源文件 SKILL.md，不要编辑此页面。 */}
 
 # GitHub 仓库管理（Github Repo Management）

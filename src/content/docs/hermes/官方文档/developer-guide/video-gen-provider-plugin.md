@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Video Gen Provider Plugin
+---
+
 sidebar_position: 12
 title: "视频生成提供者插件"
 description: "如何为 Hermes Agent 构建视频生成后端插件"

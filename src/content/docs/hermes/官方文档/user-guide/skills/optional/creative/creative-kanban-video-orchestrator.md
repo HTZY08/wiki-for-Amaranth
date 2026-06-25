@@ -1,3 +1,7 @@
+---
+title: "Kanban Video Orchestrator"
+---
+
 # Kanban Video Orchestrator（看板视频编排器）
 
 规划、设置并监控一个由 Hermes Kanban 支持的多智能体视频制作流水线。（Plan, set up, and monitor a multi-agent video production pipeline backed by Hermes Kanban.）当用户想要制作任何类型的视频——叙事电影、产品/营销视频、音乐视频、解说视频、ASCII/终端艺术、抽象/生成循环、漫画、3D、实时/装置艺术——且工作量需要分解为通过看板协调的专门角色（编剧、设计师、动画师、渲染师、配音、剪辑等）时使用。该技能执行自适应发现以界定概要，为请求的风格设计合适的团队，生成创建 Hermes 角色 + 初始看板任务的设置脚本，然后帮助监控执行并在任务停滞或失败时进行干预。它将场景路由到适合每个节拍的任何 Hermes 渲染/音频/设计技能（`ascii-video`、`manim-video`、`p5js`、`comfyui`、`touchdesigner-mcp`、`blender-mcp`、`pixel-art`、`baoyu-comic`、`claude-design`、`excalidraw`、`songsee`、`heartmula`……），以及根据需要的外部 API（TTS、图像生成、图像转视频）。

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Honcho
+---
+
 sidebar_position: 99
 title: "Honcho 记忆"
 description: "通过 Honcho — 辩证法推理、多智能体用户建模和深度个性化实现的 AI 原生持久记忆"

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Songsee
+---
+
 title: "Songsee — 通过 CLI 生成音频频谱图/特征（mel、chroma、MFCC）"
 sidebar_label: "Songsee"
 description: "通过 CLI 生成音频频谱图/特征（mel、chroma、MFCC）"

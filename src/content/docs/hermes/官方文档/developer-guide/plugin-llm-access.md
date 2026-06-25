@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Plugin Llm Access
+---
+
 sidebar_position: 11
 title: "插件 LLM 访问"
 description: "通过 ctx.llm 从插件内部运行任何 LLM 调用——聊天或结构化、同步或异步。主机拥有认证、故障关闭信任门、可选 JSON Schema 验证。"

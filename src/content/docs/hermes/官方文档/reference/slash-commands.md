@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Slash Commands
+---
+
 sidebar_position: 2
 title: "斜杠命令参考"
 description: "交互式 CLI 和消息斜杠命令的完整参考"

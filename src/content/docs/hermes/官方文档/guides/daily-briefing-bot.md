@@ -1,4 +1,5 @@
 ---
+title: Daily Briefing Bot
 ---
 
 # 教程：构建每日简报机器人

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Lambda Labs
+---
+
 title: "Lambda Labs GPU云 — 预留和按需GPU云实例，适用于机器学习训练和推理"
 sidebar_label: "Lambda Labs GPU云"
 description: "用于机器学习训练和推理的预留和按需GPU云实例"

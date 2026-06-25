@@ -1,8 +1,5 @@
---- frontmatter ---
-
-
---- body ---
---- frontmatter ---
+---
+title: Lbo Model
 ---
 
 ## 与用户协作——按章节的检查点

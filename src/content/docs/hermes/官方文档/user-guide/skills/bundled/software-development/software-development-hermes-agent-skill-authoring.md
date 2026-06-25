@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Hermes Agent Skill Authoring
+---
+
 name: my-skill-name               # 小写字母，连字符，≤64 个字符（MAX_NAME_LENGTH）
 description: 当 <触发条件> 时使用。 <单行行为描述>。
 version: 1.0.0

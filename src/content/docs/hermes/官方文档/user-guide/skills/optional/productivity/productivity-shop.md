@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Shop
+---
+
 title: "商店 — 商品目录搜索、结账、订单跟踪、退货"
 sidebar_label: "商店"
 description: "商品目录搜索、结账、订单跟踪、退货"

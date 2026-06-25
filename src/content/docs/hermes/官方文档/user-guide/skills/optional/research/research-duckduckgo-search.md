@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Duckduckgo Search
+---
+
 title: "Duckduckgo 搜索 — 通过 DuckDuckGo 进行的免费网页搜索 — 文本、新闻、图片、视频"
 sidebar_label: "Duckduckgo 搜索"
 description: "通过 DuckDuckGo 进行的免费网页搜索 — 文本、新闻、图片、视频"

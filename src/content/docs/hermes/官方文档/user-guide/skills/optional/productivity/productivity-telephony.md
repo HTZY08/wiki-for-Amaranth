@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Telephony
+---
+
 title: "电话功能（Telephony）— 无需更改核心工具即可为 Hermes 添加电话能力"
 sidebar_label: "电话功能（Telephony）"
 description: "无需更改核心工具即可为 Hermes 添加电话能力"

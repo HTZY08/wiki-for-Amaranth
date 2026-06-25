@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Rest Graphql Debug
+---
+
 title: "Rest Graphql Debug — 调试 REST/GraphQL API：状态码、认证、模式、复现"
 sidebar_label: "Rest Graphql Debug"
 description: "调试 REST/GraphQL API：状态码、认证、模式、复现"

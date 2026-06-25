@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Quickstart
 ---
 
 ## 常见故障模式（Common Failure Modes）

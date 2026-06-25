@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Simpo
+---
+
 title: "SimPO 训练 — 用于LLM对齐的简单偏好优化"
 sidebar_label: "SimPO 训练"
 description: "用于LLM对齐的简单偏好优化"

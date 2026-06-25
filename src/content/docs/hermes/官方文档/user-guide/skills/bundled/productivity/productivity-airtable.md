@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Airtable
+---
+
 title: "Airtable — 通过 curl 使用 Airtable REST API"
 sidebar_label: "Airtable"
 description: "通过 curl 使用 Airtable REST API"

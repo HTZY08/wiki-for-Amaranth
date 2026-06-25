@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Accelerate
+---
+
 title: "Huggingface Accelerate — 最简单的分布式训练 API"
 sidebar_label: "Huggingface Accelerate"
 description: "最简单的分布式训练 API"

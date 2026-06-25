@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Merger Model
+---
+
 title: "并购模型 — 在Excel中构建增厚/稀释（并购）模型 — 模拟损益表、协同效应、融资组合、每股收益影响"
 sidebar_label: "并购模型"
 description: "在Excel中构建增厚/稀释（并购）模型 — 模拟损益表、协同效应、融资组合、每股收益影响"

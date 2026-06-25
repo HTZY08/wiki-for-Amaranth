@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Context Engine Plugin
+---
+
 sidebar_position: 9
 title: "上下文引擎插件"
 description: "如何构建一个替代内置 ContextCompressor 的上下文引擎插件"

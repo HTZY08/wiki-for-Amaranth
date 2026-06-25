@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Excalidraw
 ---
 
 {/* 此页面由脚本 website/scripts/generate-skill-docs.py 根据技能的 SKILL.md 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}

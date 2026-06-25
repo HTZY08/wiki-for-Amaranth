@@ -1,16 +1,7 @@
 ---
-title: 微信
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/messaging/weixin.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/messaging/weixin.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
+description: Connect Hermes Agent to personal WeChat accounts via the iLink Bot API
 sidebar_position: 15
-title: "Weixin (WeChat)"
-description: "Connect Hermes Agent to personal WeChat accounts via the iLink Bot API"
+title: Weixin (WeChat)
 ---
 
 # Weixin (WeChat)

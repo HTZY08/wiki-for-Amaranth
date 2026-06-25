@@ -1,10 +1,8 @@
-```yaml
 ---
-title: 看板工作线程
 description: Hermes Agent 官方文档汉化版
+title: 看板工作线程
 ---
 
---- body ---
 # 看板工作线程（Worker Lane）
 
 **工作线程（Worker Lane）** 是看板调度器可将任务路由到的一类进程。每个线程都有一个身份（assignee 字符串）、一个生成机制，以及一个关于生成后必须对任务执行何种操作的契约。

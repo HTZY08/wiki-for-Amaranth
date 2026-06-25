@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Stable Diffusion
+---
+
 title: "稳定扩散图像生成（Stable Diffusion Image Generation）"
 sidebar_label: "稳定扩散图像生成"
 description: "通过 HuggingFace Diffusers 使用稳定扩散模型进行最先进的文本到图像生成"

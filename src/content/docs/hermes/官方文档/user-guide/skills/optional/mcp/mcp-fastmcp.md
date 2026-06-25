@@ -1,5 +1,6 @@
---- frontmatter ---
-
+---
+title: "Fastmcp"
+---
 
 --- body ---
 /* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */

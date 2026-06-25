@@ -1,14 +1,7 @@
 ---
-title: Creative Baoyu Comic
-description: Hermes Agent 官方技能文档
----
-
-> 本文档基于官方文档克隆，自用汉化版
-
----
-title: "Baoyu Comic — Knowledge comics (知识漫画): educational, biography, tutorial"
-sidebar_label: "Baoyu Comic"
-description: "Knowledge comics (知识漫画): educational, biography, tutorial"
+description: 'Knowledge comics (知识漫画): educational, biography, tutorial'
+sidebar_label: Baoyu Comic
+title: 'Baoyu Comic — Knowledge comics (知识漫画): educational, biography, tutorial'
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Curator
+---
+
 sidebar_position: 3
 title: "策展器"
 description: "对代理创建的技能进行后台维护——使用跟踪、过时处理、归档以及LLM驱动的审查"

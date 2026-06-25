@@ -1,5 +1,6 @@
---- frontmatter ---
-
+---
+title: "Obliteratus"
+---
 
 --- body ---
 # Obliteratus

@@ -1,5 +1,7 @@
---- frontmatter ---
 ---
+title: Faiss
+---
+
 title: "Faiss —— Facebook 的高效密集向量相似性搜索与聚类库"
 sidebar_label: "Faiss"
 description: "Facebook 的高效密集向量相似性搜索与聚类库"

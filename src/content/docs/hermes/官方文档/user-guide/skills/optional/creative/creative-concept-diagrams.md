@@ -1,4 +1,5 @@
---- frontmatter ---
+---
+title: Concept Diagrams
 ---
 
 ## 示例参考（Examples Reference）
