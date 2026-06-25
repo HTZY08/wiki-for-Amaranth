@@ -1,4 +1,6 @@
 ---
+title: 枝叶互修 · 双机互相备份方案
+
 task: cross-repair-setup
 created: 2026-06-24 11:45 CST
 requester: Begonia

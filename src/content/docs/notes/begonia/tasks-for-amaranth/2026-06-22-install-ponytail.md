@@ -1,4 +1,5 @@
 ---
+title: 安装 Ponytail — 让AI学会偷懒
 task: install-ponytail
 target: Amaranth
 from: Begonia

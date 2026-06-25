@@ -1,4 +1,6 @@
 ---
+title: Amaranth 完整待办清单 · 2026-06-24
+
 task: amaranth-master-todo
 created: 2026-06-24 11:30 CST
 requester: Begonia
