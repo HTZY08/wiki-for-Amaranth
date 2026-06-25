@@ -1,3 +1,7 @@
+---
+title: "Amaranth /learn 内容源清单"
+---
+
 # Amaranth /learn 内容源清单
 
 > 面向 Amaranth 的 `/learn` 指令，高质量教科书 + 工程范式内容源

@@ -1,3 +1,7 @@
+---
+title: "Amaranth Agent — 工程灵魂 (Engineering SOUL)"
+---
+
 # Amaranth Agent — 工程灵魂 (Engineering SOUL)
 
 <!--

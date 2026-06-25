@@ -1,3 +1,7 @@
+---
+title: "跨学科思维与写作原则（SOUL.md 适用）"
+---
+
 # 跨学科思维与写作原则（SOUL.md 适用）
 
 > 源自 P4（生物学与医学）、P5（经济学与社会科学）、方法论与写作（Purdue OWL、Chicago Manual of Style、Mental Models、Commoncog）的核心原则提炼。
