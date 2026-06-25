@@ -38,6 +38,9 @@ export default defineConfig({
         items: [
           { label: '时间线', link: 'notes/tinkering-timeline/' },
           { label: '双向 SSH 互修通道', link: 'notes/bidirectional-ssh-channel/' },
+          { label: '🌿 枝叶通道', link: 'projects/枝叶通道/' },
+          { label: '🖥️ VPS 代替机场', link: 'projects/vps-proxy/' },
+          { label: '📐 工程范式学习库', link: 'projects/engineering-learn/' },
         ],
       },
       {
