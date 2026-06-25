@@ -200,3 +200,7 @@ python3 /home/ubuntu/branch-leaf-client.py
 | `/tmp/branch-leaf/inbox/` | 收件箱（消息落地目录） |
 | `/tmp/branch-leaf/send.json` | 发件箱（Hermes 写入 → client 读取发送） |
 | `/tmp/branch-leaf/status.json` | 连接状态 |
+
+---
+
+**📂 源代码：** [GitHub](https://github.com/HTZY08/wiki-for-Amaranth/blob/main/src/content/docs/projects/engineering-learn/branch-leaf-channel.md)

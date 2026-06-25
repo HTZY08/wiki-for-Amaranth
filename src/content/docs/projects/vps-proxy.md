@@ -150,3 +150,7 @@ xray 同时监听 SOCKS5 和 HTTP 两个端口，但有些程序只支持 HTTP �
 
 **4. Tailscale 被封**
 Tailscale 官网（login.tailscale.com）在中国被墙。已登录的设备不受影响，但新设备认证需要已有设备协助或提前打开网页。
+
+---
+
+**📂 源代码：** [GitHub](https://github.com/HTZY08/wiki-for-Amaranth/blob/main/src/content/docs/projects/vps-proxy.md)

@@ -214,3 +214,7 @@ title: "工程范式原则：SOUL.md 规则注入（P0 0.1-0.5）"
 | 无状态 = 可水平扩展 | API Design, System Design Primer |
 | 统一错误响应结构 | API Design |
 | 安全默认：认证 + 限流 + 校验 | API Design |
+
+---
+
+**📂 源代码：** [GitHub](https://github.com/HTZY08/wiki-for-Amaranth/blob/main/src/content/docs/projects/engineering-learn/engineering-principles-soul-rules.md)

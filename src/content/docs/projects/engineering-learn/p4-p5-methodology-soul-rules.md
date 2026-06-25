@@ -141,3 +141,7 @@ title: "跨学科思维与写作原则（SOUL.md 适用）"
 ---
 
 *提炼自 OpenStax Biology 2e、OpenStax Psychology 2e、OpenStax Principles of Economics/Micro/Macro 3e、MSD Manuals Professional Edition、Purdue OWL、Chicago Manual of Style 17th Edition、Commoncog Mental Model FAQ、Farnam Street Mental Models。*
+
+---
+
+**📂 源代码：** [GitHub](https://github.com/HTZY08/wiki-for-Amaranth/blob/main/src/content/docs/projects/engineering-learn/p4-p5-methodology-soul-rules.md)

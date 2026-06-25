@@ -43,3 +43,7 @@ description: "Amaranth 的工程范式训练数据——设计原则、架构法
 - [训诫原则](soul_discipline_principles.md)
 - [P4-P5 方法论](p4-p5-methodology-soul-rules.md)
 - [枝叶通道映射表](branch-leaf-channel.md)
+
+---
+
+**📂 源代码：** [GitHub](https://github.com/HTZY08/wiki-for-Amaranth/tree/main/src/content/docs/projects/engineering-learn)

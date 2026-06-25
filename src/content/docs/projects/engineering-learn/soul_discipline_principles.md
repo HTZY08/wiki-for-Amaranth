@@ -151,3 +151,7 @@ title: "学科工程思维原则提取"
 
 *提取时间：2026-06-24*
 *提取目标：Amaranth SOUL.md rewrite — 工程判断模式注入*
+
+---
+
+**📂 源代码：** [GitHub](https://github.com/HTZY08/wiki-for-Amaranth/blob/main/src/content/docs/projects/engineering-learn/soul_discipline_principles.md)

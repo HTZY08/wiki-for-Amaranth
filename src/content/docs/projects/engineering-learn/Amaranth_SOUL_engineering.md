@@ -224,3 +224,7 @@ Agent 发现规则产生系统性不良结果时应提出优化建议。更新�
 3. 与现有人格定义的合并冲突检查
 4. 版本化修改日志
 -->
+
+---
+
+**📂 源代码：** [GitHub](https://github.com/HTZY08/wiki-for-Amaranth/blob/main/src/content/docs/projects/engineering-learn/Amaranth_SOUL_engineering.md)
