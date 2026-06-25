@@ -1,122 +1,121 @@
+```yaml
 ---
 title: 看板工作线程
 description: Hermes Agent 官方文档汉化版
 ---
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/kanban-worker-lanes.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/kanban-worker-lanes.md)
-> 本版本为自用学习用途，非官方翻译。
+--- body ---
+# 看板工作线程（Worker Lane）
 
-# Kanban worker lanes
+**工作线程（Worker Lane）** 是看板调度器可将任务路由到的一类进程。每个线程都有一个身份（assignee 字符串）、一个生成机制，以及一个关于生成后必须对任务执行何种操作的契约。
 
-A **worker lane** is a class of process that the kanban dispatcher can route tasks to. Each lane has an identity (the assignee string), a spawn mechanism, and a contract for what it must do with the task once spawned.
+本页面就是该契约。它面向两类读者：
 
-This page is the contract. It exists for two audiences:
+- **操作员（Operators）**：选择哪些线程接入看板（创建哪些配置文件、使用哪些 assignee）。
+- **插件/集成作者（Plugin / integration authors）**：希望添加新的线程形态（例如包装 Codex / Claude Code / OpenCode 的 CLI 工作线程、容器化审查线程、通过 API 拉取任务的非 Hermes 服务）。
 
-- **Operators** picking which lanes to wire into a board (which profiles to create, which assignees to use).
-- **Plugin / integration authors** wanting to add a new lane shape (a CLI worker that wraps Codex / Claude Code / OpenCode, a containerised review worker, a non-Hermes service that pulls tasks via the API).
+如果你正在编写工作线程本身的代码——即在*线程内部*运行的 agent——看板生命周期和参考细节会自动注入到 worker 的系统提示中（参见 [`agent/prompt_builder.py`](https://github.com/NousResearch/hermes-agent/blob/main/agent/prompt_builder.py) 中的 `KANBAN_GUIDANCE` 块）。
 
-If you're writing the worker code itself — the agent that runs *inside* a lane — the kanban lifecycle and reference details are injected into the worker's system prompt automatically (the `KANBAN_GUIDANCE` block in [`agent/prompt_builder.py`](https://github.com/NousResearch/hermes-agent/blob/main/agent/prompt_builder.py)).
-
-## The hierarchy
+## 层级结构
 
 ```text
-Hermes Kanban  =  canonical task lifecycle + audit trail
-Worker lane    =  implementation executor for one assigned card
-Reviewer       =  human or human-proxy that gates "done"
-GitHub PR      =  upstreamable artifact (optional, for code lanes)
+Hermes Kanban  =  规范的任务生命周期 + 审计追踪
+Worker lane    =  为某张已分配卡片执行实现的执行器
+Reviewer       =  把关“完成”状态的人类或人类代理
+GitHub PR      =  可上流的产物（可选，用于代码型线程）
 ```
 
-Hermes Kanban owns lifecycle truth — `ready` → `running` → `blocked` / `done` / `archived`. Worker lanes execute work but never own that truth; everything they do flows back through the kanban kernel via the `kanban_*` tools (or, for non-Hermes external workers, via the API). Reviewers gate the transition from "code change written" to "task done."
+Hermes Kanban 拥有生命周期真相——`ready` → `running` → `blocked` / `done` / `archived`。工作线程执行工作，但从不拥有那个真相；它们所做的一切都通过 `kanban_*` 工具（对于非 Hermes 外部工作线程，则通过 API）流回看板内核。审阅者（Reviewer）把关从“代码变更已编写”到“任务完成”的状态转换。
 
-## What a lane provides
+## 线程提供什么
 
-To be a kanban worker lane, an integration must provide three things:
+要成为一个看板工作线程，集成必须提供三样东西：
 
-### 1. An assignee string
+### 1. assignee 字符串
 
-The dispatcher matches `task.assignee` against either a Hermes profile name (the default lane shape) or a registered non-spawnable identifier (the plugin lane shape — see [Adding an external CLI worker lane](#adding-an-external-cli-worker-lane) below). Tasks whose assignee doesn't resolve are left on `ready` with a `skipped_nonspawnable` event so a board operator can fix them; they are not silently dropped or executed by an arbitrary fallback.
+调度器将 `task.assignee` 与某个 Hermes 配置文件名称（默认线程形态）或一个已注册的不可生成标识符（插件线程形态——见下文[添加外部 CLI 工作线程](#adding-an-external-cli-worker-lane)）进行匹配。如果 assignee 无法解析，任务将保持在 `ready` 状态并记录一个 `skipped_nonspawnable` 事件，以便看板操作员修复；这些任务不会被静默丢弃，也不会被任意回退执行。
 
-### 2. A spawn mechanism
+### 2. 生成机制
 
-For Hermes profile lanes, the dispatcher's `_default_spawn` runs `hermes -p <assignee> chat -q <prompt>` (or the equivalent module form when the `hermes` shim isn't on `$PATH`) inside the task's pinned workspace, with these env vars set:
+对于 Hermes 配置文件线程，调度器的 `_default_spawn` 会在任务的固定工作区内运行 `hermes -p <assignee> chat -q <prompt>`（如果 `hermes` 垫片不在 `$PATH` 中，则使用等效的模块形式），并设置以下环境变量：
 
-| Variable | Carries |
+| 变量 | 内容 |
 |---|---|
-| `HERMES_KANBAN_TASK` | the task id the worker is operating on |
-| `HERMES_KANBAN_DB` | absolute path to the per-board SQLite file |
-| `HERMES_KANBAN_BOARD` | board slug |
-| `HERMES_KANBAN_WORKSPACES_ROOT` | root of the board's workspace tree |
-| `HERMES_KANBAN_WORKSPACE` | absolute path to *this* task's workspace |
-| `HERMES_KANBAN_RUN_ID` | the current run's id (for the lifecycle gate) |
-| `HERMES_KANBAN_CLAIM_LOCK` | the claim lock string (`<host>:<pid>:<uuid>`) |
-| `HERMES_PROFILE` | the worker's own profile name (for `kanban_comment` author attribution) |
-| `HERMES_TENANT` | tenant namespace, if the task has one |
+| `HERMES_KANBAN_TASK` | 工作线程正在操作的任务 ID |
+| `HERMES_KANBAN_DB` | 每个看板的 SQLite 文件的绝对路径 |
+| `HERMES_KANBAN_BOARD` | 看板 slug |
+| `HERMES_KANBAN_WORKSPACES_ROOT` | 看板工作区树的根目录 |
+| `HERMES_KANBAN_WORKSPACE` | *当前*任务工作区的绝对路径 |
+| `HERMES_KANBAN_RUN_ID` | 当前运行的 ID（用于生命周期门控） |
+| `HERMES_KANBAN_CLAIM_LOCK` | 声明锁字符串（`<host>:<pid>:<uuid>`） |
+| `HERMES_PROFILE` | 工作线程自身的配置文件名称（用于 `kanban_comment` 作者归属） |
+| `HERMES_TENANT` | 租户命名空间（如果任务有） |
 
-For non-Hermes lanes (registered via a plugin), the plugin supplies its own `spawn_fn` callable that gets `task`, `workspace`, and `board` and returns an optional pid for crash detection.
+对于非 Hermes 线程（通过插件注册），插件提供自己的 `spawn_fn` 可调用对象，该对象接收 `task`、`workspace` 和 `board`，并返回一个可选的 PID 用于崩溃检测。
 
-### 3. A lifecycle terminator
+### 3. 生命周期终止器
 
-Every claim must end in exactly one of:
+每次声明必须以且仅以以下之一结束：
 
-- `kanban_complete(summary=..., metadata=...)` — task succeeds, status flips to `done`.
-- `kanban_block(reason=...)` — task waits for human input, status flips to `blocked`. The dispatcher respawns when `kanban_unblock` runs.
-- The worker process exits without a tool call. The kernel reaps it and emits `crashed` (PID died) or `gave_up` (consecutive-failure breaker tripped) or `timed_out` (max_runtime exceeded). This is the failure path; healthy workers don't end here.
+- `kanban_complete(summary=..., metadata=...)` —— 任务成功，状态翻转为 `done`。
+- `kanban_block(reason=...)` —— 任务等待人工输入，状态翻转为 `blocked`。当执行 `kanban_unblock` 时，调度器会重新生成。
+- 工作线程进程退出但未调用任何工具。内核回收它并发出 `crashed`（PID 死亡）或 `gave_up`（连续失败断路器触发）或 `timed_out`（超过 `max_runtime`）事件。这是失败路径；健康的工作线程不会在此结束。
 
-The kanban kernel enforces that exactly one of these terminates each run. A worker that calls neither and exits normally is treated as crashed.
+看板内核强制每次运行恰好由其中之一终止。一个正常退出但既未调用 `kanban_complete` 也未调用 `kanban_block` 的工作线程将被视为崩溃。
 
-## Outputs and the review-required convention
+## 输出与需要审查的约定
 
-For most code-changing tasks, the work isn't truly *done* the moment the worker finishes — it needs a human reviewer. The kanban kernel doesn't enforce this distinction (a "code-changing task" is fuzzy and forcing block-instead-of-complete on every code worker would break flows where no review is wanted). It's a convention layered on top:
+对于大多数修改代码的任务，工作线程完成时工作并不算真正*完成*——它需要人工审阅者。看板内核不强制执行此区分（“修改代码的任务”是模糊的，如果强制每个代码工作线程都使用阻止而非完成，则会破坏那些不需要审查的工作流）。这是一个叠加在之上的约定：
 
-- **Block instead of complete**, with `reason` prefixed `review-required: ` so the dashboard / `hermes kanban show` surfaces the row as awaiting review.
-- **Drop structured metadata into a `kanban_comment` first** since `kanban_block` only carries the human-readable `reason`. Comments are the durable annotation channel — every audit-relevant field (changed_files, tests_run, diff_path or PR url, decisions) belongs there.
-- **Reviewer either approves and unblocks**, which respawns the worker with the comment thread for follow-ups; or asks for changes via another comment, which the next worker run sees as part of `kanban_show`'s context.
+- **使用阻止而非完成**，并将 `reason` 前缀设为 `review-required: `，这样仪表板/`hermes kanban show` 会将该行显示为等待审查。
+- **先通过 `kanban_comment` 放入结构化元数据**，因为 `kanban_block` 只携带人类可读的 `reason`。注释是持久的注解渠道——所有与审计相关的字段（`changed_files`、`tests_run`、`diff_path` 或 PR url、决策）都应放在那里。
+- **审阅者要么批准并解除阻止**，这会使用注释线程重新生成工作线程以进行后续工作；要么通过另一条注释要求修改，下一次工作线程运行会将其视为 `kanban_show` 上下文的一部分。
 
-The injected `KANBAN_GUIDANCE` covers both `kanban_complete` (truly terminal tasks — typo fixes, docs changes, research writeups) and the `review-required` block pattern.
+注入的 `KANBAN_GUIDANCE` 涵盖了 `kanban_complete`（真正终结的任务——拼写错误修复、文档变更、研究写作）和 `review-required` 阻止模式。
 
-## Logs and audit trail
+## 日志与审计追踪
 
-The dispatcher writes per-task worker stdout/stderr to `<board-root>/logs/<task_id>.log`. Logs are auditable from kanban metadata:
+调度器将每个工作线程的 stdout/stderr 写入 `<board-root>/logs/<task_id>.log`。日志可通过看板元数据审计：
 
-- `task_runs` rows carry the `log_path`, exit code (where available), summary, and metadata.
-- `task_events` rows carry every state transition (`promoted`, `claimed`, `heartbeat`, `completed`, `blocked`, `gave_up`, `crashed`, `timed_out`, `reclaimed`, `claim_extended`).
-- `kanban_show` returns both, so a reviewer (or a follow-up worker) reading the task gets the full history without needing dashboard access.
+- `task_runs` 行包含 `log_path`、退出码（如果可用）、摘要和元数据。
+- `task_events` 行包含每个状态转换（`promoted`、`claimed`、`heartbeat`、`completed`、`blocked`、`gave_up`、`crashed`、`timed_out`、`reclaimed`、`claim_extended`）。
+- `kanban_show` 返回两者，因此审阅者（或后续工作线程）读取任务时无需仪表板访问权限即可获得完整历史。
 
-The dashboard renders run history with summaries, metadata blocks, and exit-status badges. CLI users can run `hermes kanban tail <task_id>` to follow live, or `hermes kanban runs <task_id>` for the historical attempt list.
+仪表板以摘要、元数据块和退出状态徽章的形式展示运行历史。CLI 用户可以运行 `hermes kanban tail <task_id>` 实时跟踪，或运行 `hermes kanban runs <task_id>` 查看历史尝试列表。
 
-## Existing lane shapes
+## 现有线程形态
 
-### Hermes profile lane (default)
+### Hermes 配置文件线程（默认）
 
-The shape every kanban worker takes today: the assignee is a profile name, the dispatcher spawns `hermes -p <profile>`, the worker gets the `KANBAN_GUIDANCE` system-prompt block injected automatically, and uses the `kanban_*` tools to terminate the run. No setup beyond defining the profile.
+这是目前每个看板工作线程所采用的形态：assignee 是配置文件名称，调度器生成 `hermes -p <profile>`，工作线程自动获得注入的 `KANBAN_GUIDANCE` 系统提示块，并使用 `kanban_*` 工具终止运行。无需在定义配置文件之外进行任何设置。
 
-When you create profiles for your fleet, choose names that match the *role* you want the orchestrator to route to. The orchestrator (when there is one) discovers your profile names via `hermes profile list` — there's no fixed roster the system assumes (the orchestrator side of the contract is part of the injected `KANBAN_GUIDANCE`).
+当你为工作线程池创建配置文件时，选择与希望编排器路由到的*角色*相匹配的名称。编排器（如果有）通过 `hermes profile list` 发现你的配置文件名称——系统没有假定固定的列表（契约的编排器部分包含在注入的 `KANBAN_GUIDANCE` 中）。
 
-### Orchestrator profile lane
+### 编排器配置文件线程
 
-A specialisation of the profile lane: an orchestrator is a Hermes profile whose toolset includes `kanban` but excludes `terminal` / `file` / `code` / `web` for implementation. Its job is decomposing a high-level goal into child tasks via `kanban_create` + `kanban_link` and stepping back. The orchestrator skill encodes the anti-temptation rules.
+配置文件线程的一个特化：编排器是一个 Hermes 配置文件，其工具集包含 `kanban`，但排除了用于实现的 `terminal` / `file` / `code` / `web`。它的工作是通过 `kanban_create` + `kanban_link` 将高级目标分解为子任务，然后退后一步。编排器技能（Orchestrator skill）编码了反诱惑规则。
 
-## Adding an external CLI worker lane
+## 添加外部 CLI 工作线程
 
-Wiring a non-Hermes CLI tool (Codex CLI, Claude Code CLI, OpenCode CLI, a local coding-model runner, etc.) as a kanban worker lane is *not yet a paved path*. The dispatcher's spawn function is pluggable (`spawn_fn` is a parameter on `dispatch_once`), and a plugin could register its own `spawn_fn` for a non-Hermes assignee, but the surrounding integration work — wrapping the CLI's exit code into `kanban_complete` / `kanban_block` calls, mapping the CLI's workspace/sandbox conventions onto the dispatcher's `HERMES_KANBAN_WORKSPACE` env, handling auth and per-CLI policy — is still per-integration design work.
+将一个非 Hermes CLI 工具（Codex CLI、Claude Code CLI、OpenCode CLI、本地编码模型运行器等）作为看板工作线程接入*目前还不是一条铺好的路*。调度器的生成函数是可插拔的（`spawn_fn` 是 `dispatch_once` 的一个参数），插件可以为非 Hermes 的 assignee 注册自己的 `spawn_fn`，但周围的集成工作——将 CLI 的退出码包装成 `kanban_complete` / `kanban_block` 调用，将 CLI 的工作区/沙盒约定映射到调度器的 `HERMES_KANBAN_WORKSPACE` 环境变量，处理认证和每个 CLI 的策略——仍然是每个集成设计的任务。
 
-If you're considering adding a CLI lane, open an issue describing the specific CLI and the workflow you're trying to enable. The contract above is the constraints any such lane must satisfy; the implementation shape (one plugin per CLI vs a generic CLI-runner plugin parameterised by config) is open.
+如果你在考虑添加一个 CLI 线程，请创建一个 issue，描述具体的 CLI 和你试图启用的工作流。上述契约是任何此类线程必须满足的约束；实现形状（每个 CLI 一个插件 vs 一个由配置参数化的通用 CLI 运行器插件）是开放的。
 
-The historical issue for this is [#19931](https://github.com/NousResearch/hermes-agent/issues/19931) and the closed-not-merged Codex-specific PR [#19924](https://github.com/NousResearch/hermes-agent/pull/19924) — those describe the original architecture proposal but didn't land a runner.
+相关问题历史记录为 [#19931](https://github.com/NousResearch/hermes-agent/issues/19931) 以及已关闭但未合并的 Codex 特定 PR [#19924](https://github.com/NousResearch/hermes-agent/pull/19924)——它们描述了原始架构提案，但最终未落地运行器。
 
-## Failure modes the dispatcher handles
+## 调度器处理的故障模式
 
-So lane authors don't have to reimplement these:
+这样线程作者就不必重新实现它们了：
 
-- **Stale claim TTL** — a worker that claims and then never heartbeats / completes / blocks gets reclaimed after `DEFAULT_CLAIM_TTL_SECONDS` (15 min default) — but only if the worker process has actually died. A live worker (slow model spending 20+ min in one tool-free LLM call) gets the claim *extended* instead of killed; only a dead PID is reclaimed.
-- **Crashed worker** — a worker whose host-local PID has vanished is detected by `detect_crashed_workers` and reaped; the task increments `consecutive_failures` and may auto-block when the breaker trips.
-- **Run-level retry** — when a task is retried (post-block, post-crash, post-reclaim), the worker can use the `expected_run_id` parameter on terminating tools to fail fast if its own run was already superseded.
-- **Per-task max runtime** — `task.max_runtime_seconds` hard-caps wall-clock time per run, regardless of PID liveness. Catches genuinely-deadlocked workers that the live-PID extension would otherwise keep running.
-- **Stranded-task detection** — a ready task whose assignee never produces a claim within `kanban.stranded_threshold_seconds` (default 30 min) shows up in `hermes kanban diagnostics` as a `stranded_in_ready` warning. Severity escalates to error at 2x the threshold and critical at 6x. Catches typo'd assignees, deleted profiles, and down external worker pools in one signal — identity-agnostic, no per-board allowlist to curate.
+- **过期声明 TTL** —— 一个声明后从未心跳/完成/阻止的工作线程会在 `DEFAULT_CLAIM_TTL_SECONDS`（默认 15 分钟）后重新声明——但仅当工作线程进程实际死亡时。一个存活的工作线程（慢模型在一个无工具 LLM 调用中花费超过 20 分钟）会获得声明*延长*而不是被杀死；只有死掉的 PID 会被重新声明。
+- **工作线程崩溃** —— 当工作线程的本地主机 PID 消失时，会被 `detect_crashed_workers` 检测到并回收；任务递增 `consecutive_failures`，当断路器触发时可能自动阻止。
+- **运行级重试** —— 当任务被重试（解除阻止后、崩溃后、重新声明后），工作线程可以在终止工具上使用 `expected_run_id` 参数，以便在其自身运行已被取代时快速失败。
+- **每个任务的最大运行时长** —— `task.max_runtime_seconds` 硬限制每次运行的挂钟时间，无论 PID 是否存活。捕获那些本来会被存活 PID 延长机制一直运行下去的真正死锁工作线程。
+- **滞留任务检测** —— 一个就绪任务在其 assignee 在 `kanban.stranded_threshold_seconds`（默认 30 分钟）内未产生声明时，会在 `hermes kanban diagnostics` 中显示为 `stranded_in_ready` 警告。严重性在阈值的 2 倍时升级为错误，6 倍时升级为严重。通过一个信号捕获拼写错误的 assignee、已删除的配置文件和关闭的外部工作线程池——与身份无关，无需维护每个看板的白名单。
 
-## Related
+## 相关
 
-- [Kanban overview](./kanban) — the user-facing intro.
-- [Kanban tutorial](./kanban-tutorial) — walkthrough with the dashboard open.
-- [`KANBAN_GUIDANCE`](https://github.com/NousResearch/hermes-agent/blob/main/agent/prompt_builder.py) — the worker + orchestrator lifecycle injected into every kanban worker's system prompt.
+- [看板概述](./kanban) —— 面向用户的介绍。
+- [看板教程](./kanban-tutorial) —— 配合仪表板打开的实操演练。
+- [`KANBAN_GUIDANCE`](https://github.com/NousResearch/hermes-agent/blob/main/agent/prompt_builder.py) —— 注入到每个看板工作线程系统提示中的工作线程+编排器生命周期。
+```

@@ -1,65 +1,58 @@
+--- frontmatter ---
 ---
-title: 功能概览
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/overview.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/overview.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
-title: "Features Overview"
-sidebar_label: "Overview"
+title: "功能概述"
+sidebar_label: "总览"
 sidebar_position: 1
 ---
 
-# Features Overview
+--- body ---
+# 功能概述
 
-Hermes Agent includes a rich set of capabilities that extend far beyond basic chat. From persistent memory and file-aware context to browser automation and voice conversations, these features work together to make Hermes a powerful autonomous assistant.
+Hermes Agent 拥有一套丰富的功能，远远超越基础聊天。从持久记忆和文件感知上下文，到浏览器自动化和语音对话，这些功能协同工作，使 Hermes 成为强大的自主助手。
 
-:::tip Don't know where to start?
-`hermes setup --portal` covers a model provider plus all four Tool Gateway tools (web search, image generation, TTS, browser) in one command. See [Nous Portal](/integrations/nous-portal).
+:::tip 不知道从哪里开始？
+`hermes setup --portal` 一条命令即可覆盖模型提供商以及全部四个工具网关（Tool Gateway）工具（网页搜索、图像生成、TTS、浏览器）。参见 [Nous Portal](/integrations/nous-portal)。
 :::
 
-## Core
+## 核心
 
-- **[Tools & Toolsets](tools.md)** — Tools are functions that extend the agent's capabilities. They're organized into logical toolsets that can be enabled or disabled per platform, covering web search, terminal execution, file editing, memory, delegation, and more.
-- **[Skills System](skills.md)** — On-demand knowledge documents the agent can load when needed. Skills follow a progressive disclosure pattern to minimize token usage and are compatible with the [agentskills.io](https://agentskills.io/specification) open standard.
-- **[Persistent Memory](memory.md)** — Bounded, curated memory that persists across sessions. Hermes remembers your preferences, projects, environment, and things it has learned via `MEMORY.md` and `USER.md`.
-- **[Context Files](context-files.md)** — Hermes automatically discovers and loads project context files (`.hermes.md`, `AGENTS.md`, `CLAUDE.md`, `SOUL.md`, `.cursorrules`) that shape how it behaves in your project.
-- **[Context References](context-references.md)** — Type `@` followed by a reference to inject files, folders, git diffs, and URLs directly into your messages. Hermes expands the reference inline and appends the content automatically.
-- **[Checkpoints](../checkpoints-and-rollback.md)** — Hermes automatically snapshots your working directory before making file changes, giving you a safety net to roll back with `/rollback` if something goes wrong.
+- **[工具与工具集（Tools & Toolsets）](tools.md)** — 工具是扩展 Agent 能力的函数。它们被组织成逻辑工具集，可针对每个平台启用或禁用，涵盖网页搜索、终端执行、文件编辑、记忆、委派等。
+- **[技能系统（Skills System）](skills.md)** — 按需加载的知识文档，Agent 可在需要时加载。技能遵循渐进式披露模式以最小化令牌用量，并兼容 [agentskills.io](https://agentskills.io/specification) 开放标准。
+- **[持久记忆（Persistent Memory）](memory.md)** — 有界、精炼的记忆，跨会话持久存在。Hermes 通过 `MEMORY.md` 和 `USER.md` 记住你的偏好、项目、环境以及它学到的东西。
+- **[上下文文件（Context Files）](context-files.md)** — Hermes 自动发现并加载项目上下文文件（`.hermes.md`、`AGENTS.md`、`CLAUDE.md`、`SOUL.md`、`.cursorrules`），这些文件塑造它在你项目中的行为。
+- **[上下文引用（Context References）](context-references.md)** — 输入 `@` 后跟引用，可将文件、文件夹、Git 差异和 URL 直接注入消息中。Hermes 会内联展开引用并自动附加内容。
+- **[检查点（Checkpoints）](../checkpoints-and-rollback.md)** — Hermes 在修改文件前自动快照你的工作目录，提供安全网，以便在出现问题时通过 `/rollback` 回滚。
 
-## Automation
+## 自动化
 
-- **[Scheduled Tasks (Cron)](cron.md)** — Schedule tasks to run automatically with natural language or cron expressions. Jobs can attach skills, deliver results to any platform, and support pause/resume/edit operations.
-- **[Subagent Delegation](delegation.md)** — The `delegate_task` tool spawns child agent instances with isolated context, restricted toolsets, and their own terminal sessions. Run 3 concurrent subagents by default (configurable) for parallel workstreams.
-- **[Code Execution](code-execution.md)** — The `execute_code` tool lets the agent write Python scripts that call Hermes tools programmatically, collapsing multi-step workflows into a single LLM turn via sandboxed RPC execution.
-- **[Event Hooks](hooks.md)** — Run custom code at key lifecycle points. Gateway hooks handle logging, alerts, and webhooks; plugin hooks handle tool interception, metrics, and guardrails.
-- **[Batch Processing](batch-processing.md)** — Run the Hermes agent across hundreds or thousands of prompts in parallel, generating structured ShareGPT-format trajectory data for training data generation or evaluation.
+- **[定时任务（Cron）](cron.md)** — 使用自然语言或 cron 表达式安排自动运行的任务。任务可以附加技能、将结果投递到任何平台，并支持暂停/恢复/编辑操作。
+- **[子 Agent 委派（Subagent Delegation）](delegation.md)** — `delegate_task` 工具会生成具有独立上下文、受限工具集和自身终端的子 Agent 实例。默认运行 3 个并发子 Agent（可配置），用于并行工作流。
+- **[代码执行（Code Execution）](code-execution.md)** — `execute_code` 工具让 Agent 编写调用 Hermes 工具的 Python 脚本，通过沙箱 RPC 执行将多步工作流压缩为单个 LLM 轮次。
+- **[事件钩子（Event Hooks）](hooks.md)** — 在关键生命周期点运行自定义代码。网关钩子处理日志、告警和 Webhook；插件钩子处理工具拦截、指标和护栏。
+- **[批量处理（Batch Processing）](batch-processing.md)** — 并行运行 Hermes Agent 处理数百或数千个提示，生成结构化的 ShareGPT 格式轨迹数据，用于训练数据生成或评估。
 
-## Media & Web
+## 媒体与网页
 
-- **[Voice Mode](voice-mode.md)** — Full voice interaction across CLI and messaging platforms. Talk to the agent using your microphone, hear spoken replies, and have live voice conversations in Discord voice channels.
-- **[Browser Automation](browser.md)** — Full browser automation with multiple backends: Browserbase cloud, Browser Use cloud, local Chrome/Brave/Chromium/Edge via CDP, or local Chromium. Navigate websites, fill forms, and extract information.
-- **[Vision & Image Paste](vision.md)** — Multimodal vision support. Paste images from your clipboard into the CLI and ask the agent to analyze, describe, or work with them using any vision-capable model.
-- **[Image Generation](image-generation.md)** — Generate images from text prompts using FAL.ai. Nine models supported (FLUX 2 Klein/Pro, GPT-Image 1.5/2, Nano Banana Pro, Ideogram V3, Recraft V4 Pro, Qwen, Z-Image Turbo); pick one via `hermes tools`.
-- **[Voice & TTS](tts.md)** — Text-to-speech output and voice message transcription across all messaging platforms, with ten native provider options: Edge TTS (free), ElevenLabs, OpenAI TTS, MiniMax, Mistral Voxtral, Google Gemini, xAI, NeuTTS, KittenTTS, and Piper — plus custom command providers for any local TTS CLI.
+- **[语音模式（Voice Mode）](voice-mode.md)** — 跨 CLI 和消息平台的完整语音交互。使用麦克风与 Agent 交谈，聆听语音回复，并在 Discord 语音频道中进行实时语音对话。
+- **[浏览器自动化（Browser Automation）](browser.md)** — 完整的浏览器自动化，支持多种后端：Browserbase 云、Browser Use 云、通过 CDP 的本地 Chrome/Brave/Chromium/Edge，或本地 Chromium。浏览网站、填写表单、提取信息。
+- **[视觉与图像粘贴（Vision & Image Paste）](vision.md)** — 多模态视觉支持。从剪贴板将图像粘贴到 CLI 中，并要求 Agent 使用任何支持视觉的模型分析、描述或处理它们。
+- **[图像生成（Image Generation）](image-generation.md)** — 使用 FAL.ai 从文本提示生成图像。支持九种模型（FLUX 2 Klein/Pro、GPT-Image 1.5/2、Nano Banana Pro、Ideogram V3、Recraft V4 Pro、Qwen、Z-Image Turbo）；通过 `hermes tools` 选择。
+- **[语音与 TTS](tts.md)** — 跨所有消息平台的文本转语音输出和语音消息转录，提供十种原生提供商选项：Edge TTS（免费）、ElevenLabs、OpenAI TTS、MiniMax、Mistral Voxtral、Google Gemini、xAI、NeuTTS、KittenTTS 和 Piper——外加用于任何本地 TTS CLI 的自定义命令提供商。
 
-## Integrations
+## 集成
 
-- **[MCP Integration](mcp.md)** — Connect to any MCP server via stdio or HTTP transport. Access external tools from GitHub, databases, file systems, and internal APIs without writing native Hermes tools. Includes per-server tool filtering and sampling support.
-- **[Provider Routing](provider-routing.md)** — Fine-grained control over which AI providers handle your requests. Optimize for cost, speed, or quality with sorting, whitelists, blacklists, and priority ordering.
-- **[Fallback Providers](fallback-providers.md)** — Automatic failover to backup LLM providers when your primary model encounters errors, including independent fallback for auxiliary tasks like vision and compression.
-- **[Credential Pools](credential-pools.md)** — Distribute API calls across multiple keys for the same provider. Automatic rotation on rate limits or failures.
-- **[Prompt caching](../configuration#prompt-caching)** — Built-in cross-session 1-hour prefix cache for Claude on native Anthropic, OpenRouter, and Nous Portal. Always-on; no configuration required.
-- **[Memory Providers](memory-providers.md)** — Plug in external memory backends (Honcho, OpenViking, Mem0, Hindsight, Holographic, RetainDB, ByteRover, Supermemory) for cross-session user modeling and personalization beyond the built-in memory system.
-- **[API Server](api-server.md)** — Expose Hermes as an OpenAI-compatible HTTP endpoint. Connect any frontend that speaks the OpenAI format — Open WebUI, LobeChat, LibreChat, and more.
-- **[IDE Integration (ACP)](acp.md)** — Use Hermes inside ACP-compatible editors such as VS Code, Zed, and JetBrains. Chat, tool activity, file diffs, and terminal commands render inside your editor.
-- **[Batch Processing](batch-processing.md)** — Run the agent over many prompts or tasks in parallel from the CLI, with structured outputs and trajectory capture suitable for evals or downstream training pipelines.
+- **[MCP 集成](mcp.md)** — 通过 stdio 或 HTTP 传输连接到任意 MCP 服务器。访问来自 GitHub、数据库、文件系统和内部 API 的外部工具，无需编写原生 Hermes 工具。包括每服务器工具过滤和采样支持。
+- **[提供商路由（Provider Routing）](provider-routing.md)** — 精细控制哪些 AI 提供商处理你的请求。通过排序、白名单、黑名单和优先级排序优化成本、速度或质量。
+- **[后备提供商（Fallback Providers）](fallback-providers.md)** — 当主模型遇到错误时自动故障转移到备份 LLM 提供商，包括为视觉和压缩等辅助任务提供独立的后备。
+- **[凭据池（Credential Pools）](credential-pools.md)** — 将 API 调用分布到同一提供商的多个密钥上。在达到速率限制或失败时自动轮换。
+- **[提示缓存（Prompt Caching）](../configuration#prompt-caching)** — 内置的跨会话 1 小时前缀缓存，适用于 Anthropic、OpenRouter 和 Nous Portal 上的 Claude。始终启用，无需配置。
+- **[记忆提供商（Memory Providers）](memory-providers.md)** — 插入外部记忆后端（Honcho、OpenViking、Mem0、Hindsight、Holographic、RetainDB、ByteRover、Supermemory），用于超越内置记忆系统的跨会话用户建模和个性化。
+- **[API 服务器](api-server.md)** — 将 Hermes 作为 OpenAI 兼容的 HTTP 端点暴露。连接任何使用 OpenAI 格式的前端——Open WebUI、LobeChat、LibreChat 等。
+- **[IDE 集成（ACP）](acp.md)** — 在支持 ACP 的编辑器（如 VS Code、Zed 和 JetBrains）中使用 Hermes。聊天、工具活动、文件差异和终端命令在编辑器内渲染。
+- **[批量处理（Batch Processing）](batch-processing.md)** — 从 CLI 并行运行 Agent 处理多个提示或任务，输出结构化和轨迹捕获，适用于评估或下游训练流程。
 
-## Customization
+## 自定义
 
-- **[Personality & SOUL.md](personality.md)** — Fully customizable agent personality. `SOUL.md` is the primary identity file — the first thing in the system prompt — and you can swap in built-in or custom `/personality` presets per session.
-- **[Skins & Themes](skins.md)** — Customize the CLI's visual presentation: banner colors, spinner faces and verbs, response-box labels, branding text, and the tool activity prefix.
-- **[Plugins](plugins.md)** — Add custom tools, hooks, and integrations without modifying core code. Three plugin types: general plugins (tools/hooks), memory providers (cross-session knowledge), and context engines (alternative context management). Managed via the unified `hermes plugins` interactive UI.
+- **[个性与 SOUL.md](personality.md)** — 完全可定制的 Agent 个性。`SOUL.md` 是主要身份文件，位于系统提示首位，你可以在每次会话中切换内置或自定义的 `/personality` 预设。
+- **[皮肤与主题（Skins & Themes）](skins.md)** — 自定义 CLI 的视觉呈现：横幅颜色、旋转图标及动词、响应框标签、品牌文本和工具活动前缀。
+- **[插件（Plugins）](plugins.md)** — 无需修改核心代码即可添加自定义工具、钩子和集成。三种插件类型：通用插件（工具/钩子）、记忆提供商（跨会话知识）和上下文引擎（替代上下文管理）。通过统一的 `hermes plugins` 交互式界面管理。

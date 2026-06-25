@@ -1,153 +1,142 @@
 ---
-title: X/Twitter 搜索
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/x-search.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/x-search.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
-title: X (Twitter) Search
-description: Search X (Twitter) posts and threads from within the agent using xAI's built-in x_search Responses tool — works with either a SuperGrok OAuth login or an XAI_API_KEY.
-sidebar_label: X (Twitter) Search
+title: X (推特) 搜索
+description: 通过 xAI 内置的 x_search 响应工具，让代理搜索 X (推特) 帖子和讨论串——支持 SuperGrok OAuth 登录或 XAI_API_KEY 两种方式。
+sidebar_label: X (推特) 搜索
 sidebar_position: 7
 ---
 
-# X (Twitter) Search
+# X (推特) 搜索
 
-The `x_search` tool lets the agent search X (Twitter) posts, profiles, and threads directly. It's backed by xAI's built-in `x_search` tool on the Responses API at `https://api.x.ai/v1/responses` — Grok itself runs the search server-side and returns synthesized results with citations to the originating posts.
+`x_search` 工具让代理能够直接搜索 X (推特) 上的帖子、个人资料和讨论串。它基于 xAI 在 Responses API (网址为 `https://api.x.ai/v1/responses`) 上内置的 `x_search` 工具——Grok 本身在服务端运行搜索，并返回带有原始帖子引用的合成结果。
 
-**Use this instead of `web_search`** when you specifically want current discussion, reactions, or claims **on X**. For general web pages, keep using `web_search` / `web_extract`.
+当您特别想要查看 **X 上** 当前的讨论、反应或声明时，**请使用此工具代替 `web_search`**。对于一般网页，请继续使用 `web_search` / `web_extract`。
 
 :::tip
-If you're paying Portal for an xAI model anyway, Live Search calls bill against the same xAI key configured for chat. See [Nous Portal](/integrations/nous-portal).
+如果您已经为 Portal 上的 xAI 模型付费，那么 Live Search 调用会计入为聊天配置的同一个 xAI 密钥。请参阅 [Nous Portal](/integrations/nous-portal)。
 :::
 
-## Authentication
+## 身份验证
 
-`x_search` registers when **either** xAI credential path is available:
+当 **任一** xAI 凭证路径可用时，`x_search` 工具会注册：
 
-| Credential | Source | Setup |
+| 凭证 | 来源 | 设置 |
 |------------|--------|-------|
-| **SuperGrok / X Premium+ OAuth** (preferred) | Browser login at `accounts.x.ai`, refreshed automatically | `hermes auth add xai-oauth` — see [xAI Grok OAuth (SuperGrok / X Premium+)](../../guides/xai-grok-oauth.md) |
-| **`XAI_API_KEY`** | Paid xAI API key | Set in `~/.hermes/.env` |
+| **SuperGrok / X Premium+ OAuth**（推荐） | 在 `accounts.x.ai` 通过浏览器登录，自动刷新 | `hermes auth add xai-oauth` — 请参阅 [xAI Grok OAuth (SuperGrok / X Premium+)](../../guides/xai-grok-oauth.md) |
+| **`XAI_API_KEY`** | 付费的 xAI API 密钥 | 在 `~/.hermes/.env` 中设置 |
 
-Both hit the same endpoint with the same payload — the only difference is the bearer token. **When both are configured, SuperGrok OAuth wins** so x_search runs against your subscription quota instead of paid API spend.
+两者都使用相同的负载访问同一个端点——唯一的区别是 bearer 令牌。**当两个都配置时，SuperGrok OAuth 优先**，因此 x_search 会使用您的订阅配额而非付费 API 消费。
 
-The tool's `check_fn` runs the xAI credential resolver every time the model's tool list is rebuilt. A `True` return means the bearer is fetchable AND non-empty AND (if it had expired) successfully refreshed. Revoked tokens with a failed refresh hide the tool from the schema; the model simply can't see it.
+该工具的 `check_fn` 会在每次重新构建模型工具列表时运行 xAI 凭证解析器。返回 `True` 表示 bearer 可获取、非空，并且（如果已过期）已成功刷新。已撤销且刷新失败的令牌会从架构中隐藏该工具；模型根本无法看到它。
 
-## Enabling the tool
+## 启用工具
 
-Auto-enables when xAI credentials (OAuth token or `XAI_API_KEY`) are present. Disable explicitly via `hermes tools` → Search → x_search if you don't want this.
+当存在 xAI 凭证（OAuth 令牌或 `XAI_API_KEY`）时自动启用。如果您不希望使用，可以通过 `hermes tools` → Search → x_search 显式禁用。
 
 ```bash
 hermes tools
-# → 🐦 X (Twitter) Search   (press space to toggle on)
+# → 🐦 X (推特) 搜索   (按空格键切换为启用)
 ```
 
-The picker offers two credential choices:
+选择器提供两种凭证选择：
 
-1. **xAI Grok OAuth (SuperGrok / Premium+)** — opens the browser to `accounts.x.ai` if you're not already logged in
-2. **xAI API key** — prompts for `XAI_API_KEY`
+1. **xAI Grok OAuth (SuperGrok / Premium+)** — 如果您尚未登录，则打开浏览器转到 `accounts.x.ai`
+2. **xAI API 密钥** — 提示输入 `XAI_API_KEY`
 
-Either choice satisfies the gating. You can pick whichever credentials you already have; the tool works identically with both. If both end up configured, OAuth is preferred at call time.
+任一种选择都能满足准入要求。您可以选择已有的任何一种凭证；该工具在两者下功能完全相同。如果最终两个都配置了，调用时 OAuth 优先。
 
-## Configuration
+## 配置
 
 ```yaml
 # ~/.hermes/config.yaml
 x_search:
-  # xAI model used for the Responses call.
-  # grok-4.20-reasoning is the recommended default; any Grok model
-  # with x_search tool access works.
+  # 用于 Responses 调用的 xAI 模型。
+  # grok-4.20-reasoning 是推荐的默认值；任何具有 x_search 工具访问权限的 Grok 模型均可。
   model: grok-4.20-reasoning
 
-  # Request timeout in seconds. x_search can take 60–120s for
-  # complex queries — the default is generous. Minimum: 30.
+  # 请求超时时间（秒）。对于复杂查询，x_search 可能需要 60–120 秒——默认值已足够宽松。最小值：30。
   timeout_seconds: 180
 
-  # Number of automatic retries on 5xx / ReadTimeout / ConnectionError.
-  # Each retry backs off (1.5x attempt seconds, capped at 5s).
+  # 在 5xx / ReadTimeout / ConnectionError 错误时的自动重试次数。
+  # 每次重试都会回退（尝试次数 × 1.5 秒，上限为 5 秒）。
   retries: 2
 ```
 
-## Tool parameters
+## 工具参数
 
-The agent calls `x_search` with these arguments:
+代理使用以下参数调用 `x_search`：
 
-| Parameter | Type | Description |
+| 参数 | 类型 | 描述 |
 |-----------|------|-------------|
-| `query` | string (required) | What to look up on X. |
-| `allowed_x_handles` | string array | Optional list of handles to include **exclusively** (max 10). Leading `@` is stripped. |
-| `excluded_x_handles` | string array | Optional list of handles to exclude (max 10). Mutually exclusive with `allowed_x_handles`. |
-| `from_date` | string | Optional `YYYY-MM-DD` start date. |
-| `to_date` | string | Optional `YYYY-MM-DD` end date. |
-| `enable_image_understanding` | boolean | Ask xAI to analyze images attached to matching posts. |
-| `enable_video_understanding` | boolean | Ask xAI to analyze videos attached to matching posts. |
+| `query` | string (必需) | 在 X 上要查找的内容。 |
+| `allowed_x_handles` | string array | 可选，要 **仅** 包含的句柄列表（最多 10 个）。开头的 `@` 会被去除。 |
+| `excluded_x_handles` | string array | 可选，要排除的句柄列表（最多 10 个）。与 `allowed_x_handles` 互斥。 |
+| `from_date` | string | 可选的 `YYYY-MM-DD` 起始日期。 |
+| `to_date` | string | 可选的 `YYYY-MM-DD` 结束日期。 |
+| `enable_image_understanding` | boolean | 要求 xAI 分析匹配帖子中附加的图片。 |
+| `enable_video_understanding` | boolean | 要求 xAI 分析匹配帖子中附加的视频。 |
 
-The tool returns JSON with:
+该工具返回 JSON，包含：
 
-- `answer` — synthesized text response from Grok
-- `citations` — citations returned by the Responses API top-level field
-- `inline_citations` — `url_citation` annotations extracted from the message body (each with `url`, `title`, `start_index`, `end_index`)
-- `degraded` — `true` when any narrowing filter (`allowed_x_handles`, `excluded_x_handles`, `from_date`, `to_date`) was set AND both citation channels came back empty. In that case the `answer` was synthesized from the model's own knowledge rather than the X index, so treat it as unsourced. `false` otherwise (including the "no filters set" case — a broad unsourced answer is just an answer, not a filter miss)
-- `degraded_reason` — short string naming which filters were active, or `null` when `degraded` is `false`
-- `credential_source` — `"xai-oauth"` if OAuth resolved, `"xai"` if API key resolved
-- `model`, `query`, `provider`, `tool`, `success`
+- `answer` — Grok 合成的文本响应
+- `citations` — Responses API 顶级字段返回的引用
+- `inline_citations` — 从消息体中提取的 `url_citation` 注释（每个包含 `url`、`title`、`start_index`、`end_index`）
+- `degraded` — 当设置了任何限定过滤器（`allowed_x_handles`、`excluded_x_handles`、`from_date`、`to_date`）并且两个引用通道都返回空时为 `true`。在这种情况下，`answer` 是根据模型自身知识合成的，而非来自 X 索引，因此应将其视为无来源。否则为 `false`（包括“未设置过滤器”的情况——一个宽泛的无来源答案只是答案，而不是过滤失败）
+- `degraded_reason` — 简短字符串，说明哪些过滤器处于激活状态；如果 `degraded` 为 `false` 则为 `null`
+- `credential_source` — 如果 OAuth 解析成功则为 `"xai-oauth"`，如果使用 API 密钥则为 `"xai"`
+- `model`、`query`、`provider`、`tool`、`success`
 
-### Date validation
+### 日期验证
 
-`from_date` / `to_date` are validated client-side before the HTTP call:
+`from_date` / `to_date` 会在 HTTP 调用之前在客户端进行验证：
 
-- Both, if provided, must parse as `YYYY-MM-DD`.
-- When both are set, `from_date` must be on or before `to_date`.
-- `from_date` must not be later than today UTC — no posts can exist in a window that hasn't started yet, so the call would be guaranteed to return zero citations.
-- `to_date` in the future is allowed (callers may legitimately request "from yesterday to tomorrow" to catch posts as they arrive).
+- 如果提供了两者，则必须能够解析为 `YYYY-MM-DD` 格式。
+- 如果两者都设置，`from_date` 必须早于或等于 `to_date`。
+- `from_date` 不得晚于今天的 UTC 时间——尚未开始的时间窗口中不可能存在帖子，因此调用必然返回零引用。
+- 允许 `to_date` 为未来日期（调用方可能会合法地请求“从昨天到明天”以捕获即将到达的帖子）。
 
-Validation failures surface as a structured `{"error": "..."}` tool result, never as an HTTP call to xAI.
+验证失败会以结构化的 `{"error": "..."}` 工具结果形式呈现，绝不会触发对 xAI 的 HTTP 调用。
 
-## Example
+## 示例
 
-Talking to the agent:
+与代理对话：
 
-> What are people on X saying about the new Grok image features? Focus on responses from @xai.
+> X 上的人们对新 Grok 图片功能有什么看法？重点关注来自 @xai 的回复。
 
-The agent will:
+代理将：
 
-1. Call `x_search` with `query="reactions to new Grok image features"`, `allowed_x_handles=["xai"]`
-2. Get back a synthesized answer plus a list of citations linking to specific posts
-3. Reply with the answer and references
+1. 调用 `x_search`，参数为 `query="reactions to new Grok image features"`，`allowed_x_handles=["xai"]`
+2. 返回一个合成答案以及指向特定帖子的引用列表
+3. 用答案和引用进行回复
 
-## Troubleshooting
+## 故障排除
 
 ### "No xAI credentials available"
 
-The tool surfaces this when both auth paths fail. Either set `XAI_API_KEY` in `~/.hermes/.env` or run `hermes auth add xai-oauth` and complete the browser login. Then restart your session so the agent re-reads the tool registry.
+当两个认证路径都失败时，工具会显示此信息。请在 `~/.hermes/.env` 中设置 `XAI_API_KEY`，或运行 `hermes auth add xai-oauth` 并完成浏览器登录。然后重新启动会话，以便代理重新读取工具注册表。
 
 ### "`x_search` is not enabled for this model"
 
-The configured `x_search.model` doesn't have access to the server-side `x_search` tool. Switch to `grok-4.20-reasoning` (the default) or another Grok model that supports it. Check the [xAI documentation](https://docs.x.ai/) for the current list.
+配置的 `x_search.model` 没有服务端 `x_search` 工具的访问权限。请切换到 `grok-4.20-reasoning`（默认值）或其他支持该工具的 Grok 模型。查看 [xAI 文档](https://docs.x.ai/) 以获取当前列表。
 
-### Tool doesn't appear in the schema
+### 工具未出现在架构中
 
-Two possible causes:
+两种可能原因：
 
-1. **Toolset not enabled.** Run `hermes tools` and confirm `🐦 X (Twitter) Search` is checked.
-2. **No xAI credentials.** The check_fn returns False, so the schema stays hidden. Run `hermes auth status` to confirm xai-oauth login state, and check that `XAI_API_KEY` is set (if you're using the API-key path).
+1. **工具集未启用。** 运行 `hermes tools` 并确认 `🐦 X (推特) 搜索` 已选中。
+2. **没有 xAI 凭证。** check_fn 返回 False，因此架构保持隐藏。运行 `hermes auth status` 确认 xai-oauth 登录状态，并检查 `XAI_API_KEY` 是否已设置（如果您使用 API 密钥路径）。
 
-### `degraded: true` — answer with no citations
+### `degraded: true` — 无引用的答案
 
-When you used `allowed_x_handles`, `excluded_x_handles`, or a date range and the response comes back with `degraded: true`, xAI's X index returned no matching posts but Grok still produced a synthesized answer from its own training data. The answer is unsourced — do not treat it as a real X result.
+当您使用了 `allowed_x_handles`、`excluded_x_handles` 或日期范围，并且响应返回了 `degraded: true` 时，xAI 的 X 索引未找到匹配的帖子，但 Grok 仍然根据其训练数据生成了合成答案。该答案无来源——请勿将其视为真实的 X 搜索结果。
 
-Causes worth checking:
+值得排查的原因：
 
-- **Typo in the handle.** Strip the `@`, double-check spelling, and confirm the account exists.
-- **Date range too narrow** or sliding past today's posts; widen and retry.
-- **xAI index gap.** Some active accounts intermittently fail to surface in `x_search` even when they post regularly. Retry after a few minutes, or use the `xurl` skill for direct X API reads when you need an exact handle's timeline.
+- **句柄拼写错误。** 去掉 `@`，仔细检查拼写，并确认该账户存在。
+- **日期范围过窄** 或滑过了今天的帖子；请扩大范围重试。
+- **xAI 索引缺口。** 某些活跃账户即使定期发帖，也可能间歇性地无法在 `x_search` 中显示。等待几分钟后重试，或者在需要精确句柄时间线时使用 `xurl` 技能进行直接的 X API 读取。
 
-## See Also
+## 另请参阅
 
-- [xAI Grok OAuth (SuperGrok / Premium+)](../../guides/xai-grok-oauth.md) — the OAuth setup guide
-- [Web Search & Extract](web-search.md) — for general (non-X) web search
-- [Tools Reference](../../reference/tools-reference.md) — full tool catalog
+- [xAI Grok OAuth (SuperGrok / Premium+)](../../guides/xai-grok-oauth.md) — OAuth 设置指南
+- [Web 搜索与提取](web-search.md) — 用于一般（非 X）网页搜索
+- [工具参考](../../reference/tools-reference.md) — 完整工具目录

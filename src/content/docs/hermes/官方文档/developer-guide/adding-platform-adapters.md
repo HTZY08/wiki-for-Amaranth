@@ -1,55 +1,45 @@
----
-title: 添加平台适配器
-description: Hermes Agent 官方文档汉化版
+--- frontmatter ---
 ---
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`developer-guide/adding-platform-adapters.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/adding-platform-adapters.md)
-> 本版本为自用学习用途，非官方翻译。
+# 添加平台适配器
 
----
-sidebar_position: 9
----
-
-# Adding a Platform Adapter
-
-This guide covers adding a new messaging platform to the Hermes gateway. A platform adapter connects Hermes to an external messaging service (Telegram, Discord, WeCom, etc.) so users can interact with the agent through that service.
+本指南介绍如何向 Hermes 网关添加新的消息平台。平台适配器将 Hermes 连接到外部消息服务（Telegram、Discord、WeCom 等），以便用户通过该服务与代理交互。
 
 :::tip
-There are two ways to add a platform:
-- **Plugin** (recommended for community/third-party): Drop a plugin directory into `~/.hermes/plugins/` — zero core code changes needed. See [Plugin Path](#plugin-path-recommended) below.
-- **Built-in**: Modify 20+ files across code, config, and docs. Use the [Built-in Checklist](#step-by-step-checklist-built-in-path) below.
+有两种添加平台的方式：
+- **插件**（推荐用于社区/第三方）：将插件目录放入 `~/.hermes/plugins/` — 无需修改核心代码。请参见下文中的[插件路径](#plugin-path-recommended)。
+- **内置**：修改代码、配置和文档中的 20 多个文件。请参见下文中的[内置检查清单](#step-by-step-checklist-built-in-path)。
 :::
 
-## Architecture Overview
+## 架构概览
 
 ```
-User ↔ Messaging Platform ↔ Platform Adapter ↔ Gateway Runner ↔ AIAgent
+用户 ↔ 消息平台 ↔ 平台适配器 ↔ 网关运行器 ↔ AIAgent
 ```
 
-Every adapter extends `BasePlatformAdapter` from `gateway/platforms/base.py` and implements:
+每个适配器都扩展自 `gateway/platforms/base.py` 中的 `BasePlatformAdapter`，并实现：
 
-- **`connect()`** — Establish connection (WebSocket, long-poll, HTTP server, etc.) *(abstract)*
-- **`disconnect()`** — Clean shutdown *(abstract)*
-- **`send()`** — Send a text message to a chat *(abstract)*
-- **`send_typing()`** — Show typing indicator (optional override)
-- **`get_chat_info()`** — Return chat metadata (optional override)
+- **`connect()`** — 建立连接（WebSocket、长轮询、HTTP 服务器等）*(抽象)*
+- **`disconnect()`** — 清理关闭 *(抽象)*
+- **`send()`** — 向聊天发送文本消息 *(抽象)*
+- **`send_typing()`** — 显示输入指示器（可选覆盖）
+- **`get_chat_info()`** — 返回聊天元数据（可选覆盖）
 
-Inbound messages are received by the adapter and forwarded via `self.handle_message(event)`, which the base class routes to the gateway runner.
+入站消息由适配器接收，并通过 `self.handle_message(event)` 转发，基类将其路由到网关运行器。
 
-## Plugin Path (Recommended)
+## 插件路径（推荐）
 
-The plugin system lets you add a platform adapter without modifying any core Hermes code. Your plugin is a directory with two files:
+插件系统允许您在不修改任何 Hermes 核心代码的情况下添加平台适配器。您的插件是一个包含两个文件的目录：
 
 ```
 ~/.hermes/plugins/my-platform/
-  plugin.yaml      # Plugin metadata
-  adapter.py       # Adapter class + register() entry point
+  plugin.yaml      # 插件元数据
+  adapter.py       # 适配器类 + register() 入口点
 ```
 
 ### plugin.yaml
 
-Plugin metadata. The `requires_env` and `optional_env` blocks auto-populate `hermes config` UI entries (see [Surfacing Env Vars](#surfacing-env-vars-in-hermes-config) below).
+插件元数据。`requires_env` 和 `optional_env` 块会自动填充 `hermes config` UI 条目（请参见下文[在 Hermes 配置中展示环境变量](#surfacing-env-vars-in-hermes-config)）。
 
 ```yaml
 name: my-platform
@@ -59,8 +49,8 @@ version: 1.0.0
 description: My custom messaging platform adapter
 author: Your Name
 requires_env:
-  - MY_PLATFORM_TOKEN          # bare string works
-  - name: MY_PLATFORM_CHANNEL  # or rich dict for better UX
+  - MY_PLATFORM_TOKEN          # 裸字符串也可以
+  - name: MY_PLATFORM_CHANNEL  # 或使用富字典以获得更好的用户体验
     description: "Channel to join"
     prompt: "Channel"
     password: false
@@ -164,9 +154,9 @@ def register(ctx):
     )
 ```
 
-### Configuration
+### 配置
 
-Users configure the platform in `config.yaml`:
+用户在 `config.yaml` 中配置平台：
 
 ```yaml
 gateway:
@@ -178,38 +168,38 @@ gateway:
         channel: "#general"
 ```
 
-Or via environment variables (which the adapter reads in `__init__`).
+或通过环境变量（适配器在 `__init__` 中读取）。
 
-### What the Plugin System Handles Automatically
+### 插件系统自动处理的内容
 
-When you call `ctx.register_platform()`, the following integration points are handled for you — no core code changes needed:
+当您调用 `ctx.register_platform()` 时，以下集成点会自动处理 — 无需更改核心代码：
 
-| Integration point | How it works |
+| 集成点 | 工作原理 |
 |---|---|
-| Gateway adapter creation | Registry checked before built-in if/elif chain |
-| Config parsing | `Platform._missing_()` accepts any platform name |
-| Connected platform validation | Registry `validate_config()` called |
-| User authorization | `allowed_users_env` / `allow_all_env` checked |
-| Env-only auto-enable | `env_enablement_fn` seeds `PlatformConfig.extra` + `home_channel` |
-| YAML config bridge | `apply_yaml_config_fn` translates `config.yaml` keys into env vars / extras |
-| Cron delivery | `cron_deliver_env_var` makes `deliver=<name>` work |
-| `hermes config` UI entries | `requires_env` / `optional_env` in `plugin.yaml` auto-populate |
-| send_message tool | Routes through live gateway adapter |
-| Webhook cross-platform delivery | Registry checked for known platforms |
-| `/update` command access | `allow_update_command` flag |
-| Channel directory | Plugin platforms included in enumeration |
-| System prompt hints | `platform_hint` injected into LLM context |
-| Message chunking | `max_message_length` for smart splitting |
-| PII redaction | `pii_safe` flag |
-| `hermes status` | Shows plugin platforms with `(plugin)` tag |
-| `hermes gateway setup` | Plugin platforms appear in setup menu |
-| `hermes tools` / `hermes skills` | Plugin platforms in per-platform config |
-| Token lock (multi-profile) | Use `acquire_scoped_lock()` in your `connect()` |
-| Orphaned config warning | Descriptive log when plugin is missing |
+| 网关适配器创建 | 在内置 if/elif 链之前检查注册表 |
+| 配置解析 | `Platform._missing_()` 接受任何平台名称 |
+| 已连接平台验证 | 调用注册表的 `validate_config()` |
+| 用户授权 | 检查 `allowed_users_env` / `allow_all_env` |
+| 仅环境变量自动启用 | `env_enablement_fn` 为 `PlatformConfig.extra` + `home_channel` 提供种子值 |
+| YAML 配置桥接 | `apply_yaml_config_fn` 将 `config.yaml` 键转换为环境变量 / extras |
+| Cron 投递 | `cron_deliver_env_var` 使 `deliver=<name>` 生效 |
+| `hermes config` UI 条目 | `plugin.yaml` 中的 `requires_env` / `optional_env` 自动填充 |
+| send_message 工具 | 通过活动的网关适配器路由 |
+| Webhook 跨平台投递 | 检查注册表中已知的平台 |
+| `/update` 命令访问 | `allow_update_command` 标志 |
+| 频道目录 | 枚举中包括插件平台 |
+| 系统提示提示 | `platform_hint` 注入到 LLM 上下文中 |
+| 消息分块 | `max_message_length` 用于智能分割 |
+| PII 编辑 | `pii_safe` 标志 |
+| `hermes status` | 使用 `(plugin)` 标签显示插件平台 |
+| `hermes gateway setup` | 插件平台出现在设置菜单中 |
+| `hermes tools` / `hermes skills` | 插件平台在按平台配置中 |
+| 令牌锁定（多配置文件） | 在 `connect()` 中使用 `acquire_scoped_lock()` |
+| 孤立配置警告 | 当插件缺失时，显示描述性日志 |
 
-## Env-Driven Auto-Configuration
+## 环境变量驱动的自动配置
 
-Most users set up a platform by dropping env vars into `~/.hermes/.env` rather than editing `config.yaml`. The `env_enablement_fn` hook lets your plugin pick those env vars up **before** the adapter is constructed, so `hermes gateway status`, `get_connected_platforms()`, and cron delivery see the correct state without instantiating the platform SDK.
+大多数用户通过将环境变量放入 `~/.hermes/.env` 来设置平台，而不是编辑 `config.yaml`。`env_enablement_fn` 钩子允许您的插件在适配器构建之前收集这些环境变量，因此 `hermes gateway status`、`get_connected_platforms()` 和 cron 投递无需实例化平台 SDK 即可看到正确的状态。
 
 ```python
 def _env_enablement() -> dict | None:
@@ -250,9 +240,9 @@ def register(ctx):
 ```
 
 
-## YAML→env Config Bridge
+## YAML→环境变量 配置桥接
 
-Some users prefer setting `config.yaml` keys (`my_platform.require_mention`, `my_platform.allowed_channels`, etc.) over env vars. The `apply_yaml_config_fn` hook lets your plugin own this translation instead of forcing core `gateway/config.py` to know your platform's YAML schema.
+一些用户更喜欢在 `config.yaml` 中设置键（`my_platform.require_mention`、`my_platform.allowed_channels` 等）而不是使用环境变量。`apply_yaml_config_fn` 钩子允许您的插件处理此转换，而无需强制核心 `gateway/config.py` 知道您平台的 YAML 模式。
 
 ```python
 import os
@@ -284,14 +274,14 @@ def register(ctx):
     )
 ```
 
-The hook is invoked during `load_gateway_config()` after the generic shared-key loop (which handles common keys like `unauthorized_dm_behavior`, `notice_delivery`, `reply_prefix`, `require_mention`, etc.) and before `_apply_env_overrides()`, so your plugin only needs to bridge **platform-specific** keys.
+该钩子在 `load_gateway_config()` 期间被调用，在通用共享键循环（处理常见键如 `unauthorized_dm_behavior`、`notice_delivery`、`reply_prefix`、`require_mention` 等）之后，在 `_apply_env_overrides()` 之前，因此您的插件只需要桥接**平台特定**的键。
 
-Exceptions raised by the hook are swallowed and logged at debug level — a misbehaving plugin never aborts gateway config load.
+钩子抛出的异常会被吞掉并记录在调试级别 — 行为异常的插件绝不会中止网关配置加载。
 
 
-## Cron Delivery
+## Cron 投递
 
-To let `deliver=my_platform` cron jobs route to a configured home channel, set `cron_deliver_env_var` to the env var name that holds the default chat/room/channel ID:
+为了让 `deliver=my_platform` 的 cron 作业路由到已配置的主频道，将 `cron_deliver_env_var` 设置为保存默认聊天/房间/频道 ID 的环境变量名称：
 
 ```python
 ctx.register_platform(
@@ -301,11 +291,11 @@ ctx.register_platform(
 )
 ```
 
-The scheduler reads this env var when resolving the home target for `deliver=my_platform` jobs, and also treats the platform as a valid cron target in `_KNOWN_DELIVERY_PLATFORMS`-style checks. If your `env_enablement_fn` seeds a `home_channel` dict (see above), that takes precedence — `cron_deliver_env_var` is the fallback for cron jobs that run before env seeding.
+调度器在解析 `deliver=my_platform` 作业的主目标时读取此环境变量，并且在 `_KNOWN_DELIVERY_PLATFORMS` 样式的检查中也会将该平台视为有效的 cron 目标。如果您的 `env_enablement_fn` 提供了 `home_channel` 字典（见上文），则它优先 — `cron_deliver_env_var` 是在环境变量提供之前运行的 cron 作业的后备方案。
 
-### Out-of-process cron delivery
+### 进程外 Cron 投递
 
-`cron_deliver_env_var` makes your platform a recognized `deliver=` target. To make the actual send succeed when the cron job runs in a separate process from the gateway (i.e., `hermes cron run` separate from `hermes gateway`), register a `standalone_sender_fn`:
+`cron_deliver_env_var` 使您的平台成为被认可的 `deliver=` 目标。当 cron 作业在与网关不同的进程中运行时（即 `hermes cron run` 与 `hermes gateway` 分开运行），要使实际发送成功，请注册一个 `standalone_sender_fn`：
 
 ```python
 async def _standalone_send(
@@ -330,13 +320,13 @@ ctx.register_platform(
 )
 ```
 
-Why this hook is necessary: built-in platforms (Telegram, Discord, Slack, etc.) ship direct REST helpers in `tools/send_message_tool.py` so cron can deliver without holding the gateway in the same process. Plugin platforms historically depended on `_gateway_runner_ref()`, which returns `None` outside the gateway process, so without `standalone_sender_fn` the cron-side send fails with `No live adapter for platform '<name>'`.
+为什么需要这个钩子：内置平台（Telegram、Discord、Slack 等）在 `tools/send_message_tool.py` 中提供了直接的 REST 辅助函数，因此 cron 可以在不保持网关在同一进程中的情况下投递。插件平台历史上依赖于 `_gateway_runner_ref()`，该函数在网关进程之外返回 `None`，因此如果没有 `standalone_sender_fn`，cron 端的发送会失败，并提示 `No live adapter for platform '<name>'`。
 
-The function receives the same `pconfig` and `chat_id` that the live adapter would, plus optional `thread_id`, `media_files`, and `force_document` keyword arguments. Returning `{"success": True, "message_id": ...}` is treated as a successful delivery; returning `{"error": "..."}` surfaces the message in cron's `delivery_errors`. Exceptions raised inside the function are caught by the dispatcher and reported as `Plugin standalone send failed: <reason>`. Reference implementations live in `plugins/platforms/{irc,teams,google_chat}/adapter.py`.
+该函数接收与活动适配器相同的 `pconfig` 和 `chat_id`，以及可选的 `thread_id`、`media_files` 和 `force_document` 关键字参数。返回 `{"success": True, "message_id": ...}` 被视为成功投递；返回 `{"error": "..."}` 会将消息显示在 cron 的 `delivery_errors` 中。函数内抛出的异常会被调度器捕获并报告为 `Plugin standalone send failed: <reason>`。参考实现见 `plugins/platforms/{irc,teams,google_chat}/adapter.py`。
 
-## Surfacing Env Vars in `hermes config`
+## 在 hermes config 中展示环境变量
 
-`hermes_cli/config.py` scans `plugins/platforms/*/plugin.yaml` at import time and auto-populates `OPTIONAL_ENV_VARS` from `requires_env` and (optional) `optional_env` blocks. Use the rich-dict form to contribute proper descriptions, prompts, password flags, and URLs — the CLI setup UI picks them up for free.
+`hermes_cli/config.py` 在导入时扫描 `plugins/platforms/*/plugin.yaml`，并从 `requires_env` 和（可选的）`optional_env` 块自动填充 `OPTIONAL_ENV_VARS`。使用富字典形式可以提供适当的描述、提示、密码标志和 URL — CLI 设置 UI 会自动拾取它们。
 
 ```yaml
 # plugins/platforms/my_platform/plugin.yaml
@@ -368,23 +358,23 @@ optional_env:
     password: false
 ```
 
-**Supported dict keys:** `name` (required), `description`, `prompt`, `url`, `password` (bool; auto-detected from `*_TOKEN` / `*_SECRET` / `*_KEY` / `*_PASSWORD` / `*_JSON` suffix when omitted), `category` (defaults to `"messaging"`).
+**支持的字典键：** `name`（必需）、`description`、`prompt`、`url`、`password`（布尔值；当省略时，从 `*_TOKEN` / `*_SECRET` / `*_KEY` / `*_PASSWORD` / `*_JSON` 后缀自动检测）、`category`（默认为 `"messaging"`）。
 
-Bare-string entries (`- MY_PLATFORM_TOKEN`) still work — they get a generic description auto-derived from the plugin's `label`. If a hardcoded entry for the same var already exists in `OPTIONAL_ENV_VARS`, it wins (back-compat); the plugin.yaml form acts as the fallback.
+裸字符串条目（`- MY_PLATFORM_TOKEN`）仍然有效 — 它们会从插件的 `label` 自动派生出一个通用描述。如果 `OPTIONAL_ENV_VARS` 中已存在同名的硬编码条目，则该条目优先（向后兼容）；`plugin.yaml` 形式作为后备。
 
-## Platform-Specific Slow-LLM UX
+## 平台特定的慢速 LLM 用户体验
 
-Some platforms have constraints that change how a slow LLM response should be presented:
+某些平台具有约束条件，会改变慢速 LLM 响应应如何呈现的方式：
 
-- **LINE** issues a single-use *reply token* that expires roughly 60 seconds after the inbound event. Replying with that token is free; falling back to the metered Push API is not. If the LLM hasn't finished by the deadline, the choice is "burn paid Push quota" or "do something cleverer with the reply token before it expires."
-- **WhatsApp** marks a session inactive after 24h, after which only template messages are accepted.
-- **SMS** has no concept of typing indicators or progressive updates — long responses just look like the bot is offline.
+- **LINE** 发出一个一次性*回复令牌*，在入站事件后大约 60 秒过期。使用该令牌回复是免费的；回退到按量计费的推送 API 则不是。如果 LLM 在截止时间前未完成，选择是“消耗付费推送配额”或“在回复令牌过期前做一些更巧妙的事情。”
+- **WhatsApp** 在 24 小时后将会话标记为不活跃，之后只接受模板消息。
+- **SMS** 没有输入指示器或渐进更新的概念 — 长响应看起来就像机器人离线了。
 
-These are real constraints the base `BasePlatformAdapter` can't anticipate. The plugin surface intentionally leaves the room for an adapter to layer platform-specific UX on top of the base typing loop without expanding the kwarg list.
+这些是基类 `BasePlatformAdapter` 无法预见的真实约束。插件界面特意留出了空间，允许适配器在基本输入循环之上分层实现平台特定的用户体验，而无需扩展 kwargs 列表。
 
-### Pattern: subclass `_keep_typing` to layer mid-flight UX
+### 模式：子类化 `_keep_typing` 以分层飞行中用户体验
 
-`BasePlatformAdapter._keep_typing` is the typing-indicator heartbeat — it runs as a background task while the LLM is generating, and is cancelled when the response is delivered. To layer a platform-specific behavior at a threshold (e.g. send a "still thinking" bubble at 45s), override `_keep_typing` in your adapter, schedule your own task alongside `super()._keep_typing()`, and tear it down in `finally`:
+`BasePlatformAdapter._keep_typing` 是输入指示器的心跳 — 它在 LLM 生成时作为后台任务运行，并在响应交付时被取消。要在阈值处分层平台特定行为（例如在 45 秒时发送“仍在思考”气泡），在适配器中覆盖 `_keep_typing`，并在 `super()._keep_typing()` 旁边调度您自己的任务，并在 `finally` 中将其拆除：
 
 ```python
 class LineAdapter(BasePlatformAdapter):
@@ -416,19 +406,19 @@ class LineAdapter(BasePlatformAdapter):
                     pass
 ```
 
-Key points:
+关键点：
 
-- **Always `await super()._keep_typing(...)`.** The typing heartbeat is independently useful — don't replace it, layer on top of it.
-- **Tear down the side task in `finally`.** When the LLM finishes (or `/stop` cancels the run), the gateway cancels the typing task. Your side task must observe that cancellation too, otherwise it lingers and may fire after the response was already delivered.
-- **Pair with `interrupt_session_activity`** to resolve any orphan UX state when the user issues `/stop`. For LINE, this means transitioning the postback cache entry from `PENDING` to `ERROR` so the persistent "Get answer" button delivers a "Run was interrupted" message instead of looping.
+- **始终 `await super()._keep_typing(...)`。** 输入心跳本身是有用的 — 不要替换它，而是在其之上分层。
+- **在 `finally` 中拆除辅助任务。** 当 LLM 完成（或 `/stop` 取消运行）时，网关取消输入任务。您的辅助任务也必须观察该取消，否则它会持续存在并可能在响应交付后触发。
+- **与 `interrupt_session_activity` 配对** 以解决用户发出 `/stop` 时的任何孤立用户体验状态。对于 LINE，这意味着将回传缓存条目从 `PENDING` 转换为 `ERROR`，以便持久的“获取答案”按钮发送“运行已被中断”消息而不是循环执行。
 
-### Pattern: subclass `send` to route through a cache instead of sending immediately
+### 模式：子类化 `send` 以通过缓存路由而不是立即发送
 
-If your slow-response UX caches the response for later retrieval (LINE's postback flow), your `send` override needs to recognize three modes:
+如果您的慢速响应用户体验将响应缓存起来以供以后检索（LINE 的回传流程），您的 `send` 覆盖需要识别三种模式：
 
-1. **Pending postback active for this chat** → cache the response under the request_id, don't send anything visible.
-2. **System busy-ack** (`⚡ Interrupting`, `⏳ Queued`, `⏩ Steered`) → bypass the cache and send visibly so the user sees the gateway's response to their input.
-3. **Normal response** → send via reply-token-or-push as usual.
+1. **此聊天的待处理回传处于活动状态** → 将响应缓存在 request_id 下，不发送任何可见内容。
+2. **系统忙碌确认**（`⚡ Interrupting`、`⏳ Queued`、`⏩ Steered`）→ 绕过缓存并可见地发送，以便用户看到网关对其输入的响应。
+3. **正常响应** → 照常通过回复令牌或推送发送。
 
 ```python
 async def send(self, chat_id: str, content: str, **kw) -> SendResult:
@@ -441,41 +431,42 @@ async def send(self, chat_id: str, content: str, **kw) -> SendResult:
     return await self._send_text_chunks(chat_id, content, force_push=False)
 ```
 
-`_SYSTEM_BYPASS_PREFIXES` are the gateway's own busy-acknowledgment prefixes (`⚡`, `⏳`, `⏩`, `💾`). Always let those through visibly, regardless of cached UX state.
+`_SYSTEM_BYPASS_PREFIXES` 是网关自己的忙碌确认前缀（`⚡`、`⏳`、`⏩`、`💾`）。无论缓存的用户体验状态如何，始终让这些可见地通过。
 
-### When this pattern is appropriate
+### 此模式何时适用
 
-Use the typing-loop override approach when:
+在以下情况下使用输入循环覆盖方法：
 
-- The platform's outbound API has a hard time-window constraint (single-use reply token, expiring sticky session, etc.) AND
-- A *visible mid-flight bubble* is acceptable UX on that platform.
+- 平台的出站 API 具有严格的时间窗口约束（一次性回复令牌、过期的粘性会话等）且
+- 在该平台上*可见的飞行中气泡*是可接受的用户体验。
 
-Use the simpler `slow_response_threshold = 0` always-Push path when:
+在以下情况下使用更简单的 `slow_response_threshold = 0` 始终推送路径：
 
-- The platform doesn't have a meaningful free vs. paid distinction, OR
-- The user community prefers "loading… loading… DONE" silence-then-response over an interactive intermediate bubble.
+- 平台没有有意义的免费与付费区分，或
+- 用户社区更喜欢“加载中… 加载中… 完成”静默然后响应的方式，而不是交互式中间气泡。
 
-LINE supports both: the threshold defaults to 45s for free postback fetch, and `LINE_SLOW_RESPONSE_THRESHOLD=0` reverts to "always Push fallback."
+LINE 支持两者：阈值默认为 45 秒用于免费回传获取，而 `LINE_SLOW_RESPONSE_THRESHOLD=0` 恢复到“始终推送后备”。
 
-### Reference Implementation
+### 参考实现
 
-See `plugins/platforms/line/adapter.py` for the full LINE postback implementation — a `RequestCache` state machine (`PENDING → READY → DELIVERED`, plus `ERROR` for `/stop`), a `_keep_typing` override that fires the Template Buttons bubble at threshold, a `send` override that routes through the cache, and an `interrupt_session_activity` override that resolves orphan PENDING entries.
+有关完整的 LINE 回传实现，请参阅 `plugins/platforms/line/adapter.py` — 一个 `RequestCache` 状态机（`PENDING → READY → DELIVERED`，加上用于 `/stop` 的 `ERROR`），一个在阈值处触发模板按钮气泡的 `_keep_typing` 覆盖，一个通过缓存路由的 `send` 覆盖，以及一个解决孤立 PENDING 条目的 `interrupt_session_activity` 覆盖。
 
-### Reference Implementations (Plugin Path)
+### 参考实现（插件路径）
 
-See `plugins/platforms/irc/` in the repo for a complete working example — a full async IRC adapter with zero external dependencies. `plugins/platforms/teams/` covers Bot Framework / Adaptive Cards, `plugins/platforms/google_chat/` covers OAuth-based REST APIs, and `plugins/platforms/line/` covers webhook-driven Messaging APIs with platform-specific slow-LLM UX.
+有关完整的可工作示例，请参阅仓库中的 `plugins/platforms/irc/` — 一个零外部依赖的完整异步 IRC 适配器。`plugins/platforms/teams/` 涵盖 Bot Framework / Adaptive Cards，`plugins/platforms/google_chat/` 涵盖基于 OAuth 的 REST API，`plugins/platforms/line/` 涵盖具有平台特定慢速 LLM 用户体验的 webhook 驱动消息 API。
 
 ---
 
-## Step-by-Step Checklist (Built-in Path)
+--- body ---
+## 逐步检查清单（内置路径）
 
 :::note
-This checklist is for adding a platform directly to the Hermes core codebase — typically done by core contributors for officially supported platforms. Community/third-party platforms should use the [Plugin Path](#plugin-path-recommended) above.
+此检查清单用于直接将平台添加到 Hermes 核心代码库 — 通常由核心贡献者为官方支持的平台完成。社区/第三方平台应使用上面的[插件路径](#plugin-path-recommended)。
 :::
 
-### 1. Platform Enum
+### 1. 平台枚举
 
-Add your platform to the `Platform` enum in `gateway/config.py`:
+在 `gateway/config.py` 中向 `Platform` 枚举添加您的平台：
 
 ```python
 class Platform(str, Enum):
@@ -483,9 +474,9 @@ class Platform(str, Enum):
     NEWPLAT = "newplat"
 ```
 
-### 2. Adapter File
+### 2. 适配器文件
 
-Create `plugins/platforms/newplat/adapter.py`:
+创建 `plugins/platforms/newplat/adapter.py`：
 
 ```python
 from gateway.config import Platform, PlatformConfig
@@ -521,7 +512,7 @@ class NewPlatAdapter(BasePlatformAdapter):
         return {"name": chat_id, "type": "dm"}
 ```
 
-For inbound messages, build a `MessageEvent` and call `self.handle_message(event)`:
+对于入站消息，构建一个 `MessageEvent` 并调用 `self.handle_message(event)`：
 
 ```python
 source = self.build_source(
@@ -540,52 +531,52 @@ event = MessageEvent(
 await self.handle_message(event)
 ```
 
-### 3. Gateway Config (`gateway/config.py`)
+### 3. 网关配置（`gateway/config.py`）
 
-Three touchpoints:
+三个接触点：
 
-1. **`get_connected_platforms()`** — Add a check for your platform's required credentials
-2. **`load_gateway_config()`** — Add token env map entry: `Platform.NEWPLAT: "NEWPLAT_TOKEN"`
-3. **`_apply_env_overrides()`** — Map all `NEWPLAT_*` env vars to config
+1. **`get_connected_platforms()`** — 添加对平台所需凭据的检查
+2. **`load_gateway_config()`** — 添加令牌环境映射条目：`Platform.NEWPLAT: "NEWPLAT_TOKEN"`
+3. **`_apply_env_overrides()`** — 将所有 `NEWPLAT_*` 环境变量映射到配置
 
-### 4. Gateway Runner (`gateway/run.py`)
+### 4. 网关运行器（`gateway/run.py`）
 
-Five touchpoints:
+五个接触点：
 
-1. **`_create_adapter()`** — Add an `elif platform == Platform.NEWPLAT:` branch
-2. **`_is_user_authorized()` allowed_users map** — `Platform.NEWPLAT: "NEWPLAT_ALLOWED_USERS"`
-3. **`_is_user_authorized()` allow_all map** — `Platform.NEWPLAT: "NEWPLAT_ALLOW_ALL_USERS"`
-4. **Early env check `_any_allowlist` tuple** — Add `"NEWPLAT_ALLOWED_USERS"`
-5. **Early env check `_allow_all` tuple** — Add `"NEWPLAT_ALLOW_ALL_USERS"`
-6. **`_UPDATE_ALLOWED_PLATFORMS` frozenset** — Add `Platform.NEWPLAT`
+1. **`_create_adapter()`** — 添加 `elif platform == Platform.NEWPLAT:` 分支
+2. **`_is_user_authorized()` allowed_users 映射** — `Platform.NEWPLAT: "NEWPLAT_ALLOWED_USERS"`
+3. **`_is_user_authorized()` allow_all 映射** — `Platform.NEWPLAT: "NEWPLAT_ALLOW_ALL_USERS"`
+4. **早期环境检查 `_any_allowlist` 元组** — 添加 `"NEWPLAT_ALLOWED_USERS"`
+5. **早期环境检查 `_allow_all` 元组** — 添加 `"NEWPLAT_ALLOW_ALL_USERS"`
+6. **`_UPDATE_ALLOWED_PLATFORMS` 冻结集合** — 添加 `Platform.NEWPLAT`
 
-### 5. Cross-Platform Delivery
+### 5. 跨平台投递
 
-1. **`gateway/platforms/webhook.py`** — Add `"newplat"` to the delivery type tuple
-2. **`cron/scheduler.py`** — Add to `_KNOWN_DELIVERY_PLATFORMS` frozenset and `_deliver_result()` platform map
+1. **`gateway/platforms/webhook.py`** — 将 `"newplat"` 添加到投递类型元组
+2. **`cron/scheduler.py`** — 添加到 `_KNOWN_DELIVERY_PLATFORMS` 冻结集合和 `_deliver_result()` 平台映射
 
-### 6. CLI Integration
+### 6. CLI 集成
 
-1. **`hermes_cli/config.py`** — Add all `NEWPLAT_*` vars to `_EXTRA_ENV_KEYS`
-2. **`hermes_cli/gateway.py`** — Add entry to `_PLATFORMS` list with key, label, emoji, token_var, setup_instructions, and vars
-3. **`hermes_cli/platforms.py`** — Add `PlatformInfo` entry with label and default_toolset (used by `skills_config` and `tools_config` TUIs)
-4. **`hermes_cli/setup.py`** — Add `_setup_newplat()` function (can delegate to `gateway.py`) and add tuple to the messaging platforms list
-5. **`hermes_cli/status.py`** — Add platform detection entry: `"NewPlat": ("NEWPLAT_TOKEN", "NEWPLAT_HOME_CHANNEL")`
-6. **`hermes_cli/dump.py`** — Add `"newplat": "NEWPLAT_TOKEN"` to platform detection dict
+1. **`hermes_cli/config.py`** — 将所有 `NEWPLAT_*` 变量添加到 `_EXTRA_ENV_KEYS`
+2. **`hermes_cli/gateway.py`** — 向 `_PLATFORMS` 列表添加条目，包括键、标签、表情符号、token_var、设置说明和变量
+3. **`hermes_cli/platforms.py`** — 添加 `PlatformInfo` 条目，包括标签和默认工具集（由 `skills_config` 和 `tools_config` TUI 使用）
+4. **`hermes_cli/setup.py`** — 添加 `_setup_newplat()` 函数（可以委托给 `gateway.py`），并将元组添加到消息平台列表
+5. **`hermes_cli/status.py`** — 添加平台检测条目：`"NewPlat": ("NEWPLAT_TOKEN", "NEWPLAT_HOME_CHANNEL")`
+6. **`hermes_cli/dump.py`** — 将 `"newplat": "NEWPLAT_TOKEN"` 添加到平台检测字典
 
-### 7. Tools
+### 7. 工具
 
-1. **`tools/send_message_tool.py`** — Add `"newplat": Platform.NEWPLAT` to platform map
-2. **`tools/cronjob_tools.py`** — Add `newplat` to the delivery target description string
+1. **`tools/send_message_tool.py`** — 将 `"newplat": Platform.NEWPLAT` 添加到平台映射
+2. **`tools/cronjob_tools.py`** — 将 `newplat` 添加到投递目标描述字符串
 
-### 8. Toolsets
+### 8. 工具集
 
-1. **`toolsets.py`** — Add `"hermes-newplat"` toolset definition with `_HERMES_CORE_TOOLS`
-2. **`toolsets.py`** — Add `"hermes-newplat"` to the `"hermes-gateway"` includes list
+1. **`toolsets.py`** — 使用 `_HERMES_CORE_TOOLS` 添加 `"hermes-newplat"` 工具集定义
+2. **`toolsets.py`** — 将 `"hermes-newplat"` 添加到 `"hermes-gateway"` 包含列表
 
-### 9. Optional: Platform Hints
+### 9. 可选：平台提示
 
-**`agent/prompt_builder.py`** — If your platform has specific rendering limitations (no markdown, message length limits, etc.), add an entry to the `_PLATFORM_HINTS` dict. This injects platform-specific guidance into the system prompt:
+**`agent/prompt_builder.py`** — 如果您的平台有特定的渲染限制（无 markdown、消息长度限制等），请向 `_PLATFORM_HINTS` 字典添加条目。这会将平台特定的指导注入到系统提示中：
 
 ```python
 _PLATFORM_HINTS = {
@@ -597,33 +588,33 @@ _PLATFORM_HINTS = {
 }
 ```
 
-Not all platforms need hints — only add one if the agent's behavior should differ.
+并非所有平台都需要提示 — 仅当代理的行为应有所差异时才添加。
 
-### 10. Tests
+### 10. 测试
 
-Create `tests/gateway/test_newplat.py` covering:
+创建 `tests/gateway/test_newplat.py`，涵盖：
 
-- Adapter construction from config
-- Message event building
-- Send method (mock the external API)
-- Platform-specific features (encryption, routing, etc.)
+- 基于配置的适配器构建
+- 消息事件构建
+- Send 方法（模拟外部 API）
+- 平台特定功能（加密、路由等）
 
-### 11. Documentation
+### 11. 文档
 
-| File | What to add |
+| 文件 | 要添加的内容 |
 |------|-------------|
-| `website/docs/user-guide/messaging/newplat.md` | Full platform setup page |
-| `website/docs/user-guide/messaging/index.md` | Platform comparison table, architecture diagram, toolsets table, security section, next-steps link |
-| `website/docs/reference/environment-variables.md` | All NEWPLAT_* env vars |
-| `website/docs/reference/toolsets-reference.md` | hermes-newplat toolset |
-| `website/docs/integrations/index.md` | Platform link |
-| `website/sidebars.ts` | Sidebar entry for the docs page |
-| `website/docs/developer-guide/architecture.md` | Adapter count + listing |
-| `website/docs/developer-guide/gateway-internals.md` | Adapter file listing |
+| `website/docs/user-guide/messaging/newplat.md` | 完整的平台设置页面 |
+| `website/docs/user-guide/messaging/index.md` | 平台比较表、架构图、工具集表、安全部分、下一步链接 |
+| `website/docs/reference/environment-variables.md` | 所有 NEWPLAT_* 环境变量 |
+| `website/docs/reference/toolsets-reference.md` | hermes-newplat 工具集 |
+| `website/docs/integrations/index.md` | 平台链接 |
+| `website/sidebars.ts` | 文档页面的侧边栏条目 |
+| `website/docs/developer-guide/architecture.md` | 适配器数量 + 列表 |
+| `website/docs/developer-guide/gateway-internals.md` | 适配器文件列表 |
 
-## Parity Audit
+## 对等审计
 
-Before marking a new platform PR as complete, run a parity audit against an established platform:
+在将新平台 PR 标记为完成之前，请对照已有平台运行对等审计：
 
 ```bash
 # Find every .py file mentioning the reference platform
@@ -635,13 +626,13 @@ search_files "newplat" output_mode="files_only" file_glob="*.py"
 # Any file in the first set but not the second is a potential gap
 ```
 
-Repeat for `.md` and `.ts` files. Investigate each gap — is it a platform enumeration (needs updating) or a platform-specific reference (skip)?
+对 `.md` 和 `.ts` 文件重复。调查每个差距 — 它是平台枚举（需要更新）还是平台特定引用（跳过）？
 
-## Common Patterns
+## 常见模式
 
-### Long-Poll Adapters
+### 长轮询适配器
 
-If your adapter uses long-polling (like Telegram or Weixin), use a polling loop task:
+如果您的适配器使用长轮询（如 Telegram 或微信），请使用轮询循环任务：
 
 ```python
 async def connect(self):
@@ -655,9 +646,9 @@ async def _poll_loop(self):
             await self.handle_message(self._build_event(msg))
 ```
 
-### Callback/Webhook Adapters
+### 回调/Webhook 适配器
 
-If the platform pushes messages to your endpoint (like WeCom Callback), run an HTTP server:
+如果平台将消息推送到您的端点（如企业微信回调），请运行一个 HTTP 服务器：
 
 ```python
 async def connect(self):
@@ -669,14 +660,14 @@ async def connect(self):
 async def _handle_callback(self, request):
     event = self._build_event(await request.text())
     await self._message_queue.put(event)
-    return web.Response(text="success")  # Acknowledge immediately
+    return web.Response(text="success")  # 立即确认
 ```
 
-For platforms with tight response deadlines (e.g., WeCom's 5-second limit), always acknowledge immediately and deliver the agent's reply proactively via API later. Agent sessions run 3–30 minutes — inline replies within a callback response window are not feasible.
+对于具有严格响应截止时间的平台（例如企业微信的 5 秒限制），始终立即确认，并在稍后主动通过 API 交付代理的回复。代理会话运行 3–30 分钟 — 在回调响应窗口内进行内联回复是不可行的。
 
-### Token Locks
+### 令牌锁定
 
-If the adapter holds a persistent connection with a unique credential, add a scoped lock to prevent two profiles from using the same credential:
+如果适配器持有具有唯一凭据的持久连接，请添加一个作用域锁，以防止两个配置文件使用相同的凭据：
 
 ```python
 from gateway.status import acquire_scoped_lock, release_scoped_lock
@@ -691,11 +682,11 @@ async def disconnect(self):
     release_scoped_lock("newplat", self._token)
 ```
 
-## Reference Implementations
+## 参考实现
 
-| Adapter | Pattern | Complexity | Good reference for |
+| 适配器 | 模式 | 复杂度 | 适合参考 |
 |---------|---------|------------|-------------------|
-| `bluebubbles.py` | REST + webhook | Medium | Simple REST API integration |
-| `weixin.py` | Long-poll + CDN | High | Media handling, encryption |
-| `wecom_callback.py` | Callback/webhook | Medium | HTTP server, AES crypto, multi-app |
-| `plugins/platforms/irc/adapter.py` | Long-poll + IRC protocol | High | Full-featured plugin adapter with scoped token lock |
+| `bluebubbles.py` | REST + webhook | 中等 | 简单的 REST API 集成 |
+| `weixin.py` | 长轮询 + CDN | 高 | 媒体处理、加密 |
+| `wecom_callback.py` | 回调/webhook | 中等 | HTTP 服务器、AES 加密、多应用 |
+| `plugins/platforms/irc/adapter.py` | 长轮询 + IRC 协议 | 高 | 功能齐全的插件适配器，带有作用域令牌锁 |

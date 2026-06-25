@@ -1,67 +1,58 @@
 ---
-title: 提供商运行时
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`developer-guide/provider-runtime.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/provider-runtime.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 4
-title: "Provider Runtime Resolution"
-description: "How Hermes resolves providers, credentials, API modes, and auxiliary models at runtime"
+title: "提供者运行时解析"
+description: "Hermes 如何在运行时解析提供者、凭证、API 模式和辅助模型"
 ---
 
-# Provider Runtime Resolution
+# 提供者运行时解析
 
-Hermes has a shared provider runtime resolver used across:
+Hermes 拥有一个共享的提供者运行时解析器，用于以下场景：
 
 - CLI
-- gateway
-- cron jobs
+- 网关（gateway）
+- 定时任务（cron jobs）
 - ACP
-- auxiliary model calls
+- 辅助模型（auxiliary model）调用
 
-Primary implementation:
+主要实现：
 
-- `hermes_cli/runtime_provider.py` — credential resolution, `_resolve_custom_runtime()`
-- `hermes_cli/auth.py` — provider registry, `resolve_provider()`
-- `hermes_cli/model_switch.py` — shared `/model` switch pipeline (CLI + gateway)
-- `agent/auxiliary_client.py` — auxiliary model routing
-- `providers/` — ABC + registry entry points (`ProviderProfile`, `register_provider`, `get_provider_profile`, `list_providers`)
-- `plugins/model-providers/<name>/` — per-provider plugins (bundled) that declare `api_mode`, `base_url`, `env_vars`, `fallback_models` and register themselves into the registry on first access. User plugins at `$HERMES_HOME/plugins/model-providers/<name>/` override bundled ones of the same name.
+- `hermes_cli/runtime_provider.py` — 凭证解析，`_resolve_custom_runtime()`
+- `hermes_cli/auth.py` — 提供者注册，`resolve_provider()`
+- `hermes_cli/model_switch.py` — 共享的 `/model` 切换管道（CLI + 网关）
+- `agent/auxiliary_client.py` — 辅助模型路由
+- `providers/` — 抽象基类（ABC）和注册入口（`ProviderProfile`，`register_provider`，`get_provider_profile`，`list_providers`）
+- `plugins/model-providers/<name>/` — 每个提供者的插件（内置），声明 `api_mode`、`base_url`、`env_vars`、`fallback_models`，并在首次访问时注册到注册表中。用户插件位于 `$HERMES_HOME/plugins/model-providers/<name>/`，会覆盖同名的内置插件。
 
-`get_provider_profile()` in `providers/` returns a `ProviderProfile` for a given provider id. `runtime_provider.py` calls this at resolution time to get the canonical `base_url`, `env_vars` priority list, `api_mode`, and `fallback_models` without needing to duplicate that data in multiple files. Adding a new plugin under `plugins/model-providers/<your-provider>/` (or `$HERMES_HOME/plugins/model-providers/<your-provider>/`) that calls `register_provider()` is enough for `runtime_provider.py` to pick it up — no branch needed in the resolver itself.
+`providers/` 中的 `get_provider_profile()` 根据给定的提供者 ID 返回一个 `ProviderProfile`。`runtime_provider.py` 在解析时调用它以获取规范的 `base_url`、`env_vars` 优先级列表、`api_mode` 和 `fallback_models`，无需在多个文件中重复这些数据。在 `plugins/model-providers/<your-provider>/`（或 `$HERMES_HOME/plugins/model-providers/<your-provider>/`）下添加一个调用 `register_provider()` 的新插件，就足以让 `runtime_provider.py` 识别它——解析器本身无需分支。
 
-If you are trying to add a new first-class inference provider, read [Adding Providers](./adding-providers.md) and the [Model Provider Plugin guide](./model-provider-plugin.md) alongside this page.
+如果你尝试添加一个新的顶级推理提供者，请同时阅读 [添加提供者](./adding-providers.md) 和 [模型提供者插件指南](./model-provider-plugin.md) 以及本页。
 
-## Resolution precedence
+## 解析优先级
 
-At a high level, provider resolution uses:
+在高层面上，提供者解析使用：
 
-1. explicit CLI/runtime request
-2. `config.yaml` model/provider config
-3. environment variables
-4. provider-specific defaults or auto resolution
+1. 显式的 CLI/运行时请求
+2. `config.yaml` 中的模型/提供者配置
+3. 环境变量
+4. 提供者特定的默认值或自动解析
 
-That ordering matters because Hermes treats the saved model/provider choice as the source of truth for normal runs. This prevents a stale shell export from silently overriding the endpoint a user last selected in `hermes model`.
+这个顺序很重要，因为 Hermes 将保存的模型/提供者选择视为正常运行时的真实来源。这可以防止过时的 shell 导出变量静默地覆盖用户在 `hermes model` 中最后选择的端点。
 
-## Providers
+## 提供者
 
-Current provider families include (see `plugins/model-providers/` for the complete bundled set):
+当前的提供者家族包括（有关完整的内置集合，请参见 `plugins/model-providers/`）：
 
 - OpenRouter
 - Nous Portal
 - OpenAI Codex
 - Copilot / Copilot ACP
-- Anthropic (native)
-- Google / Gemini (`gemini`)
-- Alibaba / DashScope (`alibaba`, `alibaba-coding-plan`)
+- Anthropic（原生）
+- Google / Gemini（`gemini`）
+- Alibaba / DashScope（`alibaba`，`alibaba-coding-plan`）
 - DeepSeek
 - Z.AI
-- Kimi / Moonshot (`kimi-coding`, `kimi-coding-cn`)
-- MiniMax (`minimax`, `minimax-cn`, `minimax-oauth`)
+- Kimi / Moonshot（`kimi-coding`，`kimi-coding-cn`）
+- MiniMax（`minimax`，`minimax-cn`，`minimax-oauth`）
 - Kilo Code
 - Hugging Face
 - OpenCode Zen / OpenCode Go
@@ -77,139 +68,139 @@ Current provider families include (see `plugins/model-providers/` for the comple
 - Ollama Cloud
 - LM Studio
 - Tencent TokenHub
-- Custom (`provider: custom`) — first-class provider for any OpenAI-compatible endpoint
-- Named custom providers (`custom_providers` list in config.yaml)
+- 自定义（`provider: custom`）——适用于任何兼容 OpenAI 的端点的顶级提供者
+- 命名自定义提供者（`config.yaml` 中的 `custom_providers` 列表）
 
-## Output of runtime resolution
+## 运行时解析的输出
 
-The runtime resolver returns data such as:
+运行时解析器返回如下数据：
 
 - `provider`
 - `api_mode`
 - `base_url`
 - `api_key`
 - `source`
-- provider-specific metadata like expiry/refresh info
+- 提供者特定的元数据，如过期/刷新信息
 
-## Why this matters
+## 为何重要
 
-This resolver is the main reason Hermes can share auth/runtime logic between:
+这个解析器是 Hermes 能够在以下场景之间共享认证/运行时逻辑的主要原因：
 
 - `hermes chat`
-- gateway message handling
-- cron jobs running in fresh sessions
-- ACP editor sessions
-- auxiliary model tasks
+- 网关消息处理
+- 在新会话中运行的定时任务
+- ACP 编辑器会话
+- 辅助模型任务
 
-## OpenRouter and custom OpenAI-compatible base URLs
+## OpenRouter 和自定义兼容 OpenAI 的基础 URL
 
-Hermes contains logic to avoid leaking the wrong API key to a custom endpoint when multiple provider keys exist (e.g. `OPENROUTER_API_KEY` and `OPENAI_API_KEY`).
+Hermes 包含逻辑，以避免在存在多个提供者密钥（例如 `OPENROUTER_API_KEY` 和 `OPENAI_API_KEY`）时将错误的 API 密钥泄漏到自定义端点。
 
-Each provider's API key is scoped to its own base URL:
+每个提供者的 API 密钥都限定在其自己的基础 URL 中：
 
-- `OPENROUTER_API_KEY` is only sent to `openrouter.ai` endpoints
-- `OPENAI_API_KEY` is used for custom endpoints and as a fallback
+- `OPENROUTER_API_KEY` 仅发送到 `openrouter.ai` 端点
+- `OPENAI_API_KEY` 用于自定义端点并作为后备
 
-Hermes also distinguishes between:
+Hermes 还区分了：
 
-- a real custom endpoint selected by the user
-- the OpenRouter fallback path used when no custom endpoint is configured
+- 用户选择的真正自定义端点
+- 未配置自定义端点时使用的 OpenRouter 后备路径
 
-That distinction is especially important for:
+这种区分对于以下情况尤其重要：
 
-- local model servers
-- non-OpenRouter OpenAI-compatible APIs
-- switching providers without re-running setup
-- config-saved custom endpoints that should keep working even when `OPENAI_BASE_URL` is not exported in the current shell
+- 本地模型服务器
+- 非 OpenRouter 的兼容 OpenAI API
+- 无需重新运行设置即可切换提供者
+- 配置中保存的自定义端点，即使当前 shell 中没有导出 `OPENAI_BASE_URL`，也应保持工作
 
-## Native Anthropic path
+## 原生 Anthropic 路径
 
-Anthropic is not just "via OpenRouter" anymore.
+Anthropic 不再仅仅“通过 OpenRouter”。
 
-When provider resolution selects `anthropic`, Hermes uses:
+当提供者解析选择 `anthropic` 时，Hermes 使用：
 
 - `api_mode = anthropic_messages`
-- the native Anthropic Messages API
-- `agent/anthropic_adapter.py` for translation
+- 原生 Anthropic Messages API
+- `agent/anthropic_adapter.py` 进行转换
 
-Credential resolution for native Anthropic now prefers refreshable Claude Code credentials over copied env tokens when both are present. In practice that means:
+原生 Anthropic 的凭证解析现在优先选择可刷新的 Claude Code 凭证，而不是拷贝的环境变量令牌（当两者都存在时）。实际意味着：
 
-- Claude Code credential files are treated as the preferred source when they include refreshable auth
-- manual `ANTHROPIC_TOKEN` / `CLAUDE_CODE_OAUTH_TOKEN` values still work as explicit overrides
-- Hermes preflights Anthropic credential refresh before native Messages API calls
-- Hermes still retries once on a 401 after rebuilding the Anthropic client, as a fallback path
+- 当 Claude Code 凭证文件包含可刷新认证时，它们被视为首选来源
+- 手动的 `ANTHROPIC_TOKEN` / `CLAUDE_CODE_OAUTH_TOKEN` 值仍然可以作为显式覆盖
+- Hermes 在原生 Messages API 调用前会预检 Anthropic 凭证刷新
+- 在后备路径中，Hermes 在重建 Anthropic 客户端后仍会在返回 401 时重试一次
 
-## OpenAI Codex path
+## OpenAI Codex 路径
 
-Codex uses a separate Responses API path:
+Codex 使用单独的 Responses API 路径：
 
 - `api_mode = codex_responses`
-- dedicated credential resolution and auth store support
+- 专用凭证解析和认证存储（auth store）支持
 
-## Auxiliary model routing
+## 辅助模型路由
 
-Auxiliary tasks such as:
+辅助任务，例如：
 
-- vision
-- web extraction summarization
-- context compression summaries
-- skills hub operations
-- MCP helper operations
-- memory flushes
+- 视觉（vision）
+- 网页提取摘要（web extraction summarization）
+- 上下文压缩摘要（context compression summaries）
+- 技能中枢操作（skills hub operations）
+- MCP 辅助操作（MCP helper operations）
+- 内存刷新（memory flushes）
 
-can use their own provider/model routing rather than the main conversational model.
+可以使用它们自己的提供者/模型路由，而不是主对话模型。
 
-When an auxiliary task is configured with provider `main`, Hermes resolves that through the same shared runtime path as normal chat. In practice that means:
+当辅助任务配置了提供者 `main` 时，Hermes 会通过与普通聊天相同的共享运行时路径进行解析。实际意味着：
 
-- env-driven custom endpoints still work
-- custom endpoints saved via `hermes model` / `config.yaml` also work
-- auxiliary routing can tell the difference between a real saved custom endpoint and the OpenRouter fallback
+- 环境变量驱动的自定义端点仍然有效
+- 通过 `hermes model` / `config.yaml` 保存的自定义端点也有效
+- 辅助路由可以区分真正保存的自定义端点和 OpenRouter 后备路径
 
-## Fallback models
+## 后备模型（Fallback models）
 
-Hermes supports a configured fallback provider chain — a list of `(provider, model)` entries tried in order when the primary model encounters errors. The legacy single-pair `fallback_model` dict is still accepted for back-compat (and migrated on first write).
+Hermes 支持配置的后备提供者链——当主模型遇到错误时，按顺序尝试的 `(provider, model)` 条目列表。为了向后兼容，仍然接受旧的单对 `fallback_model` 字典（并在首次写入时迁移）。
 
-### How it works internally
+### 内部工作原理
 
-1. **Storage**: `AIAgent.__init__` stores the `fallback_model` dict and sets `_fallback_activated = False`.
+1. **存储**：`AIAgent.__init__` 存储 `fallback_model` 字典，并设置 `_fallback_activated = False`。
 
-2. **Trigger points**: `_try_activate_fallback()` is called from three places in the main retry loop in `run_agent.py`:
-   - After max retries on invalid API responses (None choices, missing content)
-   - On non-retryable client errors (HTTP 401, 403, 404)
-   - After max retries on transient errors (HTTP 429, 500, 502, 503)
+2. **触发点**：`_try_activate_fallback()` 在 `run_agent.py` 的主重试循环中的三个位置被调用：
+   - 在无效 API 响应（None choices、内容缺失）达到最大重试次数后
+   - 在不可重试的客户端错误（HTTP 401、403、404）上
+   - 在临时错误（HTTP 429、500、502、503）达到最大重试次数后
 
-3. **Activation flow** (`_try_activate_fallback`):
-   - Returns `False` immediately if already activated or not configured
-   - Calls `resolve_provider_client()` from `auxiliary_client.py` to build a new client with proper auth
-   - Determines `api_mode`: `codex_responses` for openai-codex, `anthropic_messages` for anthropic, `chat_completions` for everything else
-   - Swaps in-place: `self.model`, `self.provider`, `self.base_url`, `self.api_mode`, `self.client`, `self._client_kwargs`
-   - For anthropic fallback: builds a native Anthropic client instead of OpenAI-compatible
-   - Re-evaluates prompt caching (enabled for Claude models on OpenRouter)
-   - Sets `_fallback_activated = True` — prevents firing again
-   - Resets retry count to 0 and continues the loop
+3. **激活流程**（`_try_activate_fallback`）：
+   - 如果已经激活或未配置，立即返回 `False`
+   - 调用 `auxiliary_client.py` 中的 `resolve_provider_client()` 以构建带有正确认证的新客户端
+   - 确定 `api_mode`：对于 openai-codex 为 `codex_responses`，对于 anthropic 为 `anthropic_messages`，其他所有情况为 `chat_completions`
+   - 原地替换：`self.model`、`self.provider`、`self.base_url`、`self.api_mode`、`self.client`、`self._client_kwargs`
+   - 对于 anthropic 后备：构建原生 Anthropic 客户端而不是兼容 OpenAI 的
+   - 重新评估提示缓存（针对 OpenRouter 上的 Claude 模型启用）
+   - 设置 `_fallback_activated = True`——防止再次触发
+   - 将重试计数重置为 0 并继续循环
 
-4. **Config flow**:
-   - CLI: `cli.py` reads `CLI_CONFIG["fallback_model"]` → passes to `AIAgent(fallback_model=...)`
-   - Gateway: `gateway/run.py._load_fallback_model()` reads `config.yaml` → passes to `AIAgent`
-   - Validation: both `provider` and `model` keys must be non-empty, or fallback is disabled
+4. **配置流程**：
+   - CLI：`cli.py` 读取 `CLI_CONFIG["fallback_model"]` → 传递给 `AIAgent(fallback_model=...)`
+   - 网关：`gateway/run.py._load_fallback_model()` 读取 `config.yaml` → 传递给 `AIAgent`
+   - 验证：`provider` 和 `model` 键都必须非空，否则禁用后备
 
-### What does NOT support fallback
+### 不支持后备的情况
 
-- **Subagent delegation** (`tools/delegate_tool.py`): subagents inherit the parent's provider but not the fallback config
-- **Auxiliary tasks**: use their own independent provider auto-detection chain (see Auxiliary model routing above)
+- **子代理委托**（`tools/delegate_tool.py`）：子代理继承父提供者，但不继承后备配置
+- **辅助任务**：使用自己独立的提供者自动检测链（请参见上面的辅助模型路由）
 
-Cron jobs **do** support fallback: `run_job()` reads `fallback_providers` (or legacy `fallback_model`) from `config.yaml` and passes it to `AIAgent(fallback_model=...)`, matching the gateway's `_load_fallback_model()` pattern. See [Cron Internals](./cron-internals.md).
+定时任务**支持**后备：`run_job()` 从 `config.yaml` 读取 `fallback_providers`（或旧的 `fallback_model`）并将其传递给 `AIAgent(fallback_model=...)`，匹配网关的 `_load_fallback_model()` 模式。请参见 [Cron 内部](./cron-internals.md)。
 
-### Test coverage
+### 测试覆盖
 
-Fallback behavior is exercised across several suites:
+后备行为在多个测试套件中进行了测试：
 
-- `tests/run_agent/test_fallback_credential_isolation.py` — credential isolation between primary and fallback
-- `tests/hermes_cli/test_fallback_cmd.py` — the `/fallback` CLI command
-- `tests/gateway/test_fallback_eviction.py` — gateway eviction of failed providers
+- `tests/run_agent/test_fallback_credential_isolation.py` — 主提供者和后备之间的凭证隔离
+- `tests/hermes_cli/test_fallback_cmd.py` — `/fallback` CLI 命令
+- `tests/gateway/test_fallback_eviction.py` — 网关驱逐失败的提供者
 
-## Related docs
+## 相关文档
 
-- [Agent Loop Internals](./agent-loop.md)
-- [ACP Internals](./acp-internals.md)
-- [Context Compression & Prompt Caching](./context-compression-and-caching.md)
+- [代理循环内部](./agent-loop.md)
+- [ACP 内部](./acp-internals.md)
+- [上下文压缩与提示缓存](./context-compression-and-caching.md)

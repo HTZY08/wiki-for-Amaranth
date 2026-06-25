@@ -1,263 +1,257 @@
----
-title: 从 OpenClaw 迁移
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`guides/migrate-from-openclaw.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/migrate-from-openclaw.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 10
-title: "Migrate from OpenClaw"
-description: "Complete guide to migrating your OpenClaw / Clawdbot setup to Hermes Agent — what gets migrated, how config maps, and what to check after."
+title: "从 OpenClaw 迁移"
+description: "将您的 OpenClaw / Clawdbot 设置迁移到 Hermes Agent 的完整指南 —— 包括迁移内容、配置映射方式以及迁移后需要检查的项目。"
 ---
 
-# Migrate from OpenClaw
+--- body ---
 
-`hermes claw migrate` imports your OpenClaw (or legacy Clawdbot/Moldbot) setup into Hermes. This guide covers exactly what gets migrated, the config key mappings, and what to verify after migration.
+# 从 OpenClaw 迁移
+
+`hermes claw migrate` 将您的 OpenClaw（或旧版 Clawdbot/Moldbot）设置导入到 Hermes。本指南详细说明了哪些内容会被迁移、配置键的映射关系以及迁移后需要验证的内容。
 
 :::tip
-If your OpenClaw setup was multi-provider, `hermes setup --portal` collapses it to one OAuth — 300+ models plus the Tool Gateway in a single login. See [Nous Portal](/integrations/nous-portal).
+如果您的 OpenClaw 设置使用的是多提供商模式，`hermes setup --portal` 会将其合并为一个 OAuth —— 通过单个登录即可访问 300 多个模型和工具网关。请参阅 [Nous Portal](/integrations/nous-portal)。
 :::
 
-## Quick start
+## 快速开始
 
 ```bash
-# Preview then migrate (always shows a preview first, then asks to confirm)
+# 预览并迁移（始终先显示预览，然后要求确认）
 hermes claw migrate
 
-# Preview only, no changes
+# 仅预览，不进行任何更改
 hermes claw migrate --dry-run
 
-# Full migration including API keys, skip confirmation
+# 完整迁移（包括 API 密钥），跳过确认
 hermes claw migrate --preset full --migrate-secrets --yes
 ```
 
-The migration always shows a full preview of what will be imported before making any changes. Review the list, then confirm to proceed.
+迁移过程始终会在进行任何更改前显示完整的预览。请查看列表，然后确认执行。
 
-Reads from `~/.openclaw/` by default. Legacy `~/.clawdbot/` or `~/.moltbot/` directories are detected automatically. Same for legacy config filenames (`clawdbot.json`, `moltbot.json`).
+默认从 `~/.openclaw/` 读取。旧版 `~/.clawdbot/` 或 `~/.moltbot/` 目录会被自动检测。旧版配置文件名称（`clawdbot.json`、`moltbot.json`）同理。
 
-## Options
+## 选项
 
-| Option | Description |
+| 选项 | 描述 |
 |--------|-------------|
-| `--dry-run` | Preview only — stop after showing what would be migrated. |
-| `--preset <name>` | `full` (all compatible settings) or `user-data` (excludes infrastructure config). Neither preset imports secrets by default — pass `--migrate-secrets` explicitly. |
-| `--overwrite` | Overwrite existing Hermes files on conflicts (default: refuse to apply when the plan has conflicts). |
-| `--migrate-secrets` | Include API keys. Required even under `--preset full` — no preset imports secrets silently. |
-| `--no-backup` | Skip the pre-migration zip snapshot of `~/.hermes/` (by default a single restore-point archive is written before apply, under `~/.hermes/backups/pre-migration-*.zip`; restorable with `hermes import`). |
-| `--source <path>` | Custom OpenClaw directory. |
-| `--workspace-target <path>` | Where to place `AGENTS.md`. |
-| `--skill-conflict <mode>` | `skip` (default), `overwrite`, or `rename`. |
-| `--yes` | Skip the confirmation prompt after preview. |
+| `--dry-run` | 仅预览 —— 在显示要迁移的内容后停止。 |
+| `--preset <name>` | `full`（所有兼容设置）或 `user-data`（排除基础设施配置）。两种预设默认都不导入密钥 —— 需要显式传递 `--migrate-secrets`。 |
+| `--overwrite` | 在冲突时覆盖现有 Hermes 文件（默认：当计划有冲突时拒绝应用）。 |
+| `--migrate-secrets` | 包含 API 密钥。即使在 `--preset full` 下也需要 —— 没有预设会静默导入密钥。 |
+| `--no-backup` | 跳过迁移前对 `~/.hermes/` 的 zip 快照（默认会在应用前在 `~/.hermes/backups/pre-migration-*.zip` 创建一个恢复点存档；可通过 `hermes import` 恢复）。 |
+| `--source <path>` | 自定义 OpenClaw 目录。 |
+| `--workspace-target <path>` | 放置 `AGENTS.md` 的位置。 |
+| `--skill-conflict <mode>` | `skip`（默认）、`overwrite` 或 `rename`。 |
+| `--yes` | 跳过预览后的确认提示。 |
 
-## What gets migrated
+## 迁移内容
 
-### Persona, memory, and instructions
+### 角色（Persona）、记忆（Memory）和指令（Instructions）
 
-| What | OpenClaw source | Hermes destination | Notes |
+| 内容 | OpenClaw 源 | Hermes 目标 | 备注 |
 |------|----------------|-------------------|-------|
-| Persona | `workspace/SOUL.md` | `~/.hermes/SOUL.md` | Direct copy |
-| Workspace instructions | `workspace/AGENTS.md` | `AGENTS.md` in `--workspace-target` | Requires `--workspace-target` flag |
-| Long-term memory | `workspace/MEMORY.md` | `~/.hermes/memories/MEMORY.md` | Parsed into entries, merged with existing, deduped. Uses `§` delimiter. |
-| User profile | `workspace/USER.md` | `~/.hermes/memories/USER.md` | Same entry-merge logic as memory. |
-| Daily memory files | `workspace/memory/*.md` | `~/.hermes/memories/MEMORY.md` | All daily files merged into main memory. |
+| 角色（Persona） | `workspace/SOUL.md` | `~/.hermes/SOUL.md` | 直接复制 |
+| 工作空间指令 | `workspace/AGENTS.md` | `--workspace-target` 中的 `AGENTS.md` | 需要 `--workspace-target` 标志 |
+| 长期记忆 | `workspace/MEMORY.md` | `~/.hermes/memories/MEMORY.md` | 解析为条目，与现有条目合并，去重。使用 `§` 分隔符。 |
+| 用户档案 | `workspace/USER.md` | `~/.hermes/memories/USER.md` | 与记忆相同的条目合并逻辑。 |
+| 每日记忆文件 | `workspace/memory/*.md` | `~/.hermes/memories/MEMORY.md` | 所有每日文件合并到主记忆中。 |
 
-Workspace files are also checked at `workspace.default/` and `workspace-main/` as fallback paths (OpenClaw renamed `workspace/` to `workspace-main/` in recent versions, and uses `workspace-{agentId}` for multi-agent setups).
+工作空间文件也会在 `workspace.default/` 和 `workspace-main/` 中查找，作为备用路径（OpenClaw 在最近版本中将 `workspace/` 重命名为 `workspace-main/`，并在多代理设置中使用 `workspace-{agentId}`）。
 
-### Skills (4 sources)
+### 技能（Skills）（4 个来源）
 
-| Source | OpenClaw location | Hermes destination |
+| 来源 | OpenClaw 位置 | Hermes 目标 |
 |--------|------------------|-------------------|
-| Workspace skills | `workspace/skills/` | `~/.hermes/skills/openclaw-imports/` |
-| Managed/shared skills | `~/.openclaw/skills/` | `~/.hermes/skills/openclaw-imports/` |
-| Personal cross-project | `~/.agents/skills/` | `~/.hermes/skills/openclaw-imports/` |
-| Project-level shared | `workspace/.agents/skills/` | `~/.hermes/skills/openclaw-imports/` |
+| 工作空间技能 | `workspace/skills/` | `~/.hermes/skills/openclaw-imports/` |
+| 托管/共享技能 | `~/.openclaw/skills/` | `~/.hermes/skills/openclaw-imports/` |
+| 个人跨项目技能 | `~/.agents/skills/` | `~/.hermes/skills/openclaw-imports/` |
+| 项目级共享技能 | `workspace/.agents/skills/` | `~/.hermes/skills/openclaw-imports/` |
 
-Skill conflicts are handled by `--skill-conflict`: `skip` leaves the existing Hermes skill, `overwrite` replaces it, `rename` creates a `-imported` copy.
+技能冲突由 `--skill-conflict` 处理：`skip` 保留现有的 Hermes 技能，`overwrite` 替换它，`rename` 创建 `-imported` 副本。
 
-### Model and provider configuration
+### 模型和提供商配置
 
-| What | OpenClaw config path | Hermes destination | Notes |
+| 内容 | OpenClaw 配置路径 | Hermes 目标 | 备注 |
 |------|---------------------|-------------------|-------|
-| Default model | `agents.defaults.model` | `config.yaml` → `model` | Can be a string or `{primary, fallbacks}` object |
-| Custom providers | `models.providers.*` | `config.yaml` → `custom_providers` | Maps `baseUrl`, `apiType`/`api` — handles both short ("openai", "anthropic") and hyphenated ("openai-completions", "anthropic-messages", "google-generative-ai") values |
-| Provider API keys | `models.providers.*.apiKey` | `~/.hermes/.env` | Requires `--migrate-secrets`. See [API key resolution](#api-key-resolution) below. |
+| 默认模型 | `agents.defaults.model` | `config.yaml` → `model` | 可以是字符串或 `{primary, fallbacks}` 对象 |
+| 自定义提供商 | `models.providers.*` | `config.yaml` → `custom_providers` | 映射 `baseUrl`、`apiType`/`api` —— 处理短格式（"openai"、"anthropic"）和连字符格式（"openai-completions"、"anthropic-messages"、"google-generative-ai"）的值 |
+| 提供商 API 密钥 | `models.providers.*.apiKey` | `~/.hermes/.env` | 需要 `--migrate-secrets`。请参阅下方的 [API 密钥解析](#api-key-resolution)。 |
 
-### Agent behavior
+### 代理行为
 
-| What | OpenClaw config path | Hermes config path | Mapping |
+| 内容 | OpenClaw 配置路径 | Hermes 配置路径 | 映射 |
 |------|---------------------|-------------------|---------|
-| Max turns | `agents.defaults.timeoutSeconds` | `agent.max_turns` | `timeoutSeconds / 10`, capped at 200 |
-| Verbose mode | `agents.defaults.verboseDefault` | `agent.verbose` | "off" / "on" / "full" |
-| Reasoning effort | `agents.defaults.thinkingDefault` | `agent.reasoning_effort` | "always"/"high"/"xhigh" → "high", "auto"/"medium"/"adaptive" → "medium", "off"/"low"/"none"/"minimal" → "low" |
-| Compression | `agents.defaults.compaction.mode` | `compression.enabled` | "off" → false, anything else → true |
-| Compression model | `agents.defaults.compaction.model` | `compression.summary_model` | Direct string copy |
-| Human delay | `agents.defaults.humanDelay.mode` | `human_delay.mode` | "natural" / "custom" / "off" |
-| Human delay timing | `agents.defaults.humanDelay.minMs` / `.maxMs` | `human_delay.min_ms` / `.max_ms` | Direct copy |
-| Timezone | `agents.defaults.userTimezone` | `timezone` | Direct string copy |
-| Exec timeout | `tools.exec.timeoutSec` | `terminal.timeout` | Direct copy (field is `timeoutSec`, not `timeout`) |
-| Docker sandbox | `agents.defaults.sandbox.backend` | `terminal.backend` | "docker" → "docker" |
-| Docker image | `agents.defaults.sandbox.docker.image` | `terminal.docker_image` | Direct copy |
+| 最大轮次 | `agents.defaults.timeoutSeconds` | `agent.max_turns` | `timeoutSeconds / 10`，上限为 200 |
+| 详细模式 | `agents.defaults.verboseDefault` | `agent.verbose` | "off" / "on" / "full" |
+| 推理努力 | `agents.defaults.thinkingDefault` | `agent.reasoning_effort` | "always"/"high"/"xhigh" → "high"，"auto"/"medium"/"adaptive" → "medium"，"off"/"low"/"none"/"minimal" → "low" |
+| 压缩 | `agents.defaults.compaction.mode` | `compression.enabled` | "off" → false，其他 → true |
+| 压缩模型 | `agents.defaults.compaction.model` | `compression.summary_model` | 直接字符串复制 |
+| 人类延迟 | `agents.defaults.humanDelay.mode` | `human_delay.mode` | "natural" / "custom" / "off" |
+| 人类延迟时间 | `agents.defaults.humanDelay.minMs` / `.maxMs` | `human_delay.min_ms` / `.max_ms` | 直接复制 |
+| 时区 | `agents.defaults.userTimezone` | `timezone` | 直接字符串复制 |
+| 执行超时 | `tools.exec.timeoutSec` | `terminal.timeout` | 直接复制（字段是 `timeoutSec`，不是 `timeout`） |
+| Docker 沙箱 | `agents.defaults.sandbox.backend` | `terminal.backend` | "docker" → "docker" |
+| Docker 镜像 | `agents.defaults.sandbox.docker.image` | `terminal.docker_image` | 直接复制 |
 
-### Session reset policies
+### 会话重置策略
 
-| OpenClaw config path | Hermes config path | Notes |
+| OpenClaw 配置路径 | Hermes 配置路径 | 备注 |
 |---------------------|-------------------|-------|
-| `session.reset.mode` | `session_reset.mode` | "daily", "idle", or both |
-| `session.reset.atHour` | `session_reset.at_hour` | Hour (0–23) for daily reset |
-| `session.reset.idleMinutes` | `session_reset.idle_minutes` | Minutes of inactivity |
+| `session.reset.mode` | `session_reset.mode` | "daily"、"idle" 或两者 |
+| `session.reset.atHour` | `session_reset.at_hour` | 小时（0–23），用于每日重置 |
+| `session.reset.idleMinutes` | `session_reset.idle_minutes` | 分钟数，用于空闲重置 |
 
-Note: OpenClaw also has `session.resetTriggers` (a simple string array like `["daily", "idle"]`). If the structured `session.reset` isn't present, the migration falls back to inferring from `resetTriggers`.
+注意：OpenClaw 也有 `session.resetTriggers`（一个简单的字符串数组，如 `["daily", "idle"]`）。如果结构化的 `session.reset` 不存在，迁移会回退到从 `resetTriggers` 推断。
 
-### MCP servers
+### MCP 服务器
 
-| OpenClaw field | Hermes field | Notes |
+| OpenClaw 字段 | Hermes 字段 | 备注 |
 |----------------|-------------|-------|
-| `mcp.servers.*.command` | `mcp_servers.*.command` | Stdio transport |
+| `mcp.servers.*.command` | `mcp_servers.*.command` | Stdio 传输 |
 | `mcp.servers.*.args` | `mcp_servers.*.args` | |
 | `mcp.servers.*.env` | `mcp_servers.*.env` | |
 | `mcp.servers.*.cwd` | `mcp_servers.*.cwd` | |
-| `mcp.servers.*.url` | `mcp_servers.*.url` | HTTP/SSE transport |
-| `mcp.servers.*.tools.include` | `mcp_servers.*.tools.include` | Tool filtering |
+| `mcp.servers.*.url` | `mcp_servers.*.url` | HTTP/SSE 传输 |
+| `mcp.servers.*.tools.include` | `mcp_servers.*.tools.include` | 工具过滤 |
 | `mcp.servers.*.tools.exclude` | `mcp_servers.*.tools.exclude` | |
 
-### TTS (text-to-speech)
+### TTS（文本转语音）
 
-TTS settings are read from **two** OpenClaw config locations with this priority:
+TTS 设置从 **两个** OpenClaw 配置位置读取，优先级如下：
 
-1. `messages.tts.providers.{provider}.*` (canonical location)
-2. Top-level `talk.providers.{provider}.*` (fallback)
-3. Legacy flat keys `messages.tts.{provider}.*` (oldest format)
+1. `messages.tts.providers.{provider}.*`（标准位置）
+2. 顶层 `talk.providers.{provider}.*`（备用）
+3. 旧版扁平键 `messages.tts.{provider}.*`（最旧格式）
 
-| What | Hermes destination |
+| 内容 | Hermes 目标 |
 |------|-------------------|
-| Provider name | `config.yaml` → `tts.provider` |
-| ElevenLabs voice ID | `config.yaml` → `tts.elevenlabs.voice_id` |
-| ElevenLabs model ID | `config.yaml` → `tts.elevenlabs.model_id` |
-| OpenAI model | `config.yaml` → `tts.openai.model` |
-| OpenAI voice | `config.yaml` → `tts.openai.voice` |
-| Edge TTS voice | `config.yaml` → `tts.edge.voice` (OpenClaw renamed "edge" to "microsoft" — both are recognized) |
-| TTS assets | `~/.hermes/tts/` (file copy) |
+| 提供商名称 | `config.yaml` → `tts.provider` |
+| ElevenLabs 语音 ID | `config.yaml` → `tts.elevenlabs.voice_id` |
+| ElevenLabs 模型 ID | `config.yaml` → `tts.elevenlabs.model_id` |
+| OpenAI 模型 | `config.yaml` → `tts.openai.model` |
+| OpenAI 语音 | `config.yaml` → `tts.openai.voice` |
+| Edge TTS 语音 | `config.yaml` → `tts.edge.voice`（OpenClaw 将 "edge" 重命名为 "microsoft" —— 两者都被识别） |
+| TTS 资源 | `~/.hermes/tts/`（文件复制） |
 
-### Messaging platforms
+### 消息平台
 
-| Platform | OpenClaw config path | Hermes `.env` variable | Notes |
+| 平台 | OpenClaw 配置路径 | Hermes `.env` 变量 | 备注 |
 |----------|---------------------|----------------------|-------|
-| Telegram | `channels.telegram.botToken` or `.accounts.default.botToken` | `TELEGRAM_BOT_TOKEN` | Token can be string or [SecretRef](#secretref-handling). Both flat and accounts layout supported. |
-| Telegram | `credentials/telegram-default-allowFrom.json` | `TELEGRAM_ALLOWED_USERS` | Comma-joined from `allowFrom[]` array |
-| Discord | `channels.discord.token` or `.accounts.default.token` | `DISCORD_BOT_TOKEN` | |
-| Discord | `channels.discord.allowFrom` or `.accounts.default.allowFrom` | `DISCORD_ALLOWED_USERS` | |
-| Slack | `channels.slack.botToken` or `.accounts.default.botToken` | `SLACK_BOT_TOKEN` | |
-| Slack | `channels.slack.appToken` or `.accounts.default.appToken` | `SLACK_APP_TOKEN` | |
-| Slack | `channels.slack.allowFrom` or `.accounts.default.allowFrom` | `SLACK_ALLOWED_USERS` | |
-| WhatsApp | `channels.whatsapp.allowFrom` or `.accounts.default.allowFrom` | `WHATSAPP_ALLOWED_USERS` | Auth via Baileys QR pairing — requires re-pairing after migration |
-| Signal | `channels.signal.account` or `.accounts.default.account` | `SIGNAL_ACCOUNT` | |
-| Signal | `channels.signal.httpUrl` or `.accounts.default.httpUrl` | `SIGNAL_HTTP_URL` | |
-| Signal | `channels.signal.allowFrom` or `.accounts.default.allowFrom` | `SIGNAL_ALLOWED_USERS` | |
-| Matrix | `channels.matrix.accessToken` or `.accounts.default.accessToken` | `MATRIX_ACCESS_TOKEN` | Uses `accessToken` (not `botToken`) |
-| Mattermost | `channels.mattermost.botToken` or `.accounts.default.botToken` | `MATTERMOST_BOT_TOKEN` | |
+| Telegram | `channels.telegram.botToken` 或 `.accounts.default.botToken` | `TELEGRAM_BOT_TOKEN` | Token 可以是字符串或 [SecretRef](#secretref-handling)。支持扁平布局和 accounts 布局。 |
+| Telegram | `credentials/telegram-default-allowFrom.json` | `TELEGRAM_ALLOWED_USERS` | 从 `allowFrom[]` 数组用逗号连接 |
+| Discord | `channels.discord.token` 或 `.accounts.default.token` | `DISCORD_BOT_TOKEN` | |
+| Discord | `channels.discord.allowFrom` 或 `.accounts.default.allowFrom` | `DISCORD_ALLOWED_USERS` | |
+| Slack | `channels.slack.botToken` 或 `.accounts.default.botToken` | `SLACK_BOT_TOKEN` | |
+| Slack | `channels.slack.appToken` 或 `.accounts.default.appToken` | `SLACK_APP_TOKEN` | |
+| Slack | `channels.slack.allowFrom` 或 `.accounts.default.allowFrom` | `SLACK_ALLOWED_USERS` | |
+| WhatsApp | `channels.whatsapp.allowFrom` 或 `.accounts.default.allowFrom` | `WHATSAPP_ALLOWED_USERS` | 通过 Baileys QR 配对进行认证 —— 迁移后需要重新配对 |
+| Signal | `channels.signal.account` 或 `.accounts.default.account` | `SIGNAL_ACCOUNT` | |
+| Signal | `channels.signal.httpUrl` 或 `.accounts.default.httpUrl` | `SIGNAL_HTTP_URL` | |
+| Signal | `channels.signal.allowFrom` 或 `.accounts.default.allowFrom` | `SIGNAL_ALLOWED_USERS` | |
+| Matrix | `channels.matrix.accessToken` 或 `.accounts.default.accessToken` | `MATRIX_ACCESS_TOKEN` | 使用 `accessToken`（不是 `botToken`） |
+| Mattermost | `channels.mattermost.botToken` 或 `.accounts.default.botToken` | `MATTERMOST_BOT_TOKEN` | |
 
-### Other config
+### 其他配置
 
-| What | OpenClaw path | Hermes path | Notes |
+| 内容 | OpenClaw 路径 | Hermes 路径 | 备注 |
 |------|-------------|-------------|-------|
-| Approval mode | `approvals.exec.mode` | `config.yaml` → `approvals.mode` | "auto"→"off", "always"→"manual", "smart"→"smart" |
-| Command allowlist | `exec-approvals.json` | `config.yaml` → `command_allowlist` | Patterns merged and deduped |
-| Browser CDP URL | `browser.cdpUrl` | `config.yaml` → `browser.cdp_url` | |
-| Browser headless | `browser.headless` | `config.yaml` → `browser.headless` | |
-| Brave search key | `tools.web.search.brave.apiKey` | `.env` → `BRAVE_API_KEY` | Requires `--migrate-secrets` |
-| Gateway auth token | `gateway.auth.token` | `.env` → `HERMES_GATEWAY_TOKEN` | Requires `--migrate-secrets` |
-| Working directory | `agents.defaults.workspace` | `config.yaml` → `terminal.cwd` | Legacy migrations may still emit `MESSAGING_CWD` as a compatibility fallback |
+| 批准模式 | `approvals.exec.mode` | `config.yaml` → `approvals.mode` | "auto"→"off", "always"→"manual", "smart"→"smart" |
+| 命令允许列表 | `exec-approvals.json` | `config.yaml` → `command_allowlist` | 模式合并并去重 |
+| 浏览器 CDP URL | `browser.cdpUrl` | `config.yaml` → `browser.cdp_url` | |
+| 浏览器无头模式 | `browser.headless` | `config.yaml` → `browser.headless` | |
+| Brave 搜索密钥 | `tools.web.search.brave.apiKey` | `.env` → `BRAVE_API_KEY` | 需要 `--migrate-secrets` |
+| 网关认证令牌 | `gateway.auth.token` | `.env` → `HERMES_GATEWAY_TOKEN` | 需要 `--migrate-secrets` |
+| 工作目录 | `agents.defaults.workspace` | `config.yaml` → `terminal.cwd` | 旧版迁移可能仍会发出 `MESSAGING_CWD` 作为兼容性回退 |
 
-### Archived (no direct Hermes equivalent)
+### 已归档（没有直接的 Hermes 对应项）
 
-These are saved to `~/.hermes/migration/openclaw/<timestamp>/archive/` for manual review:
+这些被保存到 `~/.hermes/migration/openclaw/<timestamp>/archive/` 供手动查看：
 
-| What | Archive file | How to recreate in Hermes |
+| 内容 | 归档文件 | 如何在 Hermes 中重建 |
 |------|-------------|--------------------------|
-| `IDENTITY.md` | `archive/workspace/IDENTITY.md` | Merge into `SOUL.md` |
-| `TOOLS.md` | `archive/workspace/TOOLS.md` | Hermes has built-in tool instructions |
-| `HEARTBEAT.md` | `archive/workspace/HEARTBEAT.md` | Use cron jobs for periodic tasks |
-| `BOOTSTRAP.md` | `archive/workspace/BOOTSTRAP.md` | Use context files or skills |
-| Cron jobs | `archive/cron-config.json` | Recreate with `hermes cron create` |
-| Plugins | `archive/plugins-config.json` | See [plugins guide](/user-guide/features/hooks) |
-| Hooks/webhooks | `archive/hooks-config.json` | Use `hermes webhook` or gateway hooks |
-| Memory backend | `archive/memory-backend-config.json` | Configure via `hermes honcho` |
-| Skills registry | `archive/skills-registry-config.json` | Use `hermes skills config` |
-| UI/identity | `archive/ui-identity-config.json` | Use `/skin` command |
-| Logging | `archive/logging-diagnostics-config.json` | Set in `config.yaml` logging section |
-| Multi-agent list | `archive/agents-list.json` | Use Hermes profiles |
-| Channel bindings | `archive/bindings.json` | Manual setup per platform |
-| Complex channels | `archive/channels-deep-config.json` | Manual platform config |
+| `IDENTITY.md` | `archive/workspace/IDENTITY.md` | 合并到 `SOUL.md` |
+| `TOOLS.md` | `archive/workspace/TOOLS.md` | Hermes 有内置的工具指令 |
+| `HEARTBEAT.md` | `archive/workspace/HEARTBEAT.md` | 使用 cron 作业进行周期性任务 |
+| `BOOTSTRAP.md` | `archive/workspace/BOOTSTRAP.md` | 使用上下文文件或技能 |
+| Cron 作业 | `archive/cron-config.json` | 使用 `hermes cron create` 重建 |
+| 插件 | `archive/plugins-config.json` | 参见 [插件指南](/user-guide/features/hooks) |
+| 钩子/Webhook | `archive/hooks-config.json` | 使用 `hermes webhook` 或网关钩子 |
+| 记忆后端 | `archive/memory-backend-config.json` | 通过 `hermes honcho` 配置 |
+| 技能注册表 | `archive/skills-registry-config.json` | 使用 `hermes skills config` |
+| UI/身份 | `archive/ui-identity-config.json` | 使用 `/skin` 命令 |
+| 日志 | `archive/logging-diagnostics-config.json` | 在 `config.yaml` 的 logging 部分设置 |
+| 多代理列表 | `archive/agents-list.json` | 使用 Hermes 配置文件（profiles） |
+| 频道绑定 | `archive/bindings.json` | 每个平台手动设置 |
+| 复杂频道 | `archive/channels-deep-config.json` | 手动配置平台 |
 
-## API key resolution
+## API 密钥解析
 
-When `--migrate-secrets` is enabled, API keys are collected from **four sources** in priority order:
+当启用 `--migrate-secrets` 时，API 密钥从 **四个来源** 按优先级收集：
 
-1. **Config values** — `models.providers.*.apiKey` and TTS provider keys in `openclaw.json`
-2. **Environment file** — `~/.openclaw/.env` (keys like `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc.)
-3. **Config env sub-object** — `openclaw.json` → `"env"` or `"env"."vars"` (some setups store keys here instead of a separate `.env` file)
-4. **Auth profiles** — `~/.openclaw/agents/main/agent/auth-profiles.json` (per-agent credentials)
+1. **配置值** — `openclaw.json` 中的 `models.providers.*.apiKey` 和 TTS 提供商密钥
+2. **环境文件** — `~/.openclaw/.env`（如 `OPENROUTER_API_KEY`、`ANTHROPIC_API_KEY` 等密钥）
+3. **配置 env 子对象** — `openclaw.json` → `"env"` 或 `"env"."vars"`（某些设置将密钥存储在此处，而不是单独的 `.env` 文件）
+4. **认证配置文件** — `~/.openclaw/agents/main/agent/auth-profiles.json`（每个代理的凭据）
 
-Config values take priority. Each subsequent source fills any remaining gaps.
+配置值优先。后续每个来源填补任何剩余的空缺。
 
-### Supported key targets
+### 支持的密钥目标
 
-`OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY`, `MINIMAX_API_KEY`, `ELEVENLABS_API_KEY`, `TELEGRAM_BOT_TOKEN`, `VOICE_TOOLS_OPENAI_KEY`
+`OPENROUTER_API_KEY`、`OPENAI_API_KEY`、`ANTHROPIC_API_KEY`、`DEEPSEEK_API_KEY`、`GEMINI_API_KEY`、`ZAI_API_KEY`、`MINIMAX_API_KEY`、`ELEVENLABS_API_KEY`、`TELEGRAM_BOT_TOKEN`、`VOICE_TOOLS_OPENAI_KEY`
 
-Keys not in this allowlist are never copied.
+不在该允许列表中的密钥不会被复制。
 
-## SecretRef handling
+## SecretRef 处理
 
-OpenClaw config values for tokens and API keys can be in three formats:
+OpenClaw 配置中令牌和 API 密钥的值可以是三种格式：
 
 ```json
-// Plain string
+// 纯字符串
 "channels": { "telegram": { "botToken": "123456:ABC-DEF..." } }
 
-// Environment template
+// 环境变量模板
 "channels": { "telegram": { "botToken": "${TELEGRAM_BOT_TOKEN}" } }
 
-// SecretRef object
+// SecretRef 对象
 "channels": { "telegram": { "botToken": { "source": "env", "id": "TELEGRAM_BOT_TOKEN" } } }
 ```
 
-The migration resolves all three formats. For env templates and SecretRef objects with `source: "env"`, it looks up the value in `~/.openclaw/.env` and the `openclaw.json` env sub-object. SecretRef objects with `source: "file"` or `source: "exec"` can't be resolved automatically — the migration warns about these, and those values must be added to Hermes manually via `hermes config set`.
+迁移过程会解析所有三种格式。对于环境变量模板和 `source: "env"` 的 SecretRef 对象，它会在 `~/.openclaw/.env` 和 `openclaw.json` 的 env 子对象中查找值。`source: "file"` 或 `source: "exec"` 的 SecretRef 对象无法自动解析 —— 迁移会针对这些情况发出警告，这些值必须通过 `hermes config set` 手动添加到 Hermes。
 
-## After migration
+## 迁移后
 
-1. **Check the migration report** — printed on completion with counts of migrated, skipped, and conflicting items.
+1. **检查迁移报告** —— 完成后会打印，包含已迁移、已跳过和冲突项的数量。
 
-2. **Review archived files** — anything in `~/.hermes/migration/openclaw/<timestamp>/archive/` needs manual attention.
+2. **查看归档文件** —— `~/.hermes/migration/openclaw/<timestamp>/archive/` 中的任何内容都需要手动处理。
 
-3. **Start a new session** — imported skills and memory entries take effect in new sessions, not the current one.
+3. **开始新会话** —— 导入的技能和记忆条目将在新会话中生效，而不是当前会话。
 
-4. **Verify API keys** — run `hermes status` to check provider authentication.
+4. **验证 API 密钥** —— 运行 `hermes status` 检查提供商认证。
 
-5. **Test messaging** — if you migrated platform tokens, restart the gateway: `systemctl --user restart hermes-gateway`
+5. **测试消息功能** —— 如果您迁移了平台令牌，请重启网关：`systemctl --user restart hermes-gateway`
 
-6. **Check session policies** — run `hermes config show` and verify the `session_reset` value matches your expectations.
+6. **检查会话策略** —— 运行 `hermes config show` 并验证 `session_reset` 值与您的预期一致。
 
-7. **Re-pair WhatsApp** — WhatsApp uses QR code pairing (Baileys), not token migration. Run `hermes whatsapp` to pair.
+7. **重新配对 WhatsApp** —— WhatsApp 使用 QR 码配对（Baileys），而不是令牌迁移。运行 `hermes whatsapp` 进行配对。
 
-8. **Archive cleanup** — after confirming everything works, run `hermes claw cleanup` to rename leftover OpenClaw directories to `.pre-migration/` (prevents state confusion).
+8. **归档清理** —— 确认一切正常后，运行 `hermes claw cleanup` 将剩余的 OpenClaw 目录重命名为 `.pre-migration/`（防止状态混淆）。
 
-## Troubleshooting
+## 故障排除
 
-### "OpenClaw directory not found"
+### "未找到 OpenClaw 目录"
 
-The migration checks `~/.openclaw/`, then `~/.clawdbot/`, then `~/.moltbot/`. If your installation is elsewhere, use `--source /path/to/your/openclaw`.
+迁移会检查 `~/.openclaw/`，然后 `~/.clawdbot/`，然后 `~/.moltbot/`。如果您的安装在其他位置，请使用 `--source /path/to/your/openclaw`。
 
-### "No provider API keys found"
+### "未找到提供商 API 密钥"
 
-Keys might be stored in several places depending on your OpenClaw version: inline in `openclaw.json` under `models.providers.*.apiKey`, in `~/.openclaw/.env`, in the `openclaw.json` `"env"` sub-object, or in `agents/main/agent/auth-profiles.json`. The migration checks all four. If keys use `source: "file"` or `source: "exec"` SecretRefs, they can't be resolved automatically — add them via `hermes config set`.
+根据您的 OpenClaw 版本，密钥可能存储在多个位置：在 `openclaw.json` 的 `models.providers.*.apiKey` 中内联，在 `~/.openclaw/.env` 中，在 `openclaw.json` 的 `"env"` 子对象中，或在 `agents/main/agent/auth-profiles.json` 中。迁移会检查所有四个位置。如果密钥使用了 `source: "file"` 或 `source: "exec"` 的 SecretRef，则无法自动解析 —— 请通过 `hermes config set` 手动添加。
 
-### Skills not appearing after migration
+### 迁移后技能未显示
 
-Imported skills land in `~/.hermes/skills/openclaw-imports/`. Start a new session for them to take effect, or run `/skills` to verify they're loaded.
+导入的技能会放在 `~/.hermes/skills/openclaw-imports/` 中。请启动新会话使其生效，或运行 `/skills` 验证它们是否已加载。
 
-### TTS voice not migrated
+### TTS 语音未迁移
 
-OpenClaw stores TTS settings in two places: `messages.tts.providers.*` and the top-level `talk` config. The migration checks both. If your voice ID was set via the OpenClaw UI (stored in a different path), you may need to set it manually: `hermes config set tts.elevenlabs.voice_id YOUR_VOICE_ID`.
+OpenClaw 将 TTS 设置存储在两个位置：`messages.tts.providers.*` 和顶层 `talk` 配置。迁移会检查两者。如果您的语音 ID 是通过 OpenClaw UI 设置的（存储在不同的路径），您可能需要手动设置：`hermes config set tts.elevenlabs.voice_id YOUR_VOICE_ID`。

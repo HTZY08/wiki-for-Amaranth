@@ -1,148 +1,137 @@
 ---
-title: 基于 SSH 的 OAuth
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`guides/oauth-over-ssh.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/oauth-over-ssh.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 17
-title: "OAuth over SSH / Remote Hosts"
-description: "How to complete browser-based OAuth (xAI, Spotify, MCP servers) when Hermes runs on a remote machine, container, or behind a jump box"
+title: "SSH / 远程主机上的OAuth"
+description: "当 Hermes 运行在远程机器、容器或通过跳板机访问时，如何完成基于浏览器的 OAuth（xAI、Spotify、MCP 服务器）"
 ---
 
-# OAuth over SSH / Remote Hosts
+# SSH / 远程主机上的OAuth
 
-Some Hermes providers — **xAI Grok OAuth**, **Spotify**, and **remote MCP servers** (Linear, Sentry, Atlassian, Asana, Figma, …) — use a *loopback redirect* OAuth flow. The auth server redirects your browser to `http://127.0.0.1:<port>/callback` so a tiny HTTP listener started by Hermes can grab the authorization code.
+某些 Hermes 提供商——**xAI Grok OAuth**、**Spotify** 以及**远程 MCP 服务器**（Linear、Sentry、Atlassian、Asana、Figma 等）——使用*环回重定向（loopback redirect）* OAuth 流程。认证服务器将你的浏览器重定向到 `http://127.0.0.1:<port>/callback`，以便 Hermes 启动的一个小型 HTTP 监听器可以获取授权码。
 
-This works perfectly when Hermes and your browser are on the same machine. It breaks the moment they aren't: your laptop's browser tries to reach `127.0.0.1` on **your laptop**, but the listener is bound to `127.0.0.1` on **the remote server**.
+当 Hermes 和你的浏览器在同一台机器上时，这可以完美工作。但当它们不在同一台机器时，就会出问题：你笔记本电脑的浏览器试图访问**你的笔记本电脑**上的 `127.0.0.1`，但监听器绑定在**远程服务器**上的 `127.0.0.1`。
 
-The fix is a one-line SSH local-forward — **or**, when you don't have a real SSH client (GCP Cloud Shell, GitHub Codespaces, EC2 Instance Connect, Gitpod, browser-based web IDEs), the new `--manual-paste` flag introduced in [#26923](https://github.com/NousResearch/hermes-agent/issues/26923).
+解决办法是一条 SSH 本地转发命令 — **或者**，当你没有真正的 SSH 客户端（GCP Cloud Shell、GitHub Codespaces、EC2 Instance Connect、Gitpod、基于浏览器的 Web IDE）时，使用 [#26923](https://github.com/NousResearch/hermes-agent/issues/26923) 中引入的新 `--manual-paste` 标志。
 
-## TL;DR
+## 快速指南
 
 ```bash
-# On your local machine (laptop), in a separate terminal:
+# 在你的本地机器（笔记本电脑）上，打开另一个终端：
 ssh -N -L 56121:127.0.0.1:56121 user@remote-host
 
-# In your existing SSH session on the remote machine:
+# 在远程机器上现有的 SSH 会话中：
 hermes auth add xai-oauth --no-browser
-# → Hermes prints an authorize URL. Open it in a browser on your laptop.
-# → Your browser redirects to 127.0.0.1:56121/callback, the tunnel forwards
-#   the request to the remote listener, login completes.
+# → Hermes 打印一个授权 URL。在笔记本电脑的浏览器中打开它。
+# → 你的浏览器重定向到 127.0.0.1:56121/callback，隧道将请求转发给远程监听器，登录完成。
 ```
 
-Port `56121` is what xAI OAuth uses. For Spotify, replace it with `43827`. Hermes prints the exact port it bound to on the `Waiting for callback on ...` line — copy it from there.
+端口 `56121` 是 xAI OAuth 使用的端口。对于 Spotify，将其替换为 `43827`。Hermes 会在 `Waiting for callback on ...` 行打印它绑定的确切端口——从中复制即可。
 
-## Browser-only remote (Cloud Shell / Codespaces / EC2 Instance Connect)
+## 仅浏览器的远程环境（Cloud Shell / Codespaces / EC2 Instance Connect）
 
-If you don't have a regular SSH client — for example because you're running Hermes inside GCP Cloud Shell, GitHub Codespaces, AWS EC2 Instance Connect, Gitpod, or another browser-based console — the SSH tunnel above isn't available. Use `--manual-paste` instead:
+如果你没有常规的 SSH 客户端——例如，因为你在 GCP Cloud Shell、GitHub Codespaces、AWS EC2 Instance Connect、Gitpod 或其他基于浏览器的控制台中运行 Hermes——则无法使用上述 SSH 隧道。请改用 `--manual-paste`：
 
 ```bash
 hermes auth add xai-oauth --manual-paste
-# → Hermes prints an authorize URL. Open it in a browser on your laptop.
-# → Approve in the browser. The redirect to 127.0.0.1:56121/callback fails
-#   to load — that's expected.
-# → Copy the FULL URL from the failed page's address bar.
-# → Paste it back into the terminal at the "Callback URL:" prompt.
+# → Hermes 打印一个授权 URL。在笔记本电脑的浏览器中打开它。
+# → 在浏览器中批准。重定向到 127.0.0.1:56121/callback 会加载失败——这是预期的。
+# → 从失败页面的地址栏复制完整的 URL。
+# → 将其粘贴回终端，在 "Callback URL:" 提示符下。
 ```
 
-The same flag works on `hermes model --manual-paste` for the integrated model picker. Hermes accepts three callback paste forms interchangeably: the full URL, a bare `?code=...&state=...` query fragment, or — when the upstream consent page renders the authorization code in-page instead of redirecting (xAI's current behavior on browser-based consoles) — just the bare code value on its own.
+同样的标志也适用于集成模型选择器的 `hermes model --manual-paste`。Hermes 可以互换接受三种回调粘贴形式：完整 URL、裸的 `?code=...&state=...` 查询片段，或者——当上游同意页面直接在页面内呈现授权码而不是重定向（这是 xAI 在基于浏览器的控制台上的当前行为）时——仅裸代码值本身。
 
-Hermes uses the **same PKCE verifier, state and nonce** for both paths, so the upstream OAuth flow is byte-identical — `--manual-paste` is purely a transport change for the callback hop and is not a security downgrade.
+Hermes 对两种路径使用**相同的 PKCE verifier、state 和 nonce**，因此上游 OAuth 流程在字节级别上是完全相同的——`--manual-paste` 纯粹是回调跳转的传输方式变化，并不是安全降级。
 
-## Which Providers Need This
+## 哪些提供商需要这个
 
-| Provider | Loopback port | Tunnel needed? |
+| 提供商 | 环回端口 | 是否需要隧道？ |
 |----------|---------------|----------------|
-| `xai-oauth` (Grok SuperGrok) | `56121` | Yes, when Hermes is remote |
-| Spotify | `43827` | Yes, when Hermes is remote |
-| MCP servers (`auth: oauth`) | auto-picked per server | Yes, when Hermes is remote |
-| `anthropic` (Claude Pro/Max) | n/a | No — paste-the-code flow |
-| `openai-codex` (ChatGPT Plus/Pro) | n/a | No — device code flow |
-| `minimax`, `nous-portal` | n/a | No — device code flow |
+| `xai-oauth` (Grok SuperGrok) | `56121` | 需要，当 Hermes 在远程时 |
+| Spotify | `43827` | 需要，当 Hermes 在远程时 |
+| MCP 服务器 (`auth: oauth`) | 每台服务器自动选取 | 需要，当 Hermes 在远程时 |
+| `anthropic` (Claude Pro/Max) | 不适用 | 否——粘贴代码流程 |
+| `openai-codex` (ChatGPT Plus/Pro) | 不适用 | 否——设备代码流程 |
+| `minimax`, `nous-portal` | 不适用 | 否——设备代码流程 |
 
-If your provider isn't in the table, you don't need a tunnel.
+如果你的提供商不在表中，则不需要隧道。
 
-## MCP Servers
+## MCP 服务器
 
-Remote MCP servers (Linear, Sentry, Atlassian, Asana, Figma, etc.) use the same loopback redirect flow. Hermes auto-picks a free port per server and prints the authorize URL when the OAuth flow kicks off — either at startup (when a new server appears in `mcp_servers:`) or when you run `hermes mcp login <server>`.
+远程 MCP 服务器（Linear、Sentry、Atlassian、Asana、Figma 等）使用相同的环回重定向流程。Hermes 为每台服务器自动选取一个空闲端口，并在 OAuth 流程启动时打印授权 URL——无论是在启动时（当 `mcp_servers:` 中出现新的服务器时），还是在你运行 `hermes mcp login <server>` 时。
 
-You have two ways to complete it from a remote host:
+你有两种方法可以从远程主机完成它：
 
-**Option 1 — paste the redirect URL back (no setup, works anywhere).** On an interactive terminal, Hermes prompts you to paste the redirect URL alongside running the local listener. After approving in your browser, the redirect to `http://127.0.0.1:<port>/callback` will show a connection error — that's expected. Copy the **full URL from the browser's address bar** and paste it at the Hermes prompt:
+**选项 1 — 粘贴重定向 URL（无需设置，任何地方都能用）。** 在交互式终端上，Hermes 在运行本地监听器的同时提示你粘贴重定向 URL。在浏览器批准后，重定向到 `http://127.0.0.1:<port>/callback` 会显示连接错误——这是预期的。从**浏览器的地址栏复制完整的 URL** 并粘贴到 Hermes 提示符下：
 
 ```
-  MCP OAuth: authorization required.
-  Open this URL in your browser:
+  MCP OAuth: 需要授权。
+  在浏览器中打开此 URL：
 
     https://mcp.linear.app/authorize?response_type=code&...
 
-  Or paste the redirect URL here (or the ?code=...&state=... portion) and press Enter:
+  或者在此处粘贴重定向 URL（或 ?code=...&state=... 部分）并按 Enter：
 > https://mcp.linear.app/callback?code=abc123&state=xyz
-  Got authorization code from paste — completing flow.
+  从粘贴中获取授权码——正在完成流程。
 ```
 
-A bare `?code=...&state=...` query string is accepted too. This works for any MCP server with `auth: oauth` and requires no SSH config changes.
+裸的 `?code=...&state=...` 查询字符串也可以接受。这适用于任何带有 `auth: oauth` 的 MCP 服务器，并且不需要更改 SSH 配置。
 
-**Option 2 — SSH port forward (same as xAI / Spotify).** Hermes prints the exact port it bound to in the SSH-session hint. Open a separate terminal on your laptop:
+**选项 2 — SSH 端口转发（与 xAI / Spotify 相同）。** Hermes 在 SSH 会话提示中打印它绑定的确切端口。在你的笔记本电脑上打开另一个终端：
 
 ```bash
 ssh -N -L <port>:127.0.0.1:<port> user@remote-host
 ```
 
-Then open the authorize URL in your browser as normal; the redirect tunnels through and the listener picks it up. Use this when you need the flow to complete unattended (e.g. scripted re-auth where you can't paste interactively).
+然后像往常一样在浏览器中打开授权 URL；重定向通过隧道传输，监听器捕获它。当你需要流程无人值守完成时（例如，脚本化的重新认证，无法交互式粘贴），使用此选项。
 
-**Pitfall — the 30s config-reload race.** If you edit `~/.hermes/config.yaml` to add an OAuth MCP server from inside a running Hermes session, the CLI auto-reloads MCP connections with a 30s timeout. That's not enough time to complete an interactive OAuth flow, and the reload will give up. Use `hermes mcp login <server>` from a fresh terminal instead — it has no such cap and waits the full 5 min for you to paste back.
+**陷阱——30 秒配置重新加载竞争。** 如果你在正在运行的 Hermes 会话中编辑 `~/.hermes/config.yaml` 以添加 OAuth MCP 服务器，CLI 会在 30 秒超时后自动重新加载 MCP 连接。这不足以完成交互式 OAuth 流程，重新加载会放弃。请改用新终端中的 `hermes mcp login <server>`——它没有此类限制，会等待完整的 5 分钟让你粘贴回。
 
-## Why the listener can't just bind 0.0.0.0
+## 为什么监听器不能直接绑定 0.0.0.0
 
-xAI and Spotify both validate the `redirect_uri` parameter against an allowlist. Both require the loopback form (`http://127.0.0.1:<exact-port>/callback`). Binding the listener to `0.0.0.0` or a different port would cause the auth server to reject the request as a redirect_uri mismatch. The SSH tunnel keeps the loopback URI intact end-to-end.
+xAI 和 Spotify 都会根据允许列表验证 `redirect_uri` 参数。两者都要求环回形式（`http://127.0.0.1:<exact-port>/callback`）。将监听器绑定到 `0.0.0.0` 或不同的端口会导致认证服务器因 redirect_uri 不匹配而拒绝请求。SSH 隧道使环回 URI 在端到端保持完整。
 
-## Step-by-step: single SSH hop
+## 分步指南：单跳 SSH
 
-### 1. Start the tunnel from your local machine
+### 1. 从本地机器启动隧道
 
 ```bash
-# xAI Grok OAuth (port 56121)
+# xAI Grok OAuth (端口 56121)
 ssh -N -L 56121:127.0.0.1:56121 user@remote-host
 
-# Or for Spotify (port 43827)
+# 或者对于 Spotify (端口 43827)
 ssh -N -L 43827:127.0.0.1:43827 user@remote-host
 ```
 
-`-N` means "don't open a remote shell, just hold the tunnel open." Keep this terminal running for the duration of the login.
+`-N` 表示“不要打开远程 shell，只保持隧道打开”。在登录期间保持此终端运行。
 
-### 2. In a separate SSH session, run the auth command
+### 2. 在另一个 SSH 会话中，运行认证命令
 
 ```bash
 ssh user@remote-host
 hermes auth add xai-oauth --no-browser
-# or for Spotify:
+# 或者对于 Spotify:
 # hermes auth add spotify --no-browser
 ```
 
-Hermes detects the SSH session, skips the browser auto-open, and prints an authorize URL plus a `Waiting for callback on http://127.0.0.1:<port>/callback` line.
+Hermes 检测到 SSH 会话，跳过浏览器自动打开，并打印授权 URL 以及 `Waiting for callback on http://127.0.0.1:<port>/callback` 行。
 
-### 3. Open the URL in your local browser
+### 3. 在本地浏览器中打开 URL
 
-Copy the authorize URL from the remote terminal and paste it into the browser on your laptop. Approve the consent screen. The auth server redirects to `http://127.0.0.1:<port>/callback`. Your browser hits the tunnel, the request is forwarded to the remote listener, and Hermes prints `Login successful!`.
+从远程终端复制授权 URL 并粘贴到笔记本电脑的浏览器中。批准同意屏幕。认证服务器重定向到 `http://127.0.0.1:<port>/callback`。你的浏览器命中隧道，请求被转发到远程监听器，Hermes 打印 `Login successful!`。
 
-You can tear down the tunnel (Ctrl+C in the first terminal) once you see the success line.
+一旦看到成功行，你就可以拆除隧道（在第一个终端中按 Ctrl+C）。
 
-## Step-by-step: through a jump box
+## 分步指南：通过跳板机
 
-If you reach Hermes through a bastion / jump host, use SSH's built-in `-J` (ProxyJump):
+如果你通过堡垒机/跳板主机访问 Hermes，请使用 SSH 内置的 `-J` (ProxyJump)：
 
 ```bash
 ssh -N -L 56121:127.0.0.1:56121 -J jump-user@jump-host user@final-host
 ```
 
-This chains a SSH connection through the jump host without putting the loopback port on the jump box itself. The local `127.0.0.1:56121` on your laptop tunnels straight through to `127.0.0.1:56121` on the final remote host.
+这通过跳板机链式连接 SSH，而无需将环回端口放在跳板机本身上。你笔记本电脑上的本地 `127.0.0.1:56121` 直接隧道传输到最终远程主机上的 `127.0.0.1:56121`。
 
-For older OpenSSH that doesn't support `-J`, the long form is:
+对于不支持 `-J` 的较旧 OpenSSH，长格式为：
 
 ```bash
 ssh -N \
@@ -151,22 +140,22 @@ ssh -N \
     user@final-host
 ```
 
-## Mosh, tmux, ssh ControlMaster
+## Mosh、tmux、ssh ControlMaster
 
-The tunnel is a property of the underlying SSH connection. If you're running Hermes inside `tmux` over a mosh session, the mosh roaming doesn't carry the `-L` forwarding. Open a *separate* plain SSH session **only** for the `-L` tunnel — that's the connection that has to stay alive during the auth flow. Your interactive mosh/tmux session can keep running Hermes normally.
+隧道是底层 SSH 连接的一个属性。如果你在通过 mosh 会话运行的 `tmux` 中运行 Hermes，mosh 漫游不会携带 `-L` 转发。打开一个**单独的**普通 SSH 会话，仅用于 `-L` 隧道——这是必须在认证流程期间保持活动的连接。你的交互式 mosh/tmux 会话可以正常保持 Hermes 运行。
 
-If you use `ssh -o ControlMaster=auto`, port forwards on a multiplexed connection share the master's lifetime. Restart the master if the tunnel doesn't come up:
+如果你使用 `ssh -o ControlMaster=auto`，复用连接上的端口转发共享主控的生命周期。如果隧道没有建立，请重启主控：
 
 ```bash
 ssh -O exit user@remote-host
 ssh -N -L 56121:127.0.0.1:56121 user@remote-host
 ```
 
-## Troubleshooting
+## 故障排除
 
 ### `bind [127.0.0.1]:56121: Address already in use`
 
-Something on your laptop is already using that port. Either the previous tunnel didn't shut down cleanly, or a local Hermes is also listening on it. Find and kill the offender:
+你笔记本电脑上的某些东西已经在使用该端口。可能是之前的隧道没有正常关闭，或者本地 Hermes 也在监听该端口。找到并杀死占用者：
 
 ```bash
 # macOS / Linux
@@ -174,23 +163,23 @@ lsof -iTCP:56121 -sTCP:LISTEN
 kill <PID>
 ```
 
-Then retry the `ssh -L` command.
+然后重试 `ssh -L` 命令。
 
 ### "Could not establish connection. We couldn't reach your app." (xAI)
 
-xAI's authorize page shows this when its redirect to `127.0.0.1:<port>/callback` doesn't reach a listener. Either the tunnel isn't running, the port is wrong, or you're using the port Hermes printed in a previous run (the port can be auto-bumped if the preferred one is busy — always read the latest `Waiting for callback on ...` line).
+当 xAI 的授权页面重定向到 `127.0.0.1:<port>/callback` 但无法到达监听器时，会显示此信息。可能是隧道未运行、端口错误，或者你使用了 Hermes 在之前运行中打印的端口（如果首选端口繁忙，端口可能会自动递增——请务必阅读最新的 `Waiting for callback on ...` 行）。
 
 ### `xAI authorization timed out waiting for the local callback`
 
-Same root cause as above — the redirect never made it back. Check the tunnel is still alive (`ssh -N` doesn't show output, so look at the terminal you started it from), restart it if needed, and re-run `hermes auth add xai-oauth --no-browser`.
+与上述相同的原因——重定向从未返回。检查隧道是否仍存活（`ssh -N` 不显示输出，所以查看你启动它的终端），如果需要，重新启动它，并重新运行 `hermes auth add xai-oauth --no-browser`。
 
-### Tokens land in the wrong `~/.hermes`
+### Token 落在了错误的 `~/.hermes`
 
-The tokens are written under the Linux user that ran `hermes auth add ...`. If your gateway / systemd service runs as a different user (e.g. `root` or a dedicated `hermes` user), authenticate as **that** user so the tokens land in their `~/.hermes/auth.json`. `sudo -u hermes -i` or equivalent.
+Token 写在运行 `hermes auth add ...` 的 Linux 用户下。如果你的网关/systemd 服务以不同用户（例如 `root` 或专用 `hermes` 用户）运行，请以**该**用户身份进行认证，以便 Token 落入其 `~/.hermes/auth.json` 中。使用 `sudo -u hermes -i` 或等效方法。
 
-## See Also
+## 另请参阅
 
 - [xAI Grok OAuth](./xai-grok-oauth.md)
-- [Spotify (`Running over SSH`)](../user-guide/features/spotify.md#running-over-ssh--in-a-headless-environment)
-- [Native MCP client (OAuth section)](../user-guide/features/mcp.md#oauth-authenticated-http-servers)
+- [Spotify (`通过 SSH 运行`)](../user-guide/features/spotify.md#running-over-ssh--in-a-headless-environment)
+- [原生 MCP 客户端 (OAuth 部分)](../user-guide/features/mcp.md#oauth-authenticated-http-servers)
 - [SSH `-J` / ProxyJump (man page)](https://man.openbsd.org/ssh#J)

@@ -1,277 +1,268 @@
 ---
-title: 元宝
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/messaging/yuanbao.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/messaging/yuanbao.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 16
 title: "Yuanbao"
-description: "Connect Hermes Agent to the Yuanbao enterprise messaging platform via WebSocket gateway"
+description: "通过 WebSocket 网关将 Hermes Agent 连接到企业即时通讯平台 Yuanbao"
 ---
 
 # Yuanbao
 
-Connect Hermes to [Yuanbao](https://yuanbao.tencent.com/), Tencent's enterprise messaging platform. The adapter uses a WebSocket gateway for real-time message delivery and supports both direct (C2C) and group conversations.
+将 Hermes 连接到腾讯的企业即时通讯平台 [Yuanbao](https://yuanbao.tencent.com/)。该适配器使用 WebSocket 网关实现实时消息投递，支持单聊（C2C）和群聊。
 
 :::info
-Yuanbao is an enterprise messaging platform primarily used within Tencent and enterprise environments. It uses WebSocket for real-time communication, HMAC-based authentication, and supports rich media including images, files, and voice messages.
+Yuanbao 是一款主要在企业内部及腾讯内部使用的企业即时通讯平台。它使用 WebSocket 进行实时通信，采用基于 HMAC 的身份认证，并支持图片、文件、语音消息等富媒体。
 :::
 
-## Prerequisites
+## 前提条件
 
-- A Yuanbao account with bot creation permissions
-- Yuanbao APP_ID and APP_SECRET (from platform admin)
-- Python packages: `websockets` and `httpx`
-- For media support: `aiofiles`
+- 拥有机器人创建权限的 Yuanbao 账户
+- 从平台管理员处获取 Yuanbao 的 APP_ID 和 APP_SECRET
+- Python 包：`websockets` 和 `httpx`
+- 如需媒体支持：`aiofiles`
 
-Install the required dependencies:
+安装所需依赖：
 
 ```bash
 pip install websockets httpx aiofiles
 ```
 
-## Setup
+## 设置
 
-### 1. Create a Bot in Yuanbao
+### 1. 在 Yuanbao 中创建一个机器人
 
-1. Download the Yuanbao app from [https://yuanbao.tencent.com/](https://yuanbao.tencent.com/)
-2. In the app, go to **PAI → My Bot** and create a new bot
-3. After the bot is created, copy the **APP_ID** and **APP_SECRET**
+1. 从 [https://yuanbao.tencent.com/](https://yuanbao.tencent.com/) 下载 Yuanbao 应用
+2. 在应用中，进入 **PAI → 我的机器人**，创建一个新机器人
+3. 机器人创建完成后，复制 **APP_ID** 和 **APP_SECRET**
 
-### 2. Run the Setup Wizard
+### 2. 运行设置向导
 
-The easiest way to configure Yuanbao is through the interactive setup:
+配置 Yuanbao 最简单的方式是通过交互式设置：
 
 ```bash
 hermes gateway setup
 ```
 
-Select **Yuanbao** when prompted. The wizard will:
+按提示选择 **Yuanbao**。向导将：
 
-1. Ask for your APP_ID
-2. Ask for your APP_SECRET
-3. Save the configuration automatically
+1. 询问你的 APP_ID
+2. 询问你的 APP_SECRET
+3. 自动保存配置
 
 :::tip
-The WebSocket URL and API Domain have sensible defaults built in. You only need to provide APP_ID and APP_SECRET to get started.
+WebSocket URL 和 API 域名已内置合理的默认值。你只需提供 APP_ID 和 APP_SECRET 即可开始。
 :::
 
-### 3. Configure Environment Variables
+### 3. 配置环境变量
 
-After initial setup, verify these variables in `~/.hermes/.env`:
+初始设置完成后，检查 `~/.hermes/.env` 中的以下变量：
 
 ```bash
-# Required
+# 必填
 YUANBAO_APP_ID=your-app-id
 YUANBAO_APP_SECRET=your-app-secret
 YUANBAO_WS_URL=wss://api.yuanbao.example.com/ws
 YUANBAO_API_DOMAIN=https://api.yuanbao.example.com
 
-# Optional: bot account ID (normally obtained automatically from sign-token)
+# 可选：机器人账户 ID（通常通过 sign-token 自动获取）
 # YUANBAO_BOT_ID=your-bot-id
 
-# Optional: internal routing environment (e.g. test/staging/production)
+# 可选：内部路由环境（例如 test/staging/production）
 # YUANBAO_ROUTE_ENV=production
 
-# Optional: home channel for cron/notifications (format: direct:<account> or group:<group_code>)
+# 可选：定时任务/通知的归属频道（格式：direct:<account> 或 group:<group_code>）
 YUANBAO_HOME_CHANNEL=direct:bot_account_id
-YUANBAO_HOME_CHANNEL_NAME="Bot Notifications"
+YUANBAO_HOME_CHANNEL_NAME="机器人通知"
 
-# Optional: restrict access (legacy, see Access Control below for fine-grained policies)
+# 可选：限制访问（旧版，详见下方访问控制以获取细粒度策略）
 YUANBAO_ALLOWED_USERS=user_account_1,user_account_2
 ```
 
-### 4. Start the Gateway
+### 4. 启动网关
 
 ```bash
 hermes gateway
 ```
 
-The adapter will connect to the Yuanbao WebSocket gateway, authenticate using HMAC signatures, and begin processing messages.
+适配器将连接到 Yuanbao WebSocket 网关，使用 HMAC 签名进行身份认证，并开始处理消息。
 
-## Features
+## 功能特性
 
-- **WebSocket gateway** — real-time bidirectional communication
-- **HMAC authentication** — secure request signing with APP_ID/APP_SECRET
-- **C2C messaging** — direct user-to-bot conversations
-- **Group messaging** — conversations in group chats
-- **Media support** — images, files, and voice messages via COS (Cloud Object Storage)
-- **Markdown formatting** — messages are automatically chunked for Yuanbao's size limits
-- **Message deduplication** — prevents duplicate processing of the same message
-- **Heartbeat/keep-alive** — maintains WebSocket connection stability
-- **Typing indicators** — shows "typing…" status while the agent processes
-- **Automatic reconnection** — handles WebSocket disconnections with exponential backoff
-- **Group information queries** — retrieve group details and member lists
-- **Sticker/Emoji support** — send TIMFaceElem stickers and emoji in conversations
-- **Auto-sethome** — first user to message the bot is automatically set as the home channel owner
-- **Slow-response notification** — sends a waiting message when the agent takes longer than expected
+- **WebSocket 网关** — 实时双向通信
+- **HMAC 身份认证** — 使用 APP_ID/APP_SECRET 进行安全请求签名
+- **C2C 消息** — 用户与机器人之间的直接对话
+- **群组消息** — 群聊中的对话
+- **媒体支持** — 通过 COS（云对象存储）传输图片、文件和语音消息
+- **Markdown 格式化** — 消息自动分块以适应 Yuanbao 的大小限制
+- **消息去重** — 防止同一消息被重复处理
+- **心跳/保活** — 维持 WebSocket 连接稳定
+- **输入状态指示** — 当智能体处理时显示“正在输入…”状态
+- **自动重连** — 使用指数退避策略处理 WebSocket 断开
+- **群组信息查询** — 检索群组详情和成员列表
+- **贴纸/表情支持** — 在对话中发送 TIMFaceElem 贴纸和 emoji
+- **自动设置归属** — 第一个给机器人发消息的用户自动被设为归属频道所有者
+- **慢响应通知** — 当智能体处理时间过长时发送等待消息
 
-## Configuration Options
+## 配置选项
 
-### Chat ID Formats
+### 聊天 ID 格式
 
-Yuanbao uses prefixed identifiers depending on conversation type:
+Yuanbao 根据对话类型使用前缀标识符：
 
-| Chat Type | Format | Example |
-|-----------|--------|---------|
-| Direct message (C2C) | `direct:<account>` | `direct:user123` |
-| Group message | `group:<group_code>` | `group:grp456` |
+| 聊天类型 | 格式 | 示例 |
+|---------|------|------|
+| 单聊（C2C） | `direct:<account>` | `direct:user123` |
+| 群聊 | `group:<group_code>` | `group:grp456` |
 
-### Media Uploads
+### 媒体上传
 
-The Yuanbao adapter automatically handles media uploads via COS (Tencent Cloud Object Storage):
+Yuanbao 适配器通过 COS（腾讯云对象存储）自动处理媒体上传：
 
-- **Images**: Supports JPEG, PNG, GIF, WebP
-- **Files**: Supports all common document types
-- **Voice**: Supports WAV, MP3, OGG
+- **图片**：支持 JPEG、PNG、GIF、WebP
+- **文件**：支持所有常见文档类型
+- **语音**：支持 WAV、MP3、OGG
 
-Media URLs are automatically validated and downloaded before upload to prevent SSRF attacks.
+媒体 URL 在上传前会自动验证和下载，以防止 SSRF 攻击。
 
-## Home Channel
+## 归属频道
 
-Use the `/sethome` command in any Yuanbao chat (DM or group) to designate it as the **home channel**. Scheduled tasks (cron jobs) deliver their results to this channel.
+在任何 Yuanbao 聊天（私聊或群聊）中使用 `/sethome` 命令，将其设置为 **归属频道**。定时任务（cron job）的结果将投递到此频道。
 
-:::tip Auto-sethome
-If no home channel is configured, the first user to message the bot will be automatically set as the home channel owner. If the current home channel is a group chat, the first DM will upgrade it to a direct channel.
+:::tip 自动设置归属
+如果未配置归属频道，第一个给机器人发消息的用户会被自动设为归属频道所有者。如果当前归属频道是群聊，第一个私聊将自动将其升级为单聊频道。
 :::
 
-You can also set it manually in `~/.hermes/.env`:
+你也可以在 `~/.hermes/.env` 中手动设置：
 
 ```bash
 YUANBAO_HOME_CHANNEL=direct:user_account_id
-# or for a group:
+# 或者用于群聊：
 # YUANBAO_HOME_CHANNEL=group:group_code
-YUANBAO_HOME_CHANNEL_NAME="My Bot Updates"
+YUANBAO_HOME_CHANNEL_NAME="我的机器人更新"
 ```
 
-### Example: Set Home Channel
+### 示例：设置归属频道
 
-1. Start a conversation with the bot in Yuanbao
-2. Send the command: `/sethome`
-3. The bot responds: "Home channel set to [chat_name] with ID [chat_id]. Cron jobs will deliver to this location."
-4. Future cron jobs and notifications will be sent to this channel
+1. 在 Yuanbao 中与机器人开始对话
+2. 发送命令：`/sethome`
+3. 机器人回复：“归属频道已设置为 [chat_name]，ID 为 [chat_id]。定时任务将投递到此位置。”
+4. 后续的定时任务和通知将发送到此频道
 
-### Example: Cron Job Delivery
+### 示例：定时任务投递
 
-Create a cron job:
+创建一个定时任务：
 
 ```bash
-/cron "0 9 * * *" Check server status
+/cron "0 9 * * *" 检查服务器状态
 ```
 
-The scheduled output will be delivered to your Yuanbao home channel every day at 9 AM.
+每日上午 9 点，定时输出将投递到你的 Yuanbao 归属频道。
 
-## Usage Tips
+## 使用技巧
 
-### Starting a Conversation
+### 开始对话
 
-Send any message to the bot in Yuanbao:
-
-```
-hello
-```
-
-The bot responds in the same conversation thread.
-
-### Available Commands
-
-All standard Hermes commands work on Yuanbao:
-
-| Command | Description |
-|---------|-------------|
-| `/new` | Start a fresh conversation |
-| `/model [provider:model]` | Show or change the model |
-| `/sethome` | Set this chat as the home channel |
-| `/status` | Show session info |
-| `/help` | Show available commands |
-
-### Sending Files
-
-To send a file to the bot, simply attach it directly in the Yuanbao chat. The bot will automatically download and process the file attachment.
-
-You can also include a message with the attachment:
+在 Yuanbao 中向机器人发送任意消息：
 
 ```
-Please analyze this document
+你好
 ```
 
-### Receiving Files
+机器人将在同一对话线程中回复。
 
-When you ask the bot to create or export a file, it sends the file directly to your Yuanbao chat.
+### 可用命令
 
-## Troubleshooting
+所有标准 Hermes 命令在 Yuanbao 上都有效：
 
-### Bot is online but not responding to messages
+| 命令 | 描述 |
+|------|------|
+| `/new` | 开始新对话 |
+| `/model [provider:model]` | 显示或切换模型 |
+| `/sethome` | 将此聊天设为归属频道 |
+| `/status` | 显示会话信息 |
+| `/help` | 显示可用命令 |
 
-**Cause**: Authentication failed during WebSocket handshake.
+### 发送文件
 
-**Fix**:
-1. Verify APP_ID and APP_SECRET are correct
-2. Check that the WebSocket URL is accessible
-3. Ensure the bot account has proper permissions
-4. Review gateway logs: `tail -f ~/.hermes/logs/gateway.log`
+要向机器人发送文件，直接在 Yuanbao 聊天中附加文件即可。机器人会自动下载并处理文件附件。
 
-### "Connection refused" error
+你也可以在附件中附带一条消息：
 
-**Cause**: WebSocket URL is unreachable or incorrect.
+```
+请分析这份文档
+```
 
-**Fix**:
-1. Verify the WebSocket URL format (should start with `wss://`)
-2. Check network connectivity to the Yuanbao API domain
-3. Confirm firewall allows WebSocket connections
-4. Test URL with: `curl -I https://[YUANBAO_API_DOMAIN]`
+### 接收文件
 
-### Media uploads fail
+当你要求机器人创建或导出文件时，它会直接将文件发送到你的 Yuanbao 聊天中。
 
-**Cause**: COS credentials are invalid or media server is unreachable.
+## 故障排除
 
-**Fix**:
-1. Verify API_DOMAIN is correct
-2. Check that media upload permissions are enabled for your bot
-3. Ensure the media file is accessible and not corrupted
-4. Check COS bucket configuration with platform admin
+### 机器人在线但不回复消息
 
-### Messages not delivered to home channel
+**原因**：WebSocket 握手时身份认证失败。
 
-**Cause**: Home channel ID format is incorrect or cron job hasn't triggered.
+**解决方法**：
+1. 确认 APP_ID 和 APP_SECRET 正确
+2. 检查 WebSocket URL 是否可访问
+3. 确保机器人账户有适当权限
+4. 查看网关日志：`tail -f ~/.hermes/logs/gateway.log`
 
-**Fix**:
-1. Verify YUANBAO_HOME_CHANNEL is in correct format
-2. Test with `/sethome` command to auto-detect correct format
-3. Check cron job schedule with `/status`
-4. Verify bot has send permissions in the target chat
+### “连接被拒绝”错误
 
-### Frequent disconnections
+**原因**：WebSocket URL 无法访问或不正确。
 
-**Cause**: WebSocket connection is unstable or network is unreliable.
+**解决方法**：
+1. 验证 WebSocket URL 格式（应以 `wss://` 开头）
+2. 检查到 Yuanbao API 域名的网络连接
+3. 确认防火墙允许 WebSocket 连接
+4. 使用以下命令测试 URL：`curl -I https://[YUANBAO_API_DOMAIN]`
 
-**Fix**:
-1. Check gateway logs for error patterns
-2. Increase heartbeat timeout in connection settings
-3. Ensure stable network connection to Yuanbao API
-4. Consider enabling verbose logging: `HERMES_LOG_LEVEL=debug`
+### 媒体上传失败
 
-## Access Control
+**原因**：COS 凭据无效或媒体服务器不可达。
 
-Yuanbao supports fine-grained access control for both DM and group conversations:
+**解决方法**：
+1. 确认 API_DOMAIN 正确
+2. 检查机器人是否已启用媒体上传权限
+3. 确保媒体文件可访问且未损坏
+4. 联系平台管理员检查 COS 存储桶配置
+
+### 消息未投递到归属频道
+
+**原因**：归属频道 ID 格式不正确或定时任务尚未触发。
+
+**解决方法**：
+1. 确认 YUANBAO_HOME_CHANNEL 格式正确
+2. 使用 `/sethome` 命令测试自动检测正确格式
+3. 使用 `/status` 检查定时任务计划
+4. 确认机器人具有目标聊天的发送权限
+
+### 频繁断开连接
+
+**原因**：WebSocket 连接不稳定或网络不可靠。
+
+**解决方法**：
+1. 检查网关日志中的错误模式
+2. 在连接设置中增加心跳超时时间
+3. 确保到 Yuanbao API 的网络连接稳定
+4. 考虑启用详细日志：`HERMES_LOG_LEVEL=debug`
+
+## 访问控制
+
+Yuanbao 支持对私聊和群聊进行细粒度访问控制：
 
 ```bash
-# DM policy: open (default) | allowlist | disabled
+# 私聊策略：open（默认）| allowlist | disabled
 YUANBAO_DM_POLICY=open
-# Comma-separated user IDs allowed to DM the bot (only used when DM_POLICY=allowlist)
+# 允许与机器人私聊的用户 ID 列表（仅当 DM_POLICY=allowlist 时生效），逗号分隔
 YUANBAO_DM_ALLOW_FROM=user_id_1,user_id_2
 
-# Group policy: open (default) | allowlist | disabled
+# 群聊策略：open（默认）| allowlist | disabled
 YUANBAO_GROUP_POLICY=open
-# Comma-separated group codes allowed (only used when GROUP_POLICY=allowlist)
+# 允许的群组代码列表（仅当 GROUP_POLICY=allowlist 时生效），逗号分隔
 YUANBAO_GROUP_ALLOW_FROM=group_code_1,group_code_2
 ```
 
-These can also be set in `config.yaml`:
+这些也可以在 `config.yaml` 中设置：
 
 ```yaml
 platforms:
@@ -283,68 +274,68 @@ platforms:
       group_allow_from: ""
 ```
 
-## Advanced Configuration
+## 高级配置
 
-### Message Chunking
+### 消息分块
 
-Yuanbao has a maximum message size. Hermes automatically chunks large responses with Markdown-aware splitting (respects code fences, tables, and paragraph boundaries).
+Yuanbao 有最大消息大小限制。Hermes 会自动对较大的响应进行分块，并注意 Markdown 边界（代码块、表格、段落分隔符）。
 
-### Connection Parameters
+### 连接参数
 
-The following connection parameters are built into the adapter with sensible defaults:
+以下连接参数内置在适配器中，具有合理的默认值：
 
-| Parameter | Default Value | Description |
-|-----------|---------------|-------------|
-| WebSocket connect timeout | 15 seconds | Time to wait for WS handshake |
-| Heartbeat interval | 30 seconds | Ping frequency to keep connection alive |
-| Max reconnect attempts | 100 | Maximum number of reconnection tries |
-| Reconnect backoff | 1s → 60s (exponential) | Wait time between reconnect attempts |
-| Reply heartbeat interval | 2 seconds | RUNNING status send frequency |
-| Send timeout | 30 seconds | Timeout for outbound WS messages |
+| 参数 | 默认值 | 描述 |
+|------|--------|------|
+| WebSocket 连接超时 | 15 秒 | 等待 WS 握手的时间 |
+| 心跳间隔 | 30 秒 | 保持连接活跃的 ping 频率 |
+| 最大重连次数 | 100 | 最大重连尝试次数 |
+| 重连退避 | 1 秒 → 60 秒（指数） | 重连尝试之间的等待时间 |
+| 回复心跳间隔 | 2 秒 | RUNNING 状态的发送频率 |
+| 发送超时 | 30 秒 | 出站 WS 消息的超时时间 |
 
 :::note
-These values are currently not configurable via environment variables. They are optimized for typical Yuanbao deployments.
+这些值目前不能通过环境变量配置。它们针对典型的 Yuanbao 部署进行了优化。
 :::
 
-### Verbose Logging
+### 详细日志
 
-Enable debug logging to troubleshoot connection issues:
+启用调试日志以排查连接问题：
 
 ```bash
 HERMES_LOG_LEVEL=debug hermes gateway
 ```
 
-## Integration with Other Features
+## 与其他功能的集成
 
-### Cron Jobs
+### 定时任务（Cron Jobs）
 
-Schedule tasks that run on Yuanbao:
-
-```
-/cron "0 */4 * * *" Report system health
-```
-
-Results are delivered to your home channel.
-
-### Background Tasks
-
-Run long operations without blocking the conversation:
+安排在 Yuanbao 上运行的任务：
 
 ```
-/background Analyze all files in the archive
+/cron "0 */4 * * *" 报告系统健康状况
 ```
 
-### Cross-Platform Messages
+结果将投递到你的归属频道。
 
-Send a message from CLI to Yuanbao:
+### 后台任务
+
+在不阻塞对话的情况下运行耗时操作：
+
+```
+/background 分析归档中的所有文件
+```
+
+### 跨平台消息
+
+通过 CLI 向 Yuanbao 发送消息：
 
 ```bash
 hermes chat -q "Send 'Hello from CLI' to yuanbao:group:group_code"
 ```
 
-## Related Documentation
+## 相关文档
 
-- [Messaging Gateway Overview](./index.md)
-- [Slash Commands Reference](/reference/slash-commands)
-- [Cron Jobs](/user-guide/features/cron)
-- [Background Sessions](/user-guide/cli#background-sessions)
+- [消息网关概述](./index.md)
+- [斜杠命令参考](/reference/slash-commands)
+- [定时任务](/user-guide/features/cron)
+- [后台会话](/user-guide/cli#background-sessions)

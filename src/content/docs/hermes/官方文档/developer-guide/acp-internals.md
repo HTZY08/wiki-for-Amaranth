@@ -1,23 +1,14 @@
 ---
-title: ACP 内部机制
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`developer-guide/acp-internals.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/acp-internals.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 2
-title: "ACP Internals"
-description: "How the ACP adapter works: lifecycle, sessions, event bridge, approvals, and tool rendering"
+title: "ACP 内部机制"
+description: "ACP 适配器的工作原理：生命周期、会话、事件桥、审批和工具渲染"
 ---
 
-# ACP Internals
+# ACP 内部机制
 
-The ACP adapter wraps Hermes' synchronous `AIAgent` in an async JSON-RPC stdio server.
+ACP 适配器将 Hermes 的同步 `AIAgent` 封装在一个异步 JSON-RPC stdio 服务器中。
 
-Key implementation files:
+关键实现文件：
 
 - `acp_adapter/entry.py`
 - `acp_adapter/server.py`
@@ -28,41 +19,41 @@ Key implementation files:
 - `acp_adapter/auth.py`
 - `acp_registry/agent.json`
 
-## Boot flow
+## 启动流程
 
 ```text
 hermes acp / hermes-acp / python -m acp_adapter
   -> acp_adapter.entry.main()
-  -> parse --version / --check / --setup before server startup
-  -> load ~/.hermes/.env
-  -> configure stderr logging
-  -> construct HermesACPAgent
+  -> 解析 --version / --check / --setup（在服务器启动前）
+  -> 加载 ~/.hermes/.env
+  -> 配置 stderr 日志
+  -> 构造 HermesACPAgent
   -> acp.run_agent(agent, use_unstable_protocol=True)
 ```
 
-The Zed ACP Registry path launches the same adapter through `uvx --from 'hermes-agent[acp]==<version>' hermes-acp`, pointed at the `hermes-agent` PyPI release.
+Zed ACP Registry 路径通过 `uvx --from 'hermes-agent[acp]==<version>' hermes-acp` 启动相同的适配器，指向 `hermes-agent` PyPI 发布版本。
 
-Stdout is reserved for ACP JSON-RPC transport. Human-readable logs go to stderr.
+标准输出保留用于 ACP JSON-RPC 传输。人类可读的日志输出到 stderr。
 
-## Major components
+## 主要组件
 
 ### `HermesACPAgent`
 
-`acp_adapter/server.py` implements the ACP agent protocol.
+`acp_adapter/server.py` 实现了 ACP 代理（Agent）协议。
 
-Responsibilities:
+职责：
 
-- initialize / authenticate
-- new/load/resume/fork/list/cancel session methods
-- prompt execution
-- session model switching
-- wiring sync AIAgent callbacks into ACP async notifications
+- 初始化 / 认证
+- new/load/resume/fork/list/cancel 会话方法
+- 提示（Prompt）执行
+- 会话模型切换
+- 将同步 AIAgent 回调连接到 ACP 异步通知
 
 ### `SessionManager`
 
-`acp_adapter/session.py` tracks live ACP sessions.
+`acp_adapter/session.py` 跟踪活动的 ACP 会话。
 
-Each session stores:
+每个会话存储：
 
 - `session_id`
 - `agent`
@@ -71,7 +62,7 @@ Each session stores:
 - `history`
 - `cancel_event`
 
-The manager is thread-safe and supports:
+管理器是线程安全的，支持：
 
 - create
 - get
@@ -79,115 +70,115 @@ The manager is thread-safe and supports:
 - fork
 - list
 - cleanup
-- cwd updates
+- cwd 更新
 
-### Event bridge
+### 事件桥
 
-`acp_adapter/events.py` converts AIAgent callbacks into ACP `session_update` events.
+`acp_adapter/events.py` 将 AIAgent 回调转换为 ACP `session_update` 事件。
 
-Bridged callbacks:
+桥接的回调：
 
 - `tool_progress_callback`
-- `thinking_callback` (currently set to `None` in the ACP bridge — reasoning is forwarded through `step_callback` instead)
+- `thinking_callback`（目前在 ACP 桥中设置为 `None`——推理内容通过 `step_callback` 转发）
 - `step_callback`
 
-Because `AIAgent` runs in a worker thread while ACP I/O lives on the main event loop, the bridge uses:
+由于 `AIAgent` 在工作线程中运行，而 ACP I/O 位于主事件循环上，桥使用：
 
 ```python
 asyncio.run_coroutine_threadsafe(...)
 ```
 
-### Permission bridge
+### 权限桥
 
-`acp_adapter/permissions.py` adapts dangerous terminal approval prompts into ACP permission requests.
+`acp_adapter/permissions.py` 将危险的终端审批提示转换为 ACP 权限请求。
 
-Mapping:
+映射：
 
 - `allow_once` -> Hermes `once`
 - `allow_always` -> Hermes `always`
-- reject options -> Hermes `deny`
+- 拒绝选项 -> Hermes `deny`
 
-Timeouts and bridge failures deny by default.
+超时和桥接失败默认拒绝。
 
-### Tool rendering helpers
+### 工具渲染辅助函数
 
-`acp_adapter/tools.py` maps Hermes tools to ACP tool kinds and builds editor-facing content.
+`acp_adapter/tools.py` 将 Hermes 工具映射到 ACP 工具类型，并构建面向编辑器的显示内容。
 
-Examples:
+示例：
 
-- `patch` / `write_file` -> file diffs
-- `terminal` -> shell command text
-- `read_file` / `search_files` -> text previews
-- large results -> truncated text blocks for UI safety
+- `patch` / `write_file` -> 文件差异
+- `terminal` -> shell 命令文本
+- `read_file` / `search_files` -> 文本预览
+- 大结果 -> 为 UI 安全截断的文本块
 
-## Session lifecycle
+## 会话生命周期
 
 ```text
 new_session(cwd)
-  -> create SessionState
-  -> create AIAgent(platform="acp", enabled_toolsets=["hermes-acp"])
-  -> bind task_id/session_id to cwd override
+  -> 创建 SessionState
+  -> 创建 AIAgent(platform="acp", enabled_toolsets=["hermes-acp"])
+  -> 绑定 task_id/session_id 到 cwd 覆盖
 
 prompt(..., session_id)
-  -> extract text from ACP content blocks
-  -> reset cancel event
-  -> install callbacks + approval bridge
-  -> run AIAgent in ThreadPoolExecutor
-  -> update session history
-  -> emit final agent message chunk
+  -> 从 ACP 内容块中提取文本
+  -> 重置取消事件
+  -> 安装回调 + 审批桥
+  -> 在 ThreadPoolExecutor 中运行 AIAgent
+  -> 更新会话历史
+  -> 发送最终的代理消息块
 ```
 
-### Cancelation
+### 取消
 
-`cancel(session_id)`:
+`cancel(session_id)`：
 
-- sets the session cancel event
-- calls `agent.interrupt()` when available
-- causes the prompt response to return `stop_reason="cancelled"`
+- 设置会话取消事件
+- 当可用时调用 `agent.interrupt()`
+- 导致提示响应返回 `stop_reason="cancelled"`
 
-### Forking
+### 分叉
 
-`fork_session()` deep-copies message history into a new live session, preserving conversation state while giving the fork its own session ID and cwd.
+`fork_session()` 将消息历史深拷贝到新的活动会话中，保留对话状态，同时为分叉赋予自己的会话 ID 和 cwd。
 
-## Provider/auth behavior
+## 提供者/认证行为
 
-ACP does not implement its own auth store.
+ACP 没有实现自己的认证存储。
 
-Instead it reuses Hermes' runtime resolver:
+而是重用 Hermes 的运行时解析器：
 
 - `acp_adapter/auth.py`
 - `hermes_cli/runtime_provider.py`
 
-So ACP advertises and uses the currently configured Hermes provider/credentials. It also always advertises a terminal setup auth method (`hermes-setup`, args `--setup`) so first-run registry clients can open Hermes' interactive model/provider configuration before starting a normal ACP session.
+因此 ACP 通告并使用当前配置的 Hermes 提供者/凭证。它还会始终通告终端设置认证方法（`hermes-setup`，参数 `--setup`），以便首次运行的注册中心客户端在启动正常 ACP 会话之前打开 Hermes 的交互式模型/提供者配置。
 
-## Working directory binding
+## 工作目录绑定
 
-ACP sessions carry an editor cwd.
+ACP 会话携带编辑器的 cwd。
 
-The session manager binds that cwd to the ACP session ID via task-scoped terminal/file overrides, so file and terminal tools operate relative to the editor workspace.
+会话管理器通过任务范围内的终端/文件覆盖将该 cwd 绑定到 ACP 会话 ID，因此文件和终端工具相对于编辑器工作空间运行。
 
-## Duplicate same-name tool calls
+## 重复的同名工具调用
 
-The event bridge tracks tool IDs FIFO per tool name, not just one ID per name. This is important for:
+事件桥按工具名称使用 FIFO 队列跟踪工具 ID，而不是每个名称仅一个 ID。这很重要，用于：
 
-- parallel same-name calls
-- repeated same-name calls in one step
+- 并行的同名调用
+- 一个步骤中重复的同名调用
 
-Without FIFO queues, completion events would attach to the wrong tool invocation.
+如果没有 FIFO 队列，完成事件会附加到错误的工具调用上。
 
-## Approval callback restoration
+## 审批回调恢复
 
-ACP temporarily installs an approval callback on the terminal tool during prompt execution, then restores the previous callback afterward. This avoids leaving ACP session-specific approval handlers installed globally forever.
+ACP 在提示执行期间临时在终端工具上安装一个审批回调，然后在之后恢复之前的回调。这避免将 ACP 会话特定的审批处理程序全局永久保留。
 
-## Current limitations
+## 当前限制
 
-- ACP sessions are persisted to the shared `~/.hermes/state.db` (SessionDB) and transparently restored across process restarts; they appear in `session_search`
-- non-text prompt blocks are currently ignored for request text extraction
-- editor-specific UX varies by ACP client implementation
+- ACP 会话持久化到共享的 `~/.hermes/state.db`（SessionDB），并在进程重启后透明恢复；它们出现在 `session_search` 中
+- 非文本提示块目前被忽略（用于请求文本提取）
+- 编辑器特定的用户体验因 ACP 客户端实现而异
 
-## Related files
+## 相关文件
 
-- `tests/acp/` — ACP test suite
-- `toolsets.py` — `hermes-acp` toolset definition
-- `hermes_cli/main.py` — `hermes acp` CLI subcommand
-- `pyproject.toml` — `[acp]` optional dependency + `hermes-acp` script
+- `tests/acp/` — ACP 测试套件
+- `toolsets.py` — `hermes-acp` 工具集定义
+- `hermes_cli/main.py` — `hermes acp` CLI 子命令
+- `pyproject.toml` — `[acp]` 可选依赖 + `hermes-acp` 脚本

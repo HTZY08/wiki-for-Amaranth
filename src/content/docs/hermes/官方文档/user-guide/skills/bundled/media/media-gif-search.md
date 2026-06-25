@@ -1,0 +1,106 @@
+---
+title: "GIF搜索 — 通过 curl + jq 从 Tenor 搜索/下载 GIF"
+sidebar_label: "Gif Search"
+description: "通过 curl + jq 从 Tenor 搜索/下载 GIF"
+---
+
+{/* 此页面由 website/scripts/generate-skill-docs.py 从技能的 SKILL.md 自动生成。请编辑源文件 SKILL.md，而非此页面。 */}
+
+# GIF搜索
+
+通过 curl + jq 从 Tenor 搜索/下载 GIF。
+
+## 技能元数据（Skill metadata）
+
+| | |
+|---|---|
+| 来源（Source） | 内置（默认安装） |
+| 路径（Path） | `skills/media/gif-search` |
+| 版本（Version） | `1.1.0` |
+| 作者（Author） | Hermes Agent |
+| 许可证（License） | MIT |
+| 平台（Platforms） | linux, macos, windows |
+| 标签（Tags） | `GIF`, `Media`, `Search`, `Tenor`, `API` |
+
+## 参考：完整 SKILL.md
+
+:::info
+以下是 Hermes 在该技能被触发时加载的完整技能定义。当技能处于活动状态时，代理（Agent）将此视为指令。
+:::
+
+# GIF 搜索（Tenor API）
+
+使用 curl 直接通过 Tenor API 搜索和下载 GIF。无需额外工具。
+
+## 何时使用
+
+适用于查找反应 GIF、创建视觉内容以及在聊天中发送 GIF。
+
+## 设置
+
+将你的 Tenor API 密钥设置在环境变量中（添加到 `${HERMES_HOME:-~/.hermes}/.env`）：
+
+```bash
+TENOR_API_KEY=your_key_here
+```
+
+在 https://developers.google.com/tenor/guides/quickstart 获取免费 API 密钥——Google Cloud Console 的 Tenor API 密钥免费且拥有宽松的速率限制。
+
+## 前置条件
+
+- `curl` 和 `jq`（macOS/Linux 标准工具）
+- `TENOR_API_KEY` 环境变量
+
+## 搜索 GIF
+
+```bash
+# 搜索并获取 GIF 链接
+curl -s "https://tenor.googleapis.com/v2/search?q=thumbs+up&limit=5&key=${TENOR_API_KEY}" | jq -r '.results[].media_formats.gif.url'
+
+# 获取较小的预览版本
+curl -s "https://tenor.googleapis.com/v2/search?q=nice+work&limit=3&key=${TENOR_API_KEY}" | jq -r '.results[].media_formats.tinygif.url'
+```
+
+## 下载 GIF
+
+```bash
+# 搜索并下载第一个结果
+URL=$(curl -s "https://tenor.googleapis.com/v2/search?q=celebration&limit=1&key=${TENOR_API_KEY}" | jq -r '.results[0].media_formats.gif.url')
+curl -sL "$URL" -o celebration.gif
+```
+
+## 获取完整元数据（Full Metadata）
+
+```bash
+curl -s "https://tenor.googleapis.com/v2/search?q=cat&limit=3&key=${TENOR_API_KEY}" | jq '.results[] | {title: .title, url: .media_formats.gif.url, preview: .media_formats.tinygif.url, dimensions: .media_formats.gif.dims}'
+```
+
+## API 参数
+
+| 参数（Parameter） | 描述（Description） |
+|-------------------|---------------------|
+| `q` | 搜索查询（空格使用 `+` 进行 URL 编码） |
+| `limit` | 最大结果数（1-50，默认 20） |
+| `key` | API 密钥（来自 `$TENOR_API_KEY` 环境变量） |
+| `media_filter` | 筛选格式：`gif`、`tinygif`、`mp4`、`tinymp4`、`webm` |
+| `contentfilter` | 安全级别：`off`、`low`、`medium`、`high` |
+| `locale` | 语言：`en_US`、`es`、`fr` 等 |
+
+## 可用媒体格式
+
+每个结果下都有多种格式，位于 `.media_formats` 中：
+
+| 格式（Format） | 使用场景（Use case） |
+|----------------|----------------------|
+| `gif` | 全质量 GIF |
+| `tinygif` | 小型预览 GIF |
+| `mp4` | 视频版本（文件较小） |
+| `tinymp4` | 小型预览视频 |
+| `webm` | WebM 视频 |
+| `nanogif` | 极小缩略图 |
+
+## 注意事项
+
+- 对查询进行 URL 编码：空格编码为 `+`，特殊字符编码为 `%XX`
+- 若要在聊天中发送，`tinygif` 的 URL 更轻量
+- GIF 链接可直接在 Markdown 中使用：`![alt](https://github.com/NousResearch/hermes-agent/blob/main/skills/media/gif-search/url)`

@@ -1,58 +1,51 @@
+--- frontmatter ---
 ---
 title: 提供商路由
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/provider-routing.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/provider-routing.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
-title: Provider Routing
-description: Configure OpenRouter provider preferences to optimize for cost, speed, or quality.
+description: 配置 OpenRouter 提供商偏好，以优化成本、速度或质量。
 sidebar_label: Provider Routing
 sidebar_position: 7
 ---
 
-# Provider Routing
+--- body ---
+# 提供商路由 (Provider Routing)
 
-When using [OpenRouter](https://openrouter.ai) as your LLM provider, Hermes Agent supports **provider routing** — fine-grained control over which underlying AI providers handle your requests and how they're prioritized.
+当使用 [OpenRouter](https://openrouter.ai) 作为您的 LLM 提供商时，Hermes Agent 支持 **提供商路由** —— 细粒度控制哪个底层 AI 提供商处理您的请求以及它们的优先级顺序。
 
-OpenRouter routes requests to many providers (e.g., Anthropic, Google, AWS Bedrock, Together AI). Provider routing lets you optimize for cost, speed, quality, or enforce specific provider requirements.
+OpenRouter 将请求路由到多个提供商（例如 Anthropic、Google、AWS Bedrock、Together AI）。提供商路由让您能够优化成本、速度、质量，或强制执行特定的提供商要求。
 
 :::tip
-Traffic routed through [Nous Portal](/integrations/nous-portal) still respects per-model routing and priority configs — and Portal subscribers get 10% off token-billed providers.
+通过 [Nous Portal](/integrations/nous-portal) 路由的流量仍然遵循每模型路由和优先级配置——并且 Portal 订阅者在使用按 token 计费的提供商时可享受 10% 折扣。
 :::
 
-## Configuration
+## 配置
 
-Add a `provider_routing` section to your `~/.hermes/config.yaml`:
+在您的 `~/.hermes/config.yaml` 文件中添加 `provider_routing` 部分：
 
 ```yaml
 provider_routing:
-  sort: "price"           # How to rank providers
-  only: []                # Whitelist: only use these providers
-  ignore: []              # Blacklist: never use these providers
-  order: []               # Explicit provider priority order
-  require_parameters: false  # Only use providers that support all parameters
-  data_collection: null   # Control data collection ("allow" or "deny")
+  sort: "price"
+  only: []
+  ignore: []
+  order: []
+  require_parameters: false
+  data_collection: null
 ```
 
 :::info
-Provider routing only applies when using OpenRouter. It has no effect with direct provider connections (e.g., connecting directly to the Anthropic API).
+提供商路由仅在使用 OpenRouter 时生效。对于直接连接到提供商（例如直接连接 Anthropic API）的情况无效。
 :::
 
-## Options
+## 选项
 
 ### `sort`
 
-Controls how OpenRouter ranks available providers for your request.
+控制 OpenRouter 如何为您的请求对可用提供商进行排序。
 
-| Value | Description |
+| 值 | 描述 |
 |-------|-------------|
-| `"price"` | Cheapest provider first |
-| `"throughput"` | Fastest tokens-per-second first |
-| `"latency"` | Lowest time-to-first-token first |
+| `"price"` | 最便宜的提供商优先 |
+| `"throughput"` | 每秒 token 数最快的优先 |
+| `"latency"` | 首个 token 到达时间最短的优先 |
 
 ```yaml
 provider_routing:
@@ -61,7 +54,7 @@ provider_routing:
 
 ### `only`
 
-Whitelist of provider names. When set, **only** these providers will be used. All others are excluded.
+提供商名称的白名单。设置后，**仅**使用这些提供商，其他所有提供商均被排除。
 
 ```yaml
 provider_routing:
@@ -72,7 +65,7 @@ provider_routing:
 
 ### `ignore`
 
-Blacklist of provider names. These providers will **never** be used, even if they offer the cheapest or fastest option.
+提供商名称的黑名单。这些提供商将**永不**被使用，即使它们提供最便宜或最快的选项。
 
 ```yaml
 provider_routing:
@@ -83,7 +76,7 @@ provider_routing:
 
 ### `order`
 
-Explicit priority order. Providers listed first are preferred. Unlisted providers are used as fallbacks.
+显式的优先级顺序。列表中排在前面的提供商优先使用。未列出的提供商作为后备。
 
 ```yaml
 provider_routing:
@@ -95,7 +88,7 @@ provider_routing:
 
 ### `require_parameters`
 
-When `true`, OpenRouter will only route to providers that support **all** parameters in your request (like `temperature`, `top_p`, `tools`, etc.). This avoids silent parameter drops.
+当设置为 `true` 时，OpenRouter 只会将请求路由到支持您的请求中**所有**参数（如 `temperature`、`top_p`、`tools` 等）的提供商。这可以避免参数被静默丢弃。
 
 ```yaml
 provider_routing:
@@ -104,45 +97,45 @@ provider_routing:
 
 ### `data_collection`
 
-Controls whether providers can use your prompts for training. Options are `"allow"` or `"deny"`.
+控制提供商是否可以使用您的提示（prompts）进行训练。选项为 `"allow"` 或 `"deny"`。
 
 ```yaml
 provider_routing:
   data_collection: "deny"
 ```
 
-## Practical Examples
+## 实际示例
 
-### Optimize for Cost
+### 优化成本
 
-Route to the cheapest available provider. Good for high-volume usage and development:
+路由到最便宜的可用提供商。适用于高用量和开发阶段：
 
 ```yaml
 provider_routing:
   sort: "price"
 ```
 
-### Optimize for Speed
+### 优化速度
 
-Prioritize low-latency providers for interactive use:
+为交互式使用优先选择低延迟提供商：
 
 ```yaml
 provider_routing:
   sort: "latency"
 ```
 
-### Optimize for Throughput
+### 优化吞吐量
 
-Best for long-form generation where tokens-per-second matters:
+最适合长时间生成场景，此时每秒 token 数很重要：
 
 ```yaml
 provider_routing:
   sort: "throughput"
 ```
 
-### Lock to Specific Providers
+### 锁定到特定提供商
 
-Ensure all requests go through a specific provider for consistency:
+确保所有请求都通过特定提供商以保证一致性：
 
 ```yaml
 provider_routing:
@@ -150,9 +143,9 @@ provider_routing:
     - "Anthropic"
 ```
 
-### Avoid Specific Providers
+### 避免特定提供商
 
-Exclude providers you don't want to use (e.g., for data privacy):
+排除您不想使用的提供商（例如出于数据隐私考虑）：
 
 ```yaml
 provider_routing:
@@ -162,9 +155,9 @@ provider_routing:
   data_collection: "deny"
 ```
 
-### Preferred Order with Fallbacks
+### 带有后备的优先顺序
 
-Try your preferred providers first, fall back to others if unavailable:
+首先尝试您偏好的提供商，若不可用则回退到其他提供商：
 
 ```yaml
 provider_routing:
@@ -174,14 +167,14 @@ provider_routing:
   require_parameters: true
 ```
 
-## How It Works
+## 工作原理
 
-Provider routing preferences are passed to the OpenRouter API via the `extra_body.provider` field on every API call. This applies to both:
+提供商路由偏好通过每次 API 调用中的 `extra_body.provider` 字段传递给 OpenRouter API。这适用于：
 
-- **CLI mode** — configured in `~/.hermes/config.yaml`, loaded at startup
-- **Gateway mode** — same config file, loaded when the gateway starts
+- **CLI 模式** —— 在 `~/.hermes/config.yaml` 中配置，启动时加载
+- **网关模式** —— 使用同一配置文件，在网关启动时加载
 
-The routing config is read from `config.yaml` and passed as parameters when creating the `AIAgent`:
+路由配置从 `config.yaml` 读取，并在创建 `AIAgent` 时作为参数传递：
 
 ```
 providers_allowed  ← from provider_routing.only
@@ -193,7 +186,7 @@ provider_data_collection    ← from provider_routing.data_collection
 ```
 
 :::tip
-You can combine multiple options. For example, sort by price but exclude certain providers and require parameter support:
+您可以组合多个选项。例如，按价格排序，但排除某些提供商并要求参数支持：
 
 ```yaml
 provider_routing:
@@ -204,10 +197,10 @@ provider_routing:
 ```
 :::
 
-## Default Behavior
+## 默认行为
 
-When no `provider_routing` section is configured (the default), OpenRouter uses its own default routing logic, which generally balances cost and availability automatically.
+当未配置 `provider_routing` 部分时（默认情况），OpenRouter 使用其自身的默认路由逻辑，通常会自动平衡成本和可用性。
 
-:::tip Provider Routing vs. Fallback Models
-Provider routing controls which **sub-providers within OpenRouter** handle your requests. For automatic failover to an entirely different provider when your primary model fails, see [Fallback Providers](/user-guide/features/fallback-providers).
+:::tip 提供商路由 vs. 后备模型
+提供商路由控制的是 OpenRouter 内部的**子提供商**如何处理您的请求。若要在主模型失败时自动故障切换到完全不同的提供商，请参阅 [后备提供商](/user-guide/features/fallback-providers)。
 :::

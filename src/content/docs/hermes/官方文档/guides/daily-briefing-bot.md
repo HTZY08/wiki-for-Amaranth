@@ -1,281 +1,269 @@
 ---
-title: 每日简报机器人
-description: Hermes Agent 官方文档汉化版
 ---
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`guides/daily-briefing-bot.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/daily-briefing-bot.md)
-> 本版本为自用学习用途，非官方翻译。
+# 教程：构建每日简报机器人
 
----
-sidebar_position: 3
-title: "Tutorial: Daily Briefing Bot"
-description: "Build an automated daily briefing bot that researches topics, summarizes findings, and delivers them to Telegram or Discord every morning"
----
+在本教程中，你将构建一个个人简报机器人，它每天早上唤醒，研究你关心的主题，汇总发现，并将简洁的简报直接发送到你的 Telegram 或 Discord。
 
-# Tutorial: Build a Daily Briefing Bot
-
-In this tutorial, you'll build a personal briefing bot that wakes up every morning, researches topics you care about, summarizes the findings, and delivers a concise briefing straight to your Telegram or Discord.
-
-By the end, you'll have a fully automated workflow combining **web search**, **cron scheduling**, **delegation**, and **messaging delivery** — no code required.
+完成后，你将拥有一个全自动工作流，结合了**网络搜索**、**定时调度**、**委派（Delegation）** 和**消息投递**——完全无需编码。
 
 :::tip
-This recipe hits web search, summarization, and optional TTS — all bundled in a Portal subscription. The fastest setup is `hermes setup --portal`. See [Nous Portal](/integrations/nous-portal).
+本方案集成了网络搜索、摘要生成与可选的文本转语音——全部捆绑在 Portal 订阅中。最快设置方式为 `hermes setup --portal`。参见 [Nous Portal](/integrations/nous-portal)。
 :::
 
-## What We're Building
+## 我们将构建什么
 
-Here's the flow:
+流程如下：
 
-1. **8:00 AM** — The cron scheduler triggers your job
-2. **Hermes spins up** a fresh agent session with your prompt
-3. **Web search** pulls the latest news on your topics
-4. **Summarization** distills it into a clean briefing format
-5. **Delivery** sends the briefing to your Telegram or Discord
+1. **上午 8:00** —— 定时调度器触发你的任务
+2. **Hermes 启动**一个全新的代理（Agent）会话，并加载你的提示词
+3. **网络搜索**拉取你关注主题的最新新闻
+4. **摘要生成**将其提炼为清晰的简报格式
+5. **投递**将简报发送到你的 Telegram 或 Discord
 
-The whole thing runs hands-free. You just read your briefing with your morning coffee.
+整个过程无需人工干预。你只需在清晨喝咖啡时阅读简报即可。
 
-## Prerequisites
+## 前置条件
 
-Before starting, make sure you have:
+开始之前，请确保你已具备：
 
-- **Hermes Agent installed** — see the [Installation guide](/getting-started/installation)
-- **Gateway running** — the gateway daemon handles cron execution:
+- **已安装 Hermes Agent** —— 参见[安装指南](/getting-started/installation)
+- **网关（Gateway）正在运行** —— 网关守护进程负责执行定时任务：
   ```bash
-  hermes gateway install   # Install as a user service
-  sudo hermes gateway install --system   # Linux servers: boot-time system service
-  # or
-  hermes gateway           # Run in foreground
+  hermes gateway install   # 安装为用户服务
+  sudo hermes gateway install --system   # Linux 服务器：开机自启的系统服务
+  # 或者
+  hermes gateway           # 前台运行
   ```
-- **Firecrawl API key** — set `FIRECRAWL_API_KEY` in your environment for web search
-- **Messaging configured** (optional but recommended) — [Telegram](/user-guide/messaging/telegram) or Discord set up with a home channel
+- **Firecrawl API 密钥** —— 在环境中设置 `FIRECRAWL_API_KEY` 以启用网络搜索
+- **已配置消息平台**（可选但推荐） —— [Telegram](/user-guide/messaging/telegram) 或 Discord，并设置好家庭频道
 
-:::tip No messaging? No problem
-You can still follow this tutorial using `deliver: "local"`. Briefings will be saved to `~/.hermes/cron/output/` and you can read them anytime.
+:::tip 没有消息平台？没问题
+你仍可以使用 `deliver: "local"` 来跟随本教程。简报将被保存至 `~/.hermes/cron/output/`，你可以随时阅读。
 :::
 
-## Step 1: Test the Workflow Manually
+## 第一步：手动测试工作流
 
-Before automating anything, let's make sure the briefing works. Start a chat session:
+在自动化之前，先确保简报功能正常。启动一个聊天会话：
 
 ```bash
 hermes
 ```
 
-Then enter this prompt:
+然后输入以下提示词：
 
 ```
-Search for the latest news about AI agents and open source LLMs.
-Summarize the top 3 stories in a concise briefing format with links.
+搜索关于 AI 代理和开源 LLM 的最新新闻。
+以简洁的简报格式汇总前 3 条故事，并附上链接。
 ```
 
-Hermes will search the web, read through results, and produce something like:
+Hermes 将搜索网络、阅读结果，并生成类似如下的内容：
 
 ```
-☀️ Your AI Briefing — March 8, 2026
+☀️ 你的 AI 简报 — 2026 年 3 月 8 日
 
-1. Qwen 3 Released with 235B Parameters
-   Alibaba's latest open-weight model matches GPT-4.5 on several
-   benchmarks while remaining fully open source.
+1. Qwen 3 发布，拥有 235B 参数
+   阿里巴巴最新的开放权重模型在多项基准测试中与 GPT-4.5 持平，
+   同时保持完全开源。
    → https://qwenlm.github.io/blog/qwen3/
 
-2. LangChain Launches Agent Protocol Standard
-   A new open standard for agent-to-agent communication gains
-   adoption from 15 major frameworks in its first week.
+2. LangChain 推出代理协议标准
+   一项新的代理间通信开放标准，在发布第一周内获得 15 个主要框架的采纳。
    → https://blog.langchain.dev/agent-protocol/
 
-3. EU AI Act Enforcement Begins for General-Purpose Models
-   The first compliance deadlines hit, with open source models
-   receiving exemptions under the 10M parameter threshold.
+3. 欧盟 AI 法案对通用模型执法开始
+   首个合规截止日期来临，开源模型因 1000 万参数阈值而获得豁免。
    → https://artificialintelligenceact.eu/updates/
 
 ---
-3 stories • Sources searched: 8 • Generated by Hermes Agent
+
+--- body ---
+--- 正文 ---
+3 条故事 • 搜索来源：8 个 • 由 Hermes Agent 生成
 ```
 
-If this works, you're ready to automate it.
+如果一切正常，你就可以继续自动化了。
 
-:::tip Iterate on the format
-Try different prompts until you get output you love. Add instructions like "use emoji headers" or "keep each summary under 2 sentences." Whatever you settle on goes into the cron job.
+:::tip 迭代格式
+尝试不同的提示词，直到获得你满意的输出。添加诸如“使用 emoji 标题”或“每条摘要控制在两句以内”的指令。最终确定的版本将用于定时任务。
 :::
 
-## Step 2: Create the Cron Job
+## 第二步：创建定时任务
 
-Now let's schedule this to run automatically every morning. You can do this in two ways.
+现在让我们安排每天早上自动运行。你有两种方式实现。
 
-Before creating cron jobs, ensure Hermes has a default model and provider configured globally. If you want a specific job to use different values, set explicit per-job model/provider overrides when creating it.
+在创建定时任务之前，请确保 Hermes 已全局配置了默认模型和提供商。如果你希望特定任务使用不同的值，可在创建时设置明确的每任务模型/提供商覆盖。
 
-### Option A: Natural Language (in chat)
+### 选项 A：自然语言（在聊天中）
 
-Just tell Hermes what you want:
-
-```
-Every morning at 8am, search the web for the latest news about AI agents
-and open source LLMs. Summarize the top 3 stories in a concise briefing
-with links. Use a friendly, professional tone. Deliver to telegram.
-```
-
-Hermes will create the cron job for you using the unified `cronjob` tool.
-
-### Option B: CLI Slash Command
-
-Use the `/cron` command for more control:
+直接告诉 Hermes 你的需求：
 
 ```
-/cron add "0 8 * * *" "Search the web for the latest news about AI agents and open source LLMs. Find at least 5 recent articles from the past 24 hours. Summarize the top 3 most important stories in a concise daily briefing format. For each story include: a clear headline, a 2-sentence summary, and the source URL. Use a friendly, professional tone. Format with emoji bullet points and end with a total story count."
+每天上午 8 点，搜索关于 AI 代理和开源 LLM 的最新新闻。
+以简洁的简报格式汇总前 3 条故事，并附上链接。
+语气友好且专业。投递到 telegram。
 ```
 
-### The Golden Rule: Self-Contained Prompts
+Hermes 将使用统一的 `cronjob` 工具为你创建定时任务。
 
-:::warning Critical concept
-Cron jobs run in a **completely fresh session** — no memory of your previous conversations, no context about what you "set up earlier." Your prompt must contain **everything** the agent needs to do the job.
+### 选项 B：CLI 斜杠命令
+
+使用 `/cron` 命令以获得更多控制：
+
+```
+/cron add "0 8 * * *" "搜索关于 AI 代理和开源 LLM 的最新新闻。查找至少 5 篇过去 24 小时内的文章。以简洁的每日简报格式汇总最重要的 3 条故事。每条故事包含：清晰的标题、2 句摘要和来源 URL。语气友好且专业。使用 emoji 项目符号格式化，并以故事总数结尾。"
+```
+
+### 黄金法则：自包含提示词
+
+:::warning 关键概念
+定时任务在**全新的会话**中运行——没有之前对话的记忆，也没有你“之前设置过”的上下文。你的提示词必须包含**代理执行任务所需的一切**。
 :::
 
-**Bad prompt:**
+**错误提示词：**
 ```
-Do my usual morning briefing.
-```
-
-**Good prompt:**
-```
-Search the web for the latest news about AI agents and open source LLMs.
-Find at least 5 recent articles from the past 24 hours. Summarize the
-top 3 most important stories in a concise daily briefing format. For each
-story include: a clear headline, a 2-sentence summary, and the source URL.
-Use a friendly, professional tone. Format with emoji bullet points.
+执行我平时的晨间简报。
 ```
 
-The good prompt is specific about **what to search**, **how many articles**, **what format**, and **what tone**. It's everything the agent needs in one shot.
-
-## Step 3: Customize the Briefing
-
-Once the basic briefing works, you can get creative.
-
-### Multi-Topic Briefings
-
-Cover several areas in one briefing:
-
+**正确提示词：**
 ```
-/cron add "0 8 * * *" "Create a morning briefing covering three topics. For each topic, search the web for recent news from the past 24 hours and summarize the top 2 stories with links.
-
-Topics:
-1. AI and machine learning — focus on open source models and agent frameworks
-2. Cryptocurrency — focus on Bitcoin, Ethereum, and regulatory news
-3. Space exploration — focus on SpaceX, NASA, and commercial space
-
-Format as a clean briefing with section headers and emoji. End with today's date and a motivational quote."
+搜索关于 AI 代理和开源 LLM 的最新新闻。
+查找至少 5 篇过去 24 小时内的文章。以简洁的每日简报格式汇总
+最重要的 3 条故事。每条故事包含：清晰的标题、2 句摘要和来源 URL。
+语气友好且专业。使用 emoji 项目符号格式化。
 ```
 
-### Using Delegation for Parallel Research
+正确提示词明确说明了**搜索什么**、**文章数量**、**格式**和**语气**。一次性包含了代理所需的所有信息。
 
-For faster briefings, tell Hermes to delegate each topic to a sub-agent:
+## 第三步：自定义简报
 
-```
-/cron add "0 8 * * *" "Create a morning briefing by delegating research to sub-agents. Delegate three parallel tasks:
+一旦基础简报运行正常，你就可以发挥创意了。
 
-1. Delegate: Search for the top 2 AI/ML news stories from the past 24 hours with links
-2. Delegate: Search for the top 2 cryptocurrency news stories from the past 24 hours with links
-3. Delegate: Search for the top 2 space exploration news stories from the past 24 hours with links
+### 多主题简报
 
-Collect all results and combine them into a single clean briefing with section headers, emoji formatting, and source links. Add today's date as a header."
-```
-
-Each sub-agent searches independently and in parallel, then the main agent combines everything into one polished briefing. See the [Delegation docs](/user-guide/features/delegation) for more on how this works.
-
-### Weekday-Only Schedule
-
-Don't need briefings on weekends? Use a cron expression that targets Monday–Friday:
+在一个简报中涵盖多个领域：
 
 ```
-/cron add "0 8 * * 1-5" "Search for the latest AI and tech news..."
+/cron add "0 8 * * *" "创建涵盖三个主题的晨间简报。每个主题搜索过去 24 小时内的最新新闻，汇总前 2 条故事并附上链接。
+
+主题：
+1. AI 与机器学习 —— 聚焦开源模型和代理框架
+2. 加密货币 —— 聚焦比特币、以太坊及监管新闻
+3. 太空探索 —— 聚焦 SpaceX、NASA 及商业航天
+
+以清晰的简报格式呈现，包含分区标题和 emoji。末尾附上今天的日期和一条励志名言。"
 ```
 
-### Twice-Daily Briefings
+### 使用委派（Delegation）进行并行研究
 
-Get a morning overview and an evening recap:
-
-```
-/cron add "0 8 * * *" "Morning briefing: search for AI news from the past 12 hours..."
-/cron add "0 18 * * *" "Evening recap: search for AI news from the past 12 hours..."
-```
-
-### Adding Personal Context with Memory
-
-If you have [memory](/user-guide/features/memory) enabled, you can store preferences that persist across sessions. But remember — cron jobs run in fresh sessions without conversational memory. To add personal context, bake it directly into the prompt:
+为了加快简报生成速度，告诉 Hermes 将每个主题委派给子代理：
 
 ```
-/cron add "0 8 * * *" "You are creating a briefing for a senior ML engineer who cares about: PyTorch ecosystem, transformer architectures, open-weight models, and AI regulation in the EU. Skip stories about product launches or funding rounds unless they involve open source.
+/cron add "0 8 * * *" "通过将研究任务委派给子代理来创建晨间简报。委派三个并行任务：
 
-Search for the latest news on these topics. Summarize the top 3 stories with links. Be concise and technical — this reader doesn't need basic explanations."
+1. 委派：搜索过去 24 小时内排名前 2 的 AI/ML 新闻故事并附上链接
+2. 委派：搜索过去 24 小时内排名前 2 的加密货币新闻故事并附上链接
+3. 委派：搜索过去 24 小时内排名前 2 的太空探索新闻故事并附上链接
+
+收集所有结果，合并为一个简洁的简报，包含分区标题、emoji 格式和来源链接。以今天的日期作为标题。"
 ```
 
-:::tip Tailor the persona
-Including details about who the briefing is *for* dramatically improves relevance. Tell the agent your role, interests, and what to skip.
+每个子代理独立并行搜索，主代理将所有内容整合为一份精致的简报。更多详情见[委派文档](/user-guide/features/delegation)。
+
+### 仅工作日调度
+
+不需要周末简报？使用针对周一至周五的 cron 表达式：
+
+```
+/cron add "0 8 * * 1-5" "搜索最新 AI 和技术新闻..."
+```
+
+### 每日两次简报
+
+既可获得晨间概览，也可获得晚间回顾：
+
+```
+/cron add "0 8 * * *" "晨间简报：搜索过去 12 小时的 AI 新闻..."
+/cron add "0 18 * * *" "晚间回顾：搜索过去 12 小时的 AI 新闻..."
+```
+
+### 使用记忆功能添加个人上下文
+
+如果你已启用[记忆（Memory）](/user-guide/features/memory)，可以存储跨会话持久化的偏好。但请记住——定时任务在全新会话中运行，没有会话记忆。要添加个人上下文，直接将其融入提示词中：
+
+```
+/cron add "0 8 * * *" "你正在为一位关心以下内容的高级 ML 工程师创建简报：PyTorch 生态、Transformer 架构、开放权重模型以及欧盟 AI 监管。跳过涉及产品发布或融资轮的故事，除非它们涉及开源。
+
+搜索这些主题的最新新闻。汇总前 3 条故事并附上链接。内容简洁且技术 —— 这位读者不需要基础解释。"
+```
+
+:::tip 定制角色
+包含简报**面向谁**的细节可以显著提升相关性。告诉代理你的角色、兴趣以及应该跳过哪些内容。
 :::
 
-## Step 4: Manage Your Jobs
+## 第四步：管理你的任务
 
-### List All Scheduled Jobs
+### 列出所有已调度任务
 
-In chat:
+在聊天中：
 ```
 /cron list
 ```
 
-Or from the terminal:
+或从终端：
 ```bash
 hermes cron list
 ```
 
-You'll see output like:
+你将看到类似如下的输出：
 
 ```
-ID          | Name              | Schedule    | Next Run           | Deliver
-------------|-------------------|-------------|--------------------|--------
-a1b2c3d4    | Morning Briefing  | 0 8 * * *   | 2026-03-09 08:00   | telegram
-e5f6g7h8    | Evening Recap     | 0 18 * * *  | 2026-03-08 18:00   | telegram
+ID          | 名称            | 调度表达式  | 下次运行时间         | 投递方式
+------------|----------------|-------------|--------------------|--------
+a1b2c3d4    | 晨间简报       | 0 8 * * *   | 2026-03-09 08:00   | telegram
+e5f6g7h8    | 晚间回顾       | 0 18 * * *  | 2026-03-08 18:00   | telegram
 ```
 
-### Remove a Job
+### 移除任务
 
-In chat:
+在聊天中：
 ```
 /cron remove a1b2c3d4
 ```
 
-Or ask conversationally:
+或以对话方式询问：
 ```
-Remove my morning briefing cron job.
+移除我的晨间简报定时任务。
 ```
 
-Hermes will use `cronjob(action="list")` to find it and `cronjob(action="remove")` to delete it.
+Hermes 将使用 `cronjob(action="list")` 找到它，并使用 `cronjob(action="remove")` 删除它。
 
-### Check Gateway Status
+### 检查网关状态
 
-Make sure the scheduler is actually running:
+确保调度器确实在运行：
 
 ```bash
 hermes cron status
 ```
 
-If the gateway isn't running, your jobs won't execute. Install it as a background service for reliability:
+如果网关未运行，你的任务将不会执行。将其安装为后台服务以确保可靠性：
 
 ```bash
 hermes gateway install
-# or on Linux servers
+# 或在 Linux 服务器上
 sudo hermes gateway install --system
 ```
 
-## Going Further
+## 更进一步
 
-You've built a working daily briefing bot. Here are some directions to explore next:
+你已经构建了一个可运行的每日简报机器人。以下是一些可探索的方向：
 
-- **[Scheduled Tasks (Cron)](/user-guide/features/cron)** — Full reference for schedule formats, repeat limits, and delivery options
-- **[Delegation](/user-guide/features/delegation)** — Deep dive into parallel sub-agent workflows
-- **[Messaging Platforms](/user-guide/messaging)** — Set up Telegram, Discord, or other delivery targets
-- **[Memory](/user-guide/features/memory)** — Persistent context across sessions
-- **[Tips & Best Practices](/guides/tips)** — More prompt engineering advice
+- **[定时任务（Cron）](/user-guide/features/cron)** —— 调度格式、重复限制和投递选项的完整参考
+- **[委派（Delegation）](/user-guide/features/delegation)** —— 深入探讨并行子代理工作流
+- **[消息平台](/user-guide/messaging)** —— 设置 Telegram、Discord 或其他投递目标
+- **[记忆（Memory）](/user-guide/features/memory)** —— 跨会话持久化上下文
+- **[技巧与最佳实践](/guides/tips)** —— 更多提示工程建议
 
-:::tip What else can you schedule?
-The briefing bot pattern works for anything: competitor monitoring, GitHub repo summaries, weather forecasts, portfolio tracking, server health checks, or even a daily joke. If you can describe it in a prompt, you can schedule it.
+:::tip 还能调度什么？
+简报机器人的模式适用于任何场景：竞争对手监控、GitHub 仓库摘要、天气预报、投资组合跟踪、服务器健康检查，甚至每日笑话。只要你能用提示词描述，就能调度它。
 :::

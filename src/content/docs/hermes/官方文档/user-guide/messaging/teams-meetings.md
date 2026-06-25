@@ -1,44 +1,35 @@
 ---
-title: Teams 会议
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/messaging/teams-meetings.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/messaging/teams-meetings.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 6
-title: "Teams Meetings"
-description: "Set up the Microsoft Teams meeting summary pipeline with Microsoft Graph webhooks"
+title: "Teams 会议"
+description: "使用 Microsoft Graph webhooks 设置 Microsoft Teams 会议摘要管道"
 ---
 
-# Microsoft Teams Meetings
+# Microsoft Teams 会议
 
-Use the Teams meeting pipeline when you want Hermes to ingest Microsoft Graph meeting events, fetch transcripts first, fall back to recordings plus STT when needed, and deliver a structured summary to downstream sinks.
+当您希望 Hermes 摄取 Microsoft Graph 会议事件时，请使用 Teams 会议管道：首先获取转录（transcript），必要时回退到录像（recording）加语音转文字（STT），并将结构化摘要传递给下游接收端。
 
-Prerequisites: see [Microsoft Teams](./teams.md) for the underlying bot/credential setup.
+前置条件：参见 [Microsoft Teams](./teams.md) 了解底层机器人/凭据设置。
 
-> Run `hermes gateway setup` and pick **Teams Meetings** for a guided walk-through.
+> 运行 `hermes gateway setup` 并选择 **Teams Meetings** 以获得引导式体验。
 
-This page focuses on setup and enablement:
-- Graph credentials
-- webhook listener configuration
-- Teams delivery modes
-- pipeline config shape
+本页面聚焦于设置和启用：
+- Graph 凭据
+- webhook 监听器配置
+- Teams 交付模式
+- 管道配置结构
 
-For day-2 operations, go-live checks, and the operator worksheet, use the dedicated guide: [Operate the Teams Meeting Pipeline](/guides/operate-teams-meeting-pipeline).
+关于第 2 天操作、上线检查以及操作员工作表，请使用专门指南：[操作 Teams 会议管道](/guides/operate-teams-meeting-pipeline)。
 
-## What This Feature Does
+## 此功能的作用
 
-The pipeline:
-1. receives Microsoft Graph webhook events
-2. resolves the meeting and prefers transcript artifacts first
-3. falls back to recording download plus STT when no usable transcript is available
-4. stores durable job state and sink records locally
-5. can write summaries to Notion, Linear, and Microsoft Teams
+管道将：
+1. 接收 Microsoft Graph webhook 事件
+2. 解析会议并优先使用转录（transcript）制品
+3. 当没有可用转录时，回退到下载录像并执行语音转文字（STT）
+4. 在本地存储持久的任务状态和接收端记录
+5. 可以将摘要写入 Notion、Linear 和 Microsoft Teams
 
-Operator actions stay in the CLI (the `teams-pipeline` subcommand is registered by the `teams_pipeline` plugin — enable it via `hermes plugins enable teams_pipeline` or set `plugins.enabled: [teams_pipeline]` in `config.yaml`):
+操作员操作保持在 CLI 中（`teams-pipeline` 子命令由 `teams_pipeline` 插件注册 — 通过 `hermes plugins enable teams_pipeline` 启用，或在 `config.yaml` 中设置 `plugins.enabled: [teams_pipeline]`）：
 
 ```bash
 hermes teams-pipeline validate
@@ -46,59 +37,59 @@ hermes teams-pipeline list
 hermes teams-pipeline maintain-subscriptions
 ```
 
-## Prerequisites
+## 前置条件
 
-Before enabling the meetings pipeline, make sure you have:
+在启用会议管道之前，请确保您已具备：
 
-- a working Hermes install
-- the existing [Microsoft Teams bot setup](/user-guide/messaging/teams) if you want Teams outbound delivery
-- Microsoft Graph application credentials with the permissions required for the meeting resources you plan to subscribe to
-- a public HTTPS URL that Microsoft Graph can call for webhook delivery
-- `ffmpeg` installed if you want recording-plus-STT fallback
+- 正常运行的 Hermes 安装
+- 现有的 [Microsoft Teams 机器人设置](/user-guide/messaging/teams)（如果您需要 Teams 出站交付）
+- Microsoft Graph 应用程序凭据，并拥有订阅会议资源所需的权限
+- 一个可以让 Microsoft Graph 调用以进行 webhook 交付的公共 HTTPS URL
+- 如果使用录像加语音转文字回退，则需要安装 `ffmpeg`
 
-## Step 1: Add Microsoft Graph Credentials
+## 步骤 1：添加 Microsoft Graph 凭据
 
-Add Graph app-only credentials to `~/.hermes/.env`:
+将 Graph 仅应用凭据添加到 `~/.hermes/.env`：
 
 ```bash
-MSGRAPH_TENANT_ID=<tenant-id>
-MSGRAPH_CLIENT_ID=<client-id>
-MSGRAPH_CLIENT_SECRET=<client-secret>
+MSGRAPH_TENANT_ID=<租户ID>
+MSGRAPH_CLIENT_ID=<客户端ID>
+MSGRAPH_CLIENT_SECRET=<客户端密钥>
 ```
 
-These credentials are used by:
-- the Graph client foundation
-- subscription maintenance commands
-- meeting resolution and artifact fetches
-- Graph-based Teams outbound delivery when you do not provide a dedicated Teams access token
+这些凭据用于：
+- Graph 客户端基础
+- 订阅维护命令
+- 会议解析和制品获取
+- 基于 Graph 的 Teams 出站交付（当您未提供专用的 Teams 访问令牌时）
 
-## Step 2: Enable the Graph Webhook Listener
+## 步骤 2：启用 Graph Webhook 监听器
 
-The webhook listener is a gateway platform named `msgraph_webhook`. At minimum, enable it and set a client state value:
+webhook 监听器是一个名为 `msgraph_webhook` 的网关平台。至少启用它并设置一个客户端状态值：
 
 ```bash
 MSGRAPH_WEBHOOK_ENABLED=true
 MSGRAPH_WEBHOOK_HOST=127.0.0.1
 MSGRAPH_WEBHOOK_PORT=8646
-MSGRAPH_WEBHOOK_CLIENT_STATE=<random-shared-secret>
+MSGRAPH_WEBHOOK_CLIENT_STATE=<随机共享密钥>
 MSGRAPH_WEBHOOK_ACCEPTED_RESOURCES=communications/onlineMeetings
 ```
 
-The listener exposes:
-- `/msgraph/webhook` for Graph notifications
-- `/health` for a simple health check
+监听器暴露以下端点：
+- `/msgraph/webhook` 用于接收 Graph 通知
+- `/health` 用于简单的健康检查
 
-You need to route your public HTTPS endpoint to that listener. For example, if your public domain is `https://ops.example.com`, your Graph notification URL would typically be:
+您需要将公共 HTTPS 端点路由到该监听器。例如，如果您的公共域是 `https://ops.example.com`，您的 Graph 通知 URL 通常为：
 
 ```text
 https://ops.example.com/msgraph/webhook
 ```
 
-## Step 3: Configure Teams Delivery and Pipeline Behavior
+## 步骤 3：配置 Teams 交付和管道行为
 
-The meeting pipeline reads its runtime config from the existing `teams` platform entry. Pipeline-specific knobs live under `teams.extra.meeting_pipeline`. Teams outbound delivery stays on the normal Teams platform config surface.
+会议管道从现有的 `teams` 平台条目中读取其运行时配置。管道特定的旋钮位于 `teams.extra.meeting_pipeline` 下。Teams 出站交付保持在正常的 Teams 平台配置表面上。
 
-Example `~/.hermes/config.yaml`:
+示例 `~/.hermes/config.yaml`：
 
 ```yaml
 platforms:
@@ -118,8 +109,8 @@ platforms:
       client_secret: "your-teams-client-secret"
       tenant_id: "your-teams-tenant-id"
 
-      # outbound summary delivery
-      delivery_mode: "graph" # or incoming_webhook
+      # 出站摘要交付
+      delivery_mode: "graph" # 或 incoming_webhook
       team_id: "team-id"
       channel_id: "channel-id"
       # incoming_webhook_url: "https://..."
@@ -135,17 +126,17 @@ platforms:
           enabled: false
 ```
 
-If you bind the listener to a non-loopback host such as `0.0.0.0`, you must also set `allowed_source_cidrs` to Microsoft's webhook egress ranges. Loopback binds (`127.0.0.1` / `::1`) are the intended dev-tunnel and local reverse-proxy setup.
+如果将监听器绑定到非回环主机（例如 `0.0.0.0`），则还必须设置 `allowed_source_cidrs` 为 Microsoft 的 webhook 出口范围。回环绑定（`127.0.0.1` / `::1`）适用于开发隧道和本地反向代理设置。
 
-## Teams Delivery Modes
+## Teams 交付模式
 
-The pipeline supports two Teams summary-delivery modes inside the existing Teams plugin.
+管道在现有 Teams 插件内支持两种 Teams 摘要交付模式。
 
 ### `incoming_webhook`
 
-Use this when you want a simple webhook post into Teams without channel-message creation through Graph.
+当您希望通过简单的 webhook 发布到 Teams，而不通过 Graph 创建频道消息时，使用此模式。
 
-Required config:
+所需配置：
 
 ```yaml
 platforms:
@@ -158,14 +149,14 @@ platforms:
 
 ### `graph`
 
-Use this when you want Hermes to post the summary through Microsoft Graph into a Teams chat or channel.
+当您希望 Hermes 通过 Microsoft Graph 将摘要发布到 Teams 聊天或频道时，使用此模式。
 
-Supported targets:
+支持的目标：
 - `chat_id`
 - `team_id` + `channel_id`
-- `team_id` + `home_channel` fallback for the existing Teams platform
+- `team_id` + `home_channel` 作为现有 Teams 平台的回退
 
-Example:
+示例：
 
 ```yaml
 platforms:
@@ -177,27 +168,27 @@ platforms:
       channel_id: "channel-id"
 ```
 
-## Step 4: Start the Gateway
+## 步骤 4：启动网关
 
-Start Hermes normally after updating config:
+更新配置后正常启动 Hermes：
 
 ```bash
 hermes gateway run
 ```
 
-Or, if you run Hermes in Docker, start the gateway the same way you already do for your deployment.
+或者，如果您在 Docker 中运行 Hermes，请以与部署相同的方式启动网关。
 
-Check the listener:
+检查监听器：
 
 ```bash
 curl http://localhost:8646/health
 ```
 
-## Step 5: Create Graph Subscriptions
+## 步骤 5：创建 Graph 订阅
 
-Use the plugin CLI to create and inspect subscriptions.
+使用插件 CLI 创建和检查订阅。
 
-Examples:
+示例：
 
 ```bash
 hermes teams-pipeline subscribe \
@@ -211,40 +202,40 @@ hermes teams-pipeline subscribe \
   --client-state "$MSGRAPH_WEBHOOK_CLIENT_STATE"
 ```
 
-:::warning Graph subscriptions expire in 72 hours
+:::warning Graph 订阅在 72 小时后过期
 
-Microsoft Graph caps webhook subscriptions at 72 hours and will not auto-renew them. You MUST schedule `hermes teams-pipeline maintain-subscriptions` before going live, or notifications will silently stop three days after any manual subscription creation. See [Automating subscription renewal](/guides/operate-teams-meeting-pipeline#automating-subscription-renewal-required-for-production) in the operator runbook — three options (Hermes cron, systemd timer, plain crontab).
+Microsoft Graph 将 webhook 订阅限制为 72 小时，并且不会自动续订。您必须在投产前安排 `hermes teams-pipeline maintain-subscriptions`，否则在手动创建订阅三天后，通知将静默停止。有关三个选项（Hermes cron、systemd 定时器、纯 crontab），请参见操作员手册中的[自动化订阅续订](/guides/operate-teams-meeting-pipeline#automating-subscription-renewal-required-for-production)。
 
 :::
 
-For subscription maintenance and day-2 operator flows, continue with the guide: [Operate the Teams Meeting Pipeline](/guides/operate-teams-meeting-pipeline).
+有关订阅维护和第 2 天操作员流程，请继续阅读指南：[操作 Teams 会议管道](/guides/operate-teams-meeting-pipeline)。
 
-## Validation
+## 验证
 
-Run the built-in validation snapshot:
+运行内置的验证快照：
 
 ```bash
 hermes teams-pipeline validate
 ```
 
-Useful companion checks:
+有用的辅助检查：
 
 ```bash
 hermes teams-pipeline token-health
 hermes teams-pipeline subscriptions
 ```
 
-## Troubleshooting
+## 故障排除
 
-| Problem | What to check |
+| 问题 | 检查内容 |
 |---------|---------------|
-| Graph webhook validation fails | Confirm the public URL is correct and reachable, and that Graph is calling the exact `/msgraph/webhook` path |
-| Jobs do not appear in `hermes teams-pipeline list` | Confirm `msgraph_webhook` is enabled and that subscriptions point at the right notification URL |
-| Transcript-first never succeeds | Check Graph permissions for transcript resources and whether the transcript artifact exists for that meeting |
-| Recording fallback fails | Confirm `ffmpeg` is installed and the Graph app can access recording artifacts |
-| Teams summary delivery fails | Re-check `delivery_mode`, target IDs, and Teams auth config |
+| Graph webhook 验证失败 | 确认公共 URL 正确且可达，并且 Graph 调用的是确切的 `/msgraph/webhook` 路径 |
+| `hermes teams-pipeline list` 中未显示任务 | 确认 `msgraph_webhook` 已启用，并且订阅指向正确的通知 URL |
+| 优先转录始终失败 | 检查 Transcript 资源的 Graph 权限，以及该会议的 Transcript 制品是否存在 |
+| 录像回退失败 | 确认已安装 `ffmpeg`，且 Graph 应用可以访问录像制品 |
+| Teams 摘要交付失败 | 重新检查 `delivery_mode`、目标 ID 和 Teams 认证配置 |
 
-## Related Docs
+## 相关文档
 
-- [Microsoft Teams bot setup](/user-guide/messaging/teams)
-- [Operate the Teams Meeting Pipeline](/guides/operate-teams-meeting-pipeline)
+- [Microsoft Teams 机器人设置](/user-guide/messaging/teams)
+- [操作 Teams 会议管道](/guides/operate-teams-meeting-pipeline)

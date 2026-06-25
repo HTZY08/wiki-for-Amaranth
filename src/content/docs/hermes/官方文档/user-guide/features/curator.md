@@ -1,57 +1,50 @@
----
-title: 技能策展人
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/curator.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/curator.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 3
-title: "Curator"
-description: "Background maintenance for agent-created skills — usage tracking, staleness, archival, and LLM-driven review"
+title: "策展器"
+description: "对代理创建的技能进行后台维护——使用跟踪、过时处理、归档以及LLM驱动的审查"
 ---
 
-# Curator
+--- body ---
+# 策展器（Curator）
 
-The curator is a background maintenance pass for **agent-created skills**. It tracks how often each skill is viewed, used, and patched, moves long-unused skills through `active → stale → archived` states, and periodically spawns a short auxiliary-model review that proposes consolidations or patches drift.
+策展器是对**代理创建的技能**进行后台维护的过程。它追踪每个技能被查看、使用和修补的频率，将长期未使用的技能通过 `active → stale → archived` 状态流转，并定期启动一个简短的辅助模型审查环节，提出整合建议或修补漂移。
 
-It exists so that skills created via the [self-improvement loop](/user-guide/features/skills#agent-managed-skills-skill_manage-tool) don't pile up forever. Every time the agent solves a novel problem and saves a skill, that skill lands in `~/.hermes/skills/`. Without maintenance, you end up with dozens of narrow near-duplicates that pollute the catalog and waste tokens.
+它的存在是为了防止通过[自我改进循环](/user-guide/features/skills#agent-managed-skills-skill_manage-tool)创建的技能无限堆积。每次代理解决一个新问题并保存一个技能时，该技能就会存入 `~/.hermes/skills/`。如果没有维护，最终你会得到几十个狭窄的近似副本，污染目录并浪费 token。
 
-By default (`prune_builtins: true`) the curator can archive **unused bundled built-in skills** (shipped with the repo) after `archive_after_days` of non-use, alongside the agent-created skills it primarily manages. Hub-installed skills (from [agentskills.io](https://agentskills.io)) are always off-limits. Set `curator.prune_builtins: false` to restore the old agent-created-only behavior, where bundled skills are never touched. The curator also **never auto-deletes** — the worst outcome is archival into `~/.hermes/skills/.archive/`, which is recoverable.
+默认情况下（`prune_builtins: true`），策展器可以在 `archive_after_days` 天未被使用后将**未使用的捆绑内置技能**（附带的）归档，同时也会管理它主要管理的代理创建技能。从中心（[agentskills.io](https://agentskills.io)）安装的技能始终不受影响。设置 `curator.prune_builtins: false` 可以恢复仅针对代理创建技能的旧行为，即从不触碰捆绑技能。策展器**也从不自动删除**——最坏的结果是归档到 `~/.hermes/skills/.archive/`，这是可恢复的。
 
-Tracks [issue #7816](https://github.com/NousResearch/hermes-agent/issues/7816).
+追踪 [issue #7816](https://github.com/NousResearch/hermes-agent/issues/7816)。
 
-## How it runs
+## 如何运行
 
-The curator is triggered by an inactivity check, not a cron daemon. On CLI session start, and on a recurring tick inside the gateway's cron-ticker thread, Hermes checks whether:
+策展器由非活动检查触发，而不是 cron 守护进程。在 CLI 会话启动时，以及在 gateway 的 cron-ticker 线程内的定期 tick 中，Hermes 会检查：
 
-1. Enough time has passed since the last curator run (`interval_hours`, default **7 days**), and
-2. The agent has been idle long enough (`min_idle_hours`, default **2 hours**).
+1. 自上次策展器运行以来是否已过去足够的时间（`interval_hours`，默认 **7 天**），以及
+2. 代理是否已经空闲了足够长的时间（`min_idle_hours`，默认 **2 小时**）。
 
-If both are true, it spawns a background fork of `AIAgent` — the same pattern used by the memory/skill self-improvement nudges. The fork runs in its own prompt cache and never touches the active conversation.
+如果两者都成立，它会生成一个 `AIAgent` 的后台分支——与记忆/技能自我改进提示使用的模式相同。该分支在自己的提示缓存中运行，并且从不触及当前对话。
 
-:::info First-run behavior
-On a brand-new install (or the first time a pre-curator install ticks after `hermes update`), the curator **does not run immediately**. The first observation seeds `last_run_at` to "now" and defers the first real pass by one full `interval_hours`. This gives you a full interval to review your skill library, pin anything important, or opt out entirely before the curator ever touches it.
+:::info 首次运行行为
+在全新安装（或之前无策展器的安装在进行 `hermes update` 后第一次 tick）时，策展器**不会立即运行**。第一次观察将 `last_run_at` 播种为“现在”，并将第一次真正运行推迟一个完整的 `interval_hours`。这给了你一个完整的时间间隔来检查你的技能库，固定任何重要内容，或者在策展器触及之前完全退出。
 
-If you want to see what the curator *would* do before it runs for real, run `hermes curator run --dry-run` — it produces the same review report without mutating the library.
+如果你想在策展器实际运行之前查看它*会*做什么，请运行 `hermes curator run --dry-run`——它会生成相同的审查报告，但不会改变库。
 :::
 
-A run has two phases:
+一次运行包含两个阶段：
 
-1. **Automatic transitions** (deterministic, no LLM). Skills unused for `stale_after_days` (30) become `stale`; skills unused for `archive_after_days` (90) are moved to `~/.hermes/skills/.archive/`. This is the always-on pruning behavior — it runs whenever the curator is enabled, with no aux-model cost.
-2. **LLM consolidation** (single aux-model pass, `max_iterations=8`) — **OFF by default**. When `curator.consolidate: true`, the forked agent surveys the agent-created skills, can read any of them with `skill_view`, and decides per-skill whether to keep, patch (via `skill_manage`), consolidate overlapping ones into class-level umbrellas, or archive via the terminal tool. Consolidation treats a skill as a full package: if a skill has `references/`, `templates/`, `scripts/`, `assets/`, or relative links to those paths, the curator must either keep it standalone, re-home the needed support files and rewrite paths, or archive the entire package unchanged — not flatten only `SKILL.md` into another skill's `references/` file.
+1. **自动转换**（确定性，无需 LLM）。未使用天数超过 `stale_after_days`（30）的技能变为 `stale`；未使用天数超过 `archive_after_days`（90）的技能被移动到 `~/.hermes/skills/.archive/`。这是始终开启的修剪行为——只要策展器启用，它就会运行，无需辅助模型成本。
+2. **LLM 整合（consolidation）**（单次辅助模型传递，`max_iterations=8`）——**默认关闭**。当 `curator.consolidate: true` 时，分支代理会调查代理创建的技能，可以使用 `skill_view` 读取其中任何一个，并针对每个技能决定是保留、修补（通过 `skill_manage`）、将重叠的技能整合为类级别的伞形技能（umbrella），还是通过终端工具归档。整合将技能视为一个完整的包：如果某个技能包含 `references/`、`templates/`、`scripts/`、`assets/` 或指向这些路径的相对链接，策展器必须要么将其独立保留，要么重新安置所需的支持文件并重写路径，要么原封不动地将整个包归档——而不是仅将 `SKILL.md` 扁平化到另一个技能的 `references/` 文件中。
 
-:::info Consolidation is opt-in
-By default the curator only **prunes** — the deterministic inactivity pass marks skills stale and archives long-unused ones. The opinionated LLM **consolidation** pass (umbrella-building, merging overlapping skills) is off by default because it costs aux-model tokens on every run and makes broad structural changes to your library. Turn it on with `curator.consolidate: true`, or run it once on demand with `hermes curator run --consolidate`.
+:::info 整合是选择加入的
+默认情况下，策展器仅**修剪**——确定性非活动传递将技能标记为过时并归档长期未使用的技能。带有观点的 LLM **整合**传递（构建伞形技能、合并重叠技能）默认关闭，因为每次运行都会消耗辅助模型 token，并对你的库进行广泛的结构性更改。使用 `curator.consolidate: true` 打开它，或者按需使用 `hermes curator run --consolidate` 运行一次。
 :::
 
-Pinned skills are off-limits to both the curator's auto-transitions and the agent's own `skill_manage` tool. See [Pinning a skill](#pinning-a-skill) below.
+固定的技能（Pinned skills）对策展器的自动转换和代理自己的 `skill_manage` 工具都不可触及。请参见下面的[固定技能](#固定技能pinning-a-skill)。
 
-## Configuration
+## 配置
 
-All settings live in `config.yaml` under `curator:` (not `.env` — this isn't a secret). Defaults:
+所有设置位于 `config.yaml` 的 `curator:` 下（不是 `.env`——这不是秘密）。默认值：
 
 ```yaml
 curator:
@@ -64,22 +57,22 @@ curator:
   prune_builtins: true         # archive unused bundled built-in skills too (hub skills always exempt)
 ```
 
-To disable entirely, set `curator.enabled: false`. To keep the always-on pruning but opt into LLM consolidation, set `curator.consolidate: true`.
+要完全禁用，设置 `curator.enabled: false`。要保留始终开启的修剪但选择 LLM 整合，设置 `curator.consolidate: true`。
 
-### Running the review on a cheaper aux model
+### 在更便宜的辅助模型上运行审查
 
-The curator's LLM review pass is a regular auxiliary task slot — `auxiliary.curator` — alongside Vision, Compression, Session Search, etc. "Auto" means "use my main chat model"; override the slot to pin a specific provider + model for the review pass instead.
+策展器的 LLM 审查传递是一个常规辅助任务槽——`auxiliary.curator`——与 Vision、Compression、Session Search 等并列。“Auto”表示“使用我主要聊天模型”；覆盖该槽可以为审查传递固定特定的提供商+模型。
 
-**Easiest — `hermes model`:**
+**最简单的方式——`hermes model`：**
 
 ```bash
 hermes model                   # → "Auxiliary models — side-task routing"
                                # → pick "Curator" → pick provider → pick model
 ```
 
-The same picker is available in the web dashboard under the **Models** tab.
+同样的选择器也可以在 Web 仪表板的 **Models** 选项卡中使用。
 
-**Direct config.yaml (equivalent):**
+**直接 config.yaml（等效）：**
 
 ```yaml
 auxiliary:
@@ -89,13 +82,13 @@ auxiliary:
     timeout: 600               # generous — reviews can take several minutes
 ```
 
-Leaving `provider: auto` (the default) routes the review pass through whatever your main chat model is, matching the behavior of every other auxiliary task.
+将 `provider: auto`（默认）会使审查传递通过你的主要聊天模型路由，与所有其他辅助任务的行为一致。
 
-:::note Legacy config
-Earlier releases used a one-off `curator.auxiliary.{provider,model}` block. That path still works but emits a deprecation log line — please migrate to `auxiliary.curator` above so the curator shares the same plumbing (`hermes model`, dashboard Models tab, `base_url`, `api_key`, `timeout`, `extra_body`) as every other aux task.
+:::note 旧配置
+早期版本使用了一个一次性的 `curator.auxiliary.{provider,model}` 块。该路径仍然有效，但会输出弃用日志行——请迁移到上面的 `auxiliary.curator`，这样策展器就能与所有其他辅助任务共享相同的管道（`hermes model`、仪表板 Models 选项卡、`base_url`、`api_key`、`timeout`、`extra_body`）。
 :::
 
-## CLI
+## CLI 命令
 
 ```bash
 hermes curator status         # last run, counts, pinned list, LRU top 5
@@ -118,9 +111,9 @@ hermes curator archive <skill>  # manually archive a single skill now
 hermes curator prune [--days N] # bulk-archive agent-created skills idle >= N days (default 90)
 ```
 
-## Backups and rollback
+## 备份与回滚
 
-Before every real curator pass, Hermes takes a tar.gz snapshot of `~/.hermes/skills/` at `~/.hermes/skills/.curator_backups/<utc-iso>/skills.tar.gz`. If a pass archives or consolidates something you didn't want touched, you can undo the whole run with one command:
+在每次真实的策展器运行之前，Hermes 会取一份 `~/.hermes/skills/` 的 tar.gz 快照，保存在 `~/.hermes/skills/.curator_backups/<utc-iso>/skills.tar.gz`。如果某次运行归档或整合了你不想被触碰的内容，你可以用一个命令撤销整个运行：
 
 ```bash
 hermes curator rollback        # restore newest snapshot (with confirmation)
@@ -128,11 +121,11 @@ hermes curator rollback -y     # skip the prompt
 hermes curator rollback --list # see all snapshots with reason + size
 ```
 
-The rollback itself is reversible: before replacing the skills tree, Hermes takes another snapshot tagged `pre-rollback to <target-id>`, so a mistaken rollback can be undone by rolling forward to that one with `--id`.
+回滚本身是可逆的：在替换技能树之前，Hermes 会再取一份快照，标记为 `pre-rollback to <target-id>`，因此误回滚可以通过使用 `--id` 回滚到该快照来撤销。
 
-You can also take manual snapshots at any time with `hermes curator backup --reason "before-refactor"`. The `--reason` string lands in the snapshot's `manifest.json` and is shown in `--list`.
+你也可以随时使用 `hermes curator backup --reason "before-refactor"` 手动创建快照。`--reason` 字符串会存入快照的 `manifest.json` 中，并在 `--list` 中显示。
 
-Snapshots are pruned to `curator.backup.keep` (default 5) to keep disk usage bounded:
+快照数量限制在 `curator.backup.keep`（默认 5）以控制磁盘使用：
 
 ```yaml
 curator:
@@ -141,79 +134,63 @@ curator:
     keep: 5
 ```
 
-Set `curator.backup.enabled: false` to disable automatic snapshotting. The manual `hermes curator backup` command still works when backups are disabled only if you set `enabled: true` first — the flag gates both paths symmetrically so there's no way to accidentally skip the pre-run snapshot on mutating runs.
+设置 `curator.backup.enabled: false` 可禁用自动快照。手动 `hermes curator backup` 命令在备份禁用时仍然有效，但前提是你先将 `enabled: true` 设置一次——该标志对称地控制两条路径，因此不存在在变异运行中意外跳过预运行快照的可能。
 
-`hermes curator status` also lists the five least-recently-used skills — a quick way to see what's likely to become stale next.
+`hermes curator status` 还会列出五个最近最少使用的技能——快速了解接下来哪些技能可能变得过时。
 
-The same subcommands are available as the `/curator` slash command inside a running session (CLI or gateway platforms).
+相同的子命令也可作为 `/curator` 斜杠命令在运行中的会话（CLI 或 gateway 平台）中使用。
 
-## What "agent-created" means
+## “代理创建”的含义
 
-The curator only manages skills explicitly marked as **agent-created** in
-`~/.hermes/skills/.usage.json`. A skill qualifies when ALL of the following
-are true:
+策展器仅管理那些在 `~/.hermes/skills/.usage.json` 中显式标记为 **代理创建的** 技能。一个技能在以下**所有**条件成立时符合条件：
 
-1. Its name is **not** in `~/.hermes/skills/.bundled_manifest` (bundled skills shipped with the repo).
-2. Its name is **not** in `~/.hermes/skills/.hub/lock.json` (hub-installed skills).
-3. Its `.usage.json` entry has `"created_by": "agent"` or `"agent_created": true`.
+1. 其名称**不在** `~/.hermes/skills/.bundled_manifest` 中（附带的捆绑技能）。
+2. 其名称**不在** `~/.hermes/skills/.hub/lock.json` 中（从中心安装的技能）。
+3. 其 `.usage.json` 条目具有 `"created_by": "agent"` 或 `"agent_created": true`。
 
-Currently, only the **background self-improvement review fork** sets this marker
-— when it creates a new umbrella skill during its periodic review pass (~every 10
-agent turns). The background fork runs with a write origin of `"background_review"`
-(via `tools/skill_provenance.py`), which is the only path that triggers the
-`mark_agent_created()` call in `skill_manage`.
+目前，只有**后台自我改进审查分支**会设置此标记——当它在定期审查传递（大约每 10 次代理轮次）期间创建新的伞形技能时。后台分支以写源 `"background_review"`（通过 `tools/skill_provenance.py`）运行，这是触发 `skill_manage` 中 `mark_agent_created()` 调用的唯一路径。
 
-Skills the foreground agent creates via `skill_manage(action="create")` during a
-conversation are **not** marked as agent-created — they are considered
-user-directed and the curator intentionally leaves them alone.
+前台代理在对话期间通过 `skill_manage(action="create")` 创建的技能**不会**被标记为代理创建——它们被认为是用户导向的，策展器故意不碰它们。
 
-:::warning Your hand-written skills are NOT curated
-If you manually created a `SKILL.md` or pointed Hermes at an external skill
-directory, that skill will have a `.usage.json` entry with `created_by: null`
-(or the field absent). The curator will not touch it. The same applies to
-skills the foreground agent created at your request.
+:::warning 你手写的技能不会被策展
+如果你手动创建了一个 `SKILL.md` 或将 Hermes 指向外部技能目录，该技能将在 `.usage.json` 中获得 `created_by: null`（或缺少该字段）。策展器不会触碰它。前台代理应你请求创建的技能也是如此。
 
-**To see which skills the curator actually manages**, run `hermes curator status`.
-If the agent-created count is 0, no skills are currently in the curator's
-jurisdiction — the LLM review pass is skipped and the report will show
-`Model: (not resolved) via (not resolved)` with `Duration: 0s`.
+**要查看策展器实际管理的技能**，请运行 `hermes curator status`。如果代理创建数量为 0，则当前没有技能处于策展器的管辖范围内——LLM 审查传递将被跳过，报告将显示 `Model: (not resolved) via (not resolved)` 且 `Duration: 0s`。
 :::
 
-Skills that ARE agent-created follow the full lifecycle:
+被**标记为代理创建**的技能遵循完整的生命周期：
 
-- `active` → (30d unused) `stale` → (90d unused) `archived`
-- Pinned skills bypass all auto-transitions
-- Archives are recoverable via `hermes curator restore <name>`
+- `active` → (30 天未使用) `stale` → (90 天未使用) `archived`
+- 固定的技能绕过所有自动转换
+- 归档的技能可通过 `hermes curator restore <name>` 恢复
 
-If you want to protect a specific skill from ever being touched — for example a
-hand-authored skill you rely on — use `hermes curator pin <name>`. See the next
-section.
+如果你想保护某个特定技能免于被触碰——例如你依赖的手写技能——请使用 `hermes curator pin <name>`。请参见下一节。
 
-## Pinning a skill
+## 固定技能（Pinning a skill）
 
-Pinning protects a skill from deletion — both the curator's automated archive passes and the agent's `skill_manage(action="delete")` tool call. Once a skill is pinned:
+固定保护技能不被删除——无论是策展器的自动归档传递还是代理的 `skill_manage(action="delete")` 工具调用。一旦技能被固定：
 
-- The **curator** skips it during auto-transitions (`active → stale → archived`), and its LLM review pass is instructed to leave it alone.
-- The **agent's `skill_manage` tool** refuses `delete` on it, pointing the user at `hermes curator unpin <name>`. Patches and edits still go through, so the agent can improve a pinned skill's content as pitfalls come up without a pin/unpin/re-pin dance.
+- **策展器**在自动转换（`active → stale → archived`）时跳过它，并且其 LLM 审查传递被指示不要碰它。
+- **代理的 `skill_manage` 工具**拒绝对其执行 `delete`，并提示用户 `hermes curator unpin <name>`。修补和编辑仍然可以进行，因此代理可以在遇到陷阱时改进固定技能的内容，而不必进行固定/取消固定/重新固定的操作。
 
-Pin and unpin with:
+使用以下命令固定和取消固定：
 
 ```bash
 hermes curator pin <skill>
 hermes curator unpin <skill>
 ```
 
-The flag is stored as `"pinned": true` on the skill's entry in `~/.hermes/skills/.usage.json`, so it survives across sessions.
+该标志作为 `"pinned": true` 存储在技能在 `~/.hermes/skills/.usage.json` 的条目中，因此跨会话持久化。
 
-Only **agent-created** skills can be pinned — `hermes curator pin` refuses on bundled and hub-installed skills with an explanatory message if you try. Hub-installed skills are never subject to curator mutation. Bundled built-in skills are only touched when `curator.prune_builtins: true` (the default), and even then only archived after `archive_after_days` of non-use — never patched, consolidated, or deleted. Set `curator.prune_builtins: false` to exempt bundled skills entirely.
+只有**代理创建的**技能可以被固定——`hermes curator pin` 会拒绝操作捆绑和中心安装的技能，并给出解释信息。中心安装的技能始终不受策展器变更的影响。捆绑的内置技能仅在 `curator.prune_builtins: true`（默认）时被触碰，而且即使如此也仅在 `archive_after_days` 天未使用后被归档——永远不会被修补、整合或删除。设置 `curator.prune_builtins: false` 可完全豁免捆绑技能。
 
-A small set of **protected built-ins** is hardcoded as never-archivable and never-consolidatable, regardless of `curator.prune_builtins`, pin state, or LLM judgment. These back load-bearing UX — for example, `plan` powers the `/plan` slash-command flow — so silently archiving one would turn its slash command into an "Unknown command" error with no signal to you. Protected built-ins are filtered out of the curator's candidate list entirely, so the consolidation pass never sees them.
+一小部分**受保护的内置技能**被硬编码为不可归档且不可整合，无论 `curator.prune_builtins`、固定状态或 LLM 判断如何。这些技能承载着重要的用户体验——例如，`plan` 驱动 `/plan` 斜杠命令流程——因此静默归档一个会导致该斜杠命令变成“未知命令”错误，且不给你任何信号。受保护的内置技能被完全过滤掉，不出现在策展器的候选列表中，因此整合传递永远不会看到它们。
 
-If you want a stronger guarantee than "no deletion" — for instance, freezing a skill's content entirely while the agent still reads it — edit `~/.hermes/skills/<name>/SKILL.md` directly with your editor. The pin guards tool-driven deletion, not your own filesystem access.
+如果你想要比“不可删除”更强的保证——例如在代理仍可读取技能的同时完全冻结其内容——请直接用你的编辑器编辑 `~/.hermes/skills/<name>/SKILL.md`。固定保护的是工具驱动的删除，而不是你自己的文件系统访问。
 
-## Usage telemetry
+## 使用遥测（Usage telemetry）
 
-The curator maintains a sidecar at `~/.hermes/skills/.usage.json` with one entry per skill:
+策展器维护一个边车文件 `~/.hermes/skills/.usage.json`，每个技能对应一个条目：
 
 ```json
 {
@@ -232,17 +209,17 @@ The curator maintains a sidecar at `~/.hermes/skills/.usage.json` with one entry
 }
 ```
 
-Counters increment when:
+计数器在以下情况递增：
 
-- `view_count`: the agent calls `skill_view` on the skill.
-- `use_count`: the skill is loaded into a conversation's prompt.
-- `patch_count`: `skill_manage patch/edit/write_file/remove_file` runs on the skill.
+- `view_count`：代理对该技能调用 `skill_view`。
+- `use_count`：该技能被加载到对话提示中。
+- `patch_count`：对该技能执行 `skill_manage patch/edit/write_file/remove_file`。
 
-Bundled and hub-installed skills are explicitly excluded from telemetry writes.
+捆绑和中心安装的技能被明确排除在遥测写入之外。
 
-## Per-run reports
+## 每次运行的报告
 
-Every curator run writes a timestamped directory under `~/.hermes/logs/curator/`:
+每次策展器运行会在 `~/.hermes/logs/curator/` 下写入一个带时间戳的目录：
 
 ```
 ~/.hermes/logs/curator/
@@ -251,43 +228,38 @@ Every curator run writes a timestamped directory under `~/.hermes/logs/curator/`
     └── REPORT.md     # human-readable summary
 ```
 
-`REPORT.md` is a quick way to see what a given run did — which skills transitioned, what the LLM reviewer said, which skills it patched. Good for auditing without having to grep `agent.log`.
+`REPORT.md` 是快速查看某次运行做了什么的好方法——哪些技能发生了转换、LLM 审查者说了什么、修补了哪些技能。适合审计，而无需 grep `agent.log`。
 
-:::note No candidates? Report shows `(not resolved)`
-When the curator has **no agent-created skills** to review, the LLM review pass
-is skipped entirely. The report header will show
-`Model: (not resolved) via (not resolved)` with `Duration: 0s` — this does **not**
-indicate a configuration error or model resolution failure. It simply means there
-were no candidates, so no model was ever invoked. The auto-transition phase still
-runs and reports its counts normally.
+:::note 没有候选？报告显示 `(not resolved)`
+当策展器**没有要审查的代理创建技能**时，LLM 审查传递被完全跳过。报告头部将显示 `Model: (not resolved) via (not resolved)` 且 `Duration: 0s`——这**不**表示配置错误或模型解析失败。这仅仅意味着没有候选，因此从未调用模型。自动转换阶段仍然运行并正常报告其计数。
 :::
 
-### Rename map in the summary
+### 摘要中的重命名映射
 
-If a run consolidated multiple skills under an umbrella (or merged near-duplicates), the user-visible summary printed at the end of the run includes an explicit rename map showing every `old-name → new-name` pair the curator applied. This is in addition to per-skill transition lines, so when a wave of renames lands you can spot them at a glance without diffing the JSON report. The hint also surfaces under `hermes curator pin` so you can pin the umbrella name immediately if you want to lock the new label in.
+如果某次运行将多个技能整合到一个伞形技能下（或合并了近似重复），运行结束时打印的用户可见摘要会包含一个显式的重命名映射，显示策展器应用的每一对 `旧名称 → 新名称`。这是对每个技能转换行的补充，因此当一波重命名到来时，你可以一目了然地发现它们，而无需比对 JSON 报告。该提示也会在 `hermes curator pin` 下显示，因此如果你想要锁定新标签，可以立即固定伞形技能名称。
 
-## Restoring an archived skill
+## 恢复归档的技能
 
-If the curator archived something you still want:
+如果策展器归档了你仍然想要的内容：
 
 ```bash
 hermes curator restore <skill-name>
 ```
 
-This moves the skill back from `~/.hermes/skills/.archive/` to the active tree and resets its state to `active`. The restore refuses if a bundled or hub-installed skill has since been installed under the same name (would shadow upstream).
+这会将技能从 `~/.hermes/skills/.archive/` 移回活动树，并将其状态重置为 `active`。如果同名捆绑或中心安装的技能后来已被安装（会遮蔽上游），恢复操作会拒绝。
 
-## Disabling per environment
+## 按环境禁用
 
-The curator is on by default. To turn it off:
+策展器默认开启。要关闭它：
 
-- **For one profile only:** edit `~/.hermes/config.yaml` (or the active profile's config) and set `curator.enabled: false`.
-- **For just one run:** `hermes curator pause` — the pause persists across sessions; use `resume` to re-enable.
+- **仅针对一个配置文件：** 编辑 `~/.hermes/config.yaml`（或活动配置文件的配置），设置 `curator.enabled: false`。
+- **仅针对一次运行：** `hermes curator pause`——暂停状态跨会话持久化；使用 `resume` 重新启用。
 
-The curator also refuses to run if `min_idle_hours` hasn't elapsed, so on an active dev machine it naturally only runs during quiet stretches.
+如果 `min_idle_hours` 尚未过去，策展器也会拒绝运行，因此在活跃的开发机器上它自然只在安静时段运行。
 
-## See also
+## 另请参见
 
-- [Skills System](/user-guide/features/skills) — how skills work in general and the self-improvement loop that creates them
-- [Memory](/user-guide/features/memory) — a parallel background review that maintains long-term memory
-- [Bundled Skills Catalog](/reference/skills-catalog)
-- [Issue #7816](https://github.com/NousResearch/hermes-agent/issues/7816) — original proposal and design discussion
+- [技能系统](/user-guide/features/skills) —— 技能通常如何工作以及创建技能的自我改进循环
+- [记忆](/user-guide/features/memory) —— 维护长期记忆的并行后台审查
+- [捆绑技能目录](/reference/skills-catalog)
+- [问题 #7816](https://github.com/NousResearch/hermes-agent/issues/7816) —— 原始提案和设计讨论

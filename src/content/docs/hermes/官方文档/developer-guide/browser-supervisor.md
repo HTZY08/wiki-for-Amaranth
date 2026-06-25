@@ -1,125 +1,85 @@
----
-title: 浏览器监控器
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`developer-guide/browser-supervisor.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/browser-supervisor.md)
-> 本版本为自用学习用途，非官方翻译。
-
+```markdown
 ---
 sidebar_position: 18
-title: "Browser CDP Supervisor"
-description: "How Hermes detects and responds to native JS dialogs and interacts with cross-origin iframes via a persistent CDP connection."
+title: "浏览器CDP监管器 (Browser CDP Supervisor)"
+description: "Hermes如何检测和响应原生JS对话框，并通过持久化的CDP连接与跨源iframe交互。"
 ---
 
-# Browser CDP Supervisor
+# 浏览器CDP监管器
 
-The CDP supervisor closes two long-standing gaps in Hermes' browser tooling:
+CDP监管器填补了Hermes浏览器工具中长期存在的两个空白：
 
-1. **Native JS dialogs** (`alert`/`confirm`/`prompt`/`beforeunload`) block the
-   page's JS thread. Without supervision, the agent has no way to know a
-   dialog is open — subsequent tool calls hang or throw opaque errors.
-2. **Cross-origin iframes (OOPIFs)** are invisible to top-level
-   `Runtime.evaluate`. The agent can see iframe nodes in the DOM snapshot but
-   can't click, type, or eval inside them without a CDP session attached to
-   the child target.
+1. **原生JS对话框**（`alert`/`confirm`/`prompt`/`beforeunload`）会阻塞页面的JS线程。若无监管，代理（Agent）无法知道对话框已打开——后续工具调用会挂起或抛出含义不明的错误。
+2. **跨源iframe（OOPIF）** 对顶层 `Runtime.evaluate` 不可见。代理可以在DOM快照中看到iframe节点，但如果没有附加到子目标的CDP会话，则无法在iframe内点击、输入或执行eval。
 
-The supervisor solves both by holding a persistent WebSocket to the backend's
-CDP endpoint per browser task, surfacing pending dialogs and frame structure
-into `browser_snapshot`, and exposing a `browser_dialog` tool for explicit
-responses.
+监管器通过为每个浏览器任务持有一个到后端CDP端点的持久WebSocket来解决这两个问题，将待处理的对话框和框架结构呈现到 `browser_snapshot` 中，并提供一个用于显式响应的 `browser_dialog` 工具。
 
-## Backend support
+## 后端支持
 
-| Backend | Dialog detect | Dialog respond | Frame tree | OOPIF `Runtime.evaluate` via `browser_cdp(frame_id=...)` |
+| 后端 | 对话框检测 | 对话框响应 | 框架树 | 通过 `browser_cdp(frame_id=...)` 的OOPIF `Runtime.evaluate` |
 |---|---|---|---|---|
-| Local Chrome (`--remote-debugging-port`) / `/browser connect` | ✓ | ✓ full workflow | ✓ | ✓ |
-| Browserbase | ✓ (via bridge) | ✓ full workflow (via bridge) | ✓ | ✓ |
-| Camofox | ✗ no CDP (REST-only) | ✗ | partial via DOM snapshot | ✗ |
+| 本地Chrome（`--remote-debugging-port`）/ `/browser connect` | ✓ | ✓ 完整工作流 | ✓ | ✓ |
+| Browserbase | ✓（通过桥接） | ✓ 完整工作流（通过桥接） | ✓ | ✓ |
+| Camofox | ✗ 无CDP（仅REST） | ✗ | 通过DOM快照部分支持 | ✗ |
 
-**Browserbase quirk.** Browserbase's CDP proxy uses Playwright internally and
-auto-dismisses native dialogs within ~10ms, so `Page.handleJavaScriptDialog`
-can't keep up. The supervisor injects a bridge script via
-`Page.addScriptToEvaluateOnNewDocument` that overrides
-`window.alert`/`confirm`/`prompt` with a synchronous XHR to a magic host
-(`hermes-dialog-bridge.invalid`). `Fetch.enable` intercepts those XHRs before
-they touch the network — the dialog becomes a `Fetch.requestPaused` event the
-supervisor captures, and `respond_to_dialog` fulfills via
-`Fetch.fulfillRequest` with a JSON body the injected script decodes.
+**Browserbase 特性。** Browserbase 的CDP代理内部使用Playwright，会在约10ms内自动关闭原生对话框，因此 `Page.handleJavaScriptDialog` 无法跟上。监管器通过 `Page.addScriptToEvaluateOnNewDocument` 注入一个桥接脚本，将 `window.alert`/`confirm`/`prompt` 重写为对魔术主机（`hermes-dialog-bridge.invalid`）的同步XHR请求。`Fetch.enable` 在这些XHR到达网络之前拦截它们——对话框变为监管器捕获的 `Fetch.requestPaused` 事件，而 `respond_to_dialog` 通过 `Fetch.fulfillRequest` 响应一个JSON主体，该主体由注入的脚本解码。
 
-From the page's perspective, `prompt()` still returns the agent-supplied
-string. From the agent's perspective, it's the same `browser_dialog(action=...)`
-API either way.
+从页面的角度看，`prompt()` 仍然返回代理提供的字符串。从代理的角度看，无论哪种方式，都是同一个 `browser_dialog(action=...)` API。
 
-Camofox is unsupported — no CDP surface, REST-only.
+Camofox 不受支持——无CDP表面，仅REST。
 
-## Architecture
+## 架构
 
-### CDPSupervisor
+### CDP监管器 (CDPSupervisor)
 
-One `asyncio.Task` running in a background daemon thread per Hermes `task_id`.
-Holds a persistent WebSocket to the backend's CDP endpoint. Maintains:
+每个 Hermes `task_id` 对应一个运行在后台守护线程中的 `asyncio.Task`。持有一个到后端CDP端点的持久WebSocket。维护：
 
-- **Dialog queue** — `List[PendingDialog]` with `{id, type, message, default_prompt, session_id, opened_at}`
-- **Frame tree** — `Dict[frame_id, FrameInfo]` with parent relationships, URL, origin, whether cross-origin child session
-- **Session map** — `Dict[session_id, SessionInfo]` so interaction tools can route to the right attached session for OOPIF operations
-- **Recent console errors** — ring buffer of the last 50 for diagnostics
+- **对话框队列（Dialog queue）** — `List[PendingDialog]` 包含 `{id, type, message, default_prompt, session_id, opened_at}`
+- **框架树（Frame tree）** — `Dict[frame_id, FrameInfo]` 包含父级关系、URL、源（origin）、是否为跨源子会话
+- **会话映射（Session map）** — `Dict[session_id, SessionInfo]`，以便交互工具可以路由到正确的附加会话以进行OOPIF操作
+- **近期控制台错误** — 最近50条错误环形缓冲区，用于诊断
 
-Subscribes on attach:
+附加时订阅：
 
-- `Page.enable` — `javascriptDialogOpening`, `frameAttached`, `frameNavigated`, `frameDetached`
-- `Runtime.enable` — `executionContextCreated`, `consoleAPICalled`, `exceptionThrown`
-- `Target.setAutoAttach {autoAttach: true, flatten: true}` — surfaces child OOPIF targets; supervisor enables `Page`+`Runtime` on each
+- `Page.enable` — `javascriptDialogOpening`、`frameAttached`、`frameNavigated`、`frameDetached`
+- `Runtime.enable` — `executionContextCreated`、`consoleAPICalled`、`exceptionThrown`
+- `Target.setAutoAttach {autoAttach: true, flatten: true}` — 暴露子OOPIF目标；监管器在每个子目标上启用 `Page`+`Runtime`
 
-Thread-safe state access via a snapshot lock; tool handlers (sync) read the
-frozen snapshot without awaiting.
+通过快照锁实现线程安全的状态访问；工具处理程序（同步）读取冻结的快照而无需等待。
 
-### Lifecycle
+### 生命周期
 
-- **Start:** `SupervisorRegistry.get_or_start(task_id, cdp_url)` — called by
-  `browser_navigate`, Browserbase session create, `/browser connect`.
-  Idempotent.
-- **Stop:** session teardown or `/browser disconnect`. Cancels the asyncio
-  task, closes the WebSocket, discards state.
-- **Rebind:** if the CDP URL changes (user reconnects to a new Chrome), the
-  old supervisor is stopped and a fresh one started — state is never reused
-  across endpoints.
+- **启动：** `SupervisorRegistry.get_or_start(task_id, cdp_url)` — 由 `browser_navigate`、Browserbase会话创建、`/browser connect` 调用。幂等。
+- **停止：** 会话拆除或 `/browser disconnect`。取消asyncio任务，关闭WebSocket，丢弃状态。
+- **重新绑定：** 如果CDP URL发生变化（用户重新连接到新的Chrome），旧监管器停止，启动新监管器——状态不会跨端点重用。
 
-### Dialog policy
+### 对话框策略
 
-Configurable via `config.yaml` under `browser.dialog_policy`:
+可通过 `config.yaml` 在 `browser.dialog_policy` 下配置：
 
-- **`must_respond`** (default) — capture, surface in `browser_snapshot`, wait
-  for explicit `browser_dialog(action=...)` call. After a 300s safety timeout
-  with no response, auto-dismiss and log. Prevents a buggy agent from stalling
-  forever.
-- `auto_dismiss` — record and dismiss immediately; agent sees it after the
-  fact via `browser_state` inside `browser_snapshot`.
-- `auto_accept` — record and accept (useful for `beforeunload` where the
-  workflow wants to navigate away cleanly).
+- **`must_respond`**（默认）— 捕获，在 `browser_snapshot` 中呈现，等待显式 `browser_dialog(action=...)` 调用。如果没有响应，则在300s安全超时后自动关闭并记录日志。防止有缺陷的代理无限期停滞。
+- `auto_dismiss` — 记录并立即关闭；代理事后通过 `browser_snapshot` 中的 `browser_state` 查看。
+- `auto_accept` — 记录并接受（适用于 `beforeunload`，工作流希望干净地导航离开）。
 
-Policy is per-task; no per-dialog overrides.
+策略按任务设定；没有按对话框的重写。
 
-## Agent surface
+## 代理接口
 
-### `browser_dialog` tool
+### `browser_dialog` 工具
 
 ```
 browser_dialog(action, prompt_text=None, dialog_id=None)
 ```
 
-- `action="accept"` / `"dismiss"` → responds to the specified or sole pending dialog (required)
-- `prompt_text=...` → text to supply to a `prompt()` dialog
-- `dialog_id=...` → disambiguate when multiple dialogs are queued (rare)
+- `action="accept"` / `"dismiss"` → 响应指定或唯一的待处理对话框（必需）
+- `prompt_text=...` → 提供给 `prompt()` 对话框的文本
+- `dialog_id=...` → 当多个对话框排队时用于区分（很少见）
 
-Tool is response-only. The agent reads pending dialogs from `browser_snapshot`
-output before calling.
+该工具仅用于响应。代理在调用之前从 `browser_snapshot` 输出中读取待处理对话框。
 
-### `browser_snapshot` extension
+### `browser_snapshot` 扩展
 
-Adds three optional fields to the existing snapshot output when a supervisor
-is attached:
+当监管器附加时，向现有快照输出添加三个可选字段：
 
 ```json
 {
@@ -141,67 +101,39 @@ is attached:
 }
 ```
 
-- **`pending_dialogs`** — dialogs currently blocking the page's JS thread.
-  The agent must call `browser_dialog(action=...)` to respond. Empty on
-  Browserbase because their CDP proxy auto-dismisses within ~10ms.
+- **`pending_dialogs`** — 当前阻塞页面JS线程的对话框。代理必须调用 `browser_dialog(action=...)` 来响应。在Browserbase上为空，因为它们的CDP代理会在约10ms内自动关闭。
+- **`recent_dialogs`** — 最多20个最近关闭的对话框环形缓冲区，带有 `closed_by` 标签：`"agent"`（我们响应了）、`"auto_policy"`（本地auto_dismiss/auto_accept）、`"watchdog"`（must_respond超时触发）、或 `"remote"`（浏览器/后端关闭了它，例如Browserbase）。这是Browserbase上的代理仍然能查看发生了什么的方式。
+- **`frame_tree`** — 框架结构，包括跨源（OOPIF）子框架。限制为30个条目 + OOPIF深度2，以限制广告繁重页面上的快照大小。`truncated: true` 表示达到了限制；需要完整树的代理可以使用 `browser_cdp` 并调用 `Page.getFrameTree`。
 
-- **`recent_dialogs`** — ring buffer of up to 20 recently-closed dialogs with
-  a `closed_by` tag: `"agent"` (we responded), `"auto_policy"` (local
-  auto_dismiss/auto_accept), `"watchdog"` (must_respond timeout hit), or
-  `"remote"` (browser/backend closed it on us, e.g. Browserbase). This is
-  how agents on Browserbase still get visibility into what happened.
+这些字段没有新的工具模式接口——代理读取它已经请求的快照。
 
-- **`frame_tree`** — frame structure including cross-origin (OOPIF) children.
-  Capped at 30 entries + OOPIF depth 2 to bound snapshot size on ad-heavy
-  pages. `truncated: true` surfaces when limits were hit; agents needing
-  the full tree can use `browser_cdp` with `Page.getFrameTree`.
+### 可用性门控
 
-No new tool schema surface for any of these — the agent reads the snapshot it
-already requests.
+两个接口都通过 `_browser_cdp_check` 门控（监管器仅在CDP端点可到达时运行）。在Camofox/无后端会话上，对话框工具隐藏，快照省略新字段——不会导致模式膨胀。
 
-### Availability gating
+## 跨源iframe交互
 
-Both surfaces gate on `_browser_cdp_check` (supervisor can only run when a CDP
-endpoint is reachable). On Camofox / no-backend sessions, the dialog tool is
-hidden and the snapshot omits the new fields — no schema bloat.
+`browser_cdp(frame_id=...)` 通过监管器已连接的WebSocket，使用OOPIF的子 `sessionId` 路由CDP调用（特别是 `Runtime.evaluate`）。代理从 `browser_snapshot.frame_tree.children[]` 中选取 `is_oopif=true` 的frame_id，然后将其传递给 `browser_cdp`。对于同源iframe（没有专用CDP会话），代理改用顶层 `Runtime.evaluate` 中的 `contentWindow`/`contentDocument`——当 `frame_id` 属于非OOPIF时，监管器会抛出指向该回退的错误。
 
-## Cross-origin iframe interaction
+在Browserbase上，这是iframe交互的唯一可靠路径——无状态CDP连接（每次 `browser_cdp` 调用打开）会遇到签名URL过期，而监管器的长连接保持有效会话。
 
-`browser_cdp(frame_id=...)` routes CDP calls (notably `Runtime.evaluate`)
-through the supervisor's already-connected WebSocket using the OOPIF's child
-`sessionId`. Agents pick frame_ids out of
-`browser_snapshot.frame_tree.children[]` where `is_oopif=true` and pass them
-to `browser_cdp`. For same-origin iframes (no dedicated CDP session), the
-agent uses `contentWindow`/`contentDocument` from a top-level
-`Runtime.evaluate` instead — the supervisor surfaces an error pointing at that
-fallback when `frame_id` belongs to a non-OOPIF.
+## 文件布局
 
-On Browserbase, this is the only reliable path for iframe interaction —
-stateless CDP connections (opened per `browser_cdp` call) hit signed-URL
-expiry, while the supervisor's long-lived connection keeps a valid session.
+- `tools/browser_supervisor.py` — `CDPSupervisor`、`SupervisorRegistry`、`PendingDialog`、`FrameInfo`
+- `tools/browser_dialog_tool.py` — `browser_dialog` 工具处理程序
+- `tools/browser_tool.py` — `browser_navigate` 启动钩子、`browser_snapshot` 合并、`/browser connect` 重新附加、`_cleanup_browser_session` 拆除
+- `toolsets.py` — 在 `browser`、`hermes-acp`、`hermes-api-server` 和核心工具集中注册 `browser_dialog`（门控于CDP可到达性）
+- `hermes_cli/config.py` — `browser.dialog_policy` 和 `browser.dialog_timeout_s` 默认值
 
-## File layout
+## 非目标
 
-- `tools/browser_supervisor.py` — `CDPSupervisor`, `SupervisorRegistry`, `PendingDialog`, `FrameInfo`
-- `tools/browser_dialog_tool.py` — `browser_dialog` tool handler
-- `tools/browser_tool.py` — `browser_navigate` start-hook, `browser_snapshot` merge, `/browser connect` reattach, `_cleanup_browser_session` teardown
-- `toolsets.py` — registers `browser_dialog` in `browser`, `hermes-acp`, `hermes-api-server`, and core toolsets (gated on CDP reachability)
-- `hermes_cli/config.py` — `browser.dialog_policy` and `browser.dialog_timeout_s` defaults
+- 对Camofox的检测/交互（上游差距；单独跟踪）
+- 将对话框/框架事件实时流式传输给用户（需要网关钩子）
+- 跨会话持久化对话框历史（仅内存）
+- 每个iframe的对话框策略（代理可以通过 `dialog_id` 表达）
+- 替换 `browser_cdp`——它仍然作为长尾场景（cookie、视口、网络节流）的逃生舱口
 
-## Non-goals
+## 测试
 
-- Detection/interaction for Camofox (upstream gap; tracked separately)
-- Streaming dialog/frame events live to the user (would require gateway hooks)
-- Persisting dialog history across sessions (in-memory only)
-- Per-iframe dialog policies (agent can express this via `dialog_id`)
-- Replacing `browser_cdp` — it stays as the escape hatch for the long tail (cookies, viewport, network throttling)
-
-## Testing
-
-Unit tests (`tests/tools/test_browser_supervisor.py`) use an asyncio mock CDP
-server that speaks enough of the protocol to exercise all state transitions:
-attach, enable, navigate, dialog fire, dialog dismiss, frame attach/detach,
-child target attach, session teardown. Real-backend E2E (Browserbase + local
-Chromium-family browser) is manual — exercise via `/browser connect` to a
-live Chromium-family browser and run the dialog/frame test cases described
-above.
+单元测试（`tests/tools/test_browser_supervisor.py`）使用一个asyncio模拟CDP服务器，该服务器实现了足够的协议以执行所有状态转换：附加、启用、导航、对话框触发、对话框关闭、框架附加/分离、子目标附加、会话拆除。真实后端端到端测试（Browserbase + 本地Chromium系列浏览器）是手动的——通过 `/browser connect` 连接到运行的Chromium系列浏览器，并执行上述对话框/框架测试用例。
+```

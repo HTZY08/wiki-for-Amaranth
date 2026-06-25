@@ -1,168 +1,102 @@
+--- frontmatter ---
 ---
-title: 工具搜索
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/tool-search.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/tool-search.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
-title: Tool Search
+title: 工具搜索（Tool Search）
 sidebar_position: 95
 ---
 
-# Tool Search
+--- body ---
+# 工具搜索（Tool Search）
 
-When you have many MCP servers or non-core plugin tools attached to a
-session, their JSON schemas can consume a substantial fraction of the
-context window on every turn — even when only a few of them are relevant
-to what the user actually asked for.
+当会话中附加了许多 MCP 服务器或非核心插件工具时，它们的 JSON 模式（JSON schemas）会在每一轮中消耗相当一部分上下文窗口（context window）——即便其中只有少数几个与用户实际请求相关。
 
-**Tool Search** is Hermes' opt-in progressive-disclosure layer for that
-problem. When activated, MCP and plugin tools are replaced in the
-model-visible tools array by three bridge tools, and the model loads each
-specific tool's schema on demand.
+**工具搜索（Tool Search）** 是 Hermes 为应对此问题提供的可选渐进式披露（progressive-disclosure）层。激活后，MCP 和插件工具会被三个桥接工具（bridge tools）替换到模型可见的工具数组（tools array）中，模型则按需加载每个特定工具的模式。
 
-:::info Built-in Hermes tools never defer
-The tools that make up Hermes' core capability set (`terminal`,
-`read_file`, `write_file`, `patch`, `search_files`, `todo`, `memory`,
-`browser_*`, `web_search`, `web_extract`, `clarify`, `execute_code`,
-`delegate_task`, `session_search`, `send_message`, and the rest of
-`_HERMES_CORE_TOOLS`) are *always* loaded directly. Only MCP tools and
-non-core plugin tools are eligible for deferral.
+:::info 内置 Hermes 工具从不延迟
+构成 Hermes 核心能力集的工具（`terminal`、`read_file`、`write_file`、`patch`、`search_files`、`todo`、`memory`、`browser_*`、`web_search`、`web_extract`、`clarify`、`execute_code`、`delegate_task`、`session_search`、`send_message` 以及其余 `_HERMES_CORE_TOOLS`）*始终*直接加载。只有 MCP 工具和非核心插件工具才符合延迟条件。
 :::
 
-## How it works
+## 工作原理
 
-When Tool Search activates for a turn, the model sees three new tools in
-place of the deferred ones:
-
-```
-tool_search(query, limit?)     — search the deferred-tool catalog
-tool_describe(name)            — load the full schema for one tool
-tool_call(name, arguments)     — invoke a deferred tool
-```
-
-A typical interaction looks like:
+当工具搜索在某一轮中激活时，模型会看到三个新工具来代替被延迟的工具：
 
 ```
-Model: tool_search("create a github issue")
+tool_search(query, limit?)     — 搜索延迟工具目录
+tool_describe(name)            — 加载某个工具的完整模式
+tool_call(name, arguments)     — 调用一个延迟工具
+```
+
+典型的交互过程如下：
+
+```
+模型：tool_search("创建一个 GitHub issue")
   → { matches: [{ name: "mcp_github_create_issue", ... }, ...] }
-Model: tool_describe("mcp_github_create_issue")
+模型：tool_describe("mcp_github_create_issue")
   → { parameters: { type: "object", properties: { ... } } }
-Model: tool_call("mcp_github_create_issue", { title: "...", body: "..." })
+模型：tool_call("mcp_github_create_issue", { title: "...", body: "..." })
   → { ok: true, issue_number: 42 }
 ```
 
-When the model invokes `tool_call`, Hermes **unwraps the bridge** and
-dispatches the underlying tool exactly as if the model had called it
-directly. Pre-tool-call hooks, guardrails, approval prompts, and
-post-tool-call hooks all run against the real tool name — not against
-`tool_call`. The activity feed in the CLI and gateway also unwraps so you
-see the underlying tool, not the bridge.
+当模型调用 `tool_call` 时，Hermes **解开桥接**并将底层工具分派出去，就像模型直接调用它一样。预工具调用钩子（pre-tool-call hooks）、防护措施（guardrails）、审批提示（approval prompts）和后工具调用钩子（post-tool-call hooks）均针对真实工具名称运行——而非针对 `tool_call`。CLI 和网关中的活动馈送（activity feed）也会解开桥接，以便你看到底层工具，而不是桥接工具。
 
-## When does it activate?
+## 何时激活？
 
-By default Tool Search runs in `auto` mode: it activates only when the
-deferrable tool schemas would consume at least 10% of the active model's
-context window. Below that, the tools-array assembly is a pure
-pass-through and you pay no overhead.
+默认情况下，工具搜索以 `auto` 模式运行：仅当可延迟工具模式（deferrable tool schemas）消耗活动模型上下文窗口至少 10% 时才会激活。低于该阈值时，工具数组的组装是纯粹的直通（pass-through），你不会产生任何开销。
 
-This decision is re-evaluated every time the tools array is built, so:
+此决策在每次构建工具数组时都会重新评估，因此：
 
-- A session with just a few MCP tools and a long context model never
-  activates Tool Search.
-- A session with many MCP servers attached (15+ tools typically) starts
-  activating it.
-- Removing MCP servers mid-session correctly returns to direct exposure
-  on the next assembly.
+- 仅有少量 MCP 工具且使用长上下文模型的会话，永远不会激活工具搜索。
+- 附加了许多 MCP 服务器（通常 15 个以上工具）的会话会开始激活它。
+- 在会话中间移除 MCP 服务器，下次组装时会正确地恢复到直接暴露。
 
-## Configuration
+## 配置
 
 ```yaml
 tools:
   tool_search:
-    enabled: auto       # auto (default), on, or off
-    threshold_pct: 10   # percentage of context — only used in auto mode
+    enabled: auto       # auto（默认）、on 或 off
+    threshold_pct: 10   # 上下文百分比——仅在 auto 模式下使用
     search_default_limit: 5
     max_search_limit: 20
 ```
 
-| Key | Default | Meaning |
+| 键 | 默认值 | 含义 |
 | --- | --- | --- |
-| `enabled` | `auto` | `auto` activates above threshold; `on` always activates if there's at least one deferrable tool; `off` disables entirely. |
-| `threshold_pct` | `10` | Percentage of context length at which `auto` mode kicks in. Range 0–100. |
-| `search_default_limit` | `5` | Hits returned when the model calls `tool_search` without a `limit`. |
-| `max_search_limit` | `20` | Hard upper bound the model can request via `limit`. Range 1–50. |
+| `enabled` | `auto` | `auto` 在超过阈值时激活；`on` 只要存在至少一个可延迟工具就始终激活；`off` 完全禁用。 |
+| `threshold_pct` | `10` | `auto` 模式触发的上下文长度百分比。范围 0–100。 |
+| `search_default_limit` | `5` | 模型调用 `tool_search` 且未提供 `limit` 时返回的命中数。 |
+| `max_search_limit` | `20` | 模型可通过 `limit` 请求的硬上限。范围 1–50。 |
 
-You can also flip the legacy boolean shape:
+你也可以使用传统的布尔形式：
 
 ```yaml
 tools:
-  tool_search: true   # equivalent to {enabled: auto}
+  tool_search: true   # 等同于 {enabled: auto}
 ```
 
-## When NOT to use it
+## 何时不使用
 
-Tool Search trades a fixed per-turn token cost (the three bridge tool
-schemas, ~300 tokens) and at least one extra round trip (search →
-describe → call) for the savings on the deferred schemas. It's a clear
-win when you have many tools and use few per turn; it's overhead when
-you have few tools total.
+工具搜索用固定的每轮令牌成本（三个桥接工具模式，约 300 个令牌）以及至少一次额外的往返（搜索→描述→调用）来换取延迟模式上的节省。当你拥有许多工具且每轮使用较少时，它显然是赢家；当工具总数很少时，它就成了开销。
 
-The `auto` default handles this for you. If you set `enabled: on`
-unconditionally, expect a slight per-turn cost on small toolsets.
+`auto` 默认值会为你处理这一点。如果你无条件设置 `enabled: on`，预计在小工具集上会产生轻微的每轮成本。
 
-## Trade-offs that don't go away
+## 无法消除的权衡
 
-These come from the prompt-cache integrity invariant — they are inherent
-to any progressive-disclosure design, not specific to this implementation:
+这些源于提示缓存完整性不变性（prompt-cache integrity invariant）——它们是任何渐进式披露设计所固有的，并非此实现特有：
 
-- **One extra round trip on cold tools.** The first time the model needs
-  a deferred tool, it spends one or two extra model calls to find and
-  load the schema. The token savings on the static side are real, but a
-  portion is paid back at runtime.
-- **No cache benefit on deferred schemas.** A loaded `tool_describe`
-  result enters the conversation history (so it does get cached on
-  subsequent turns) but it never benefits from the system-prompt cache
-  prefix.
-- **Model-quality dependence.** Tool Search assumes the model can write a
-  reasonable search query for the tool it wants. Smaller models do this
-  less well; the published Anthropic numbers (49% → 74% on Opus 4 with
-  vs. without tool search) show the upside but also that ~26 points of
-  accuracy is still retrieval failure.
-- **Toolset edits invalidate cache.** Adding or removing a tool mid-
-  session changes the bridge tools' descriptions (which include the
-  count of deferred tools) and the catalog, so the prompt cache is
-  invalidated. This is the same trade-off as any toolset edit.
+- **冷工具上的额外一次往返。** 模型首次需要延迟工具时，会多花费一两次模型调用来查找并加载模式。静态侧的令牌节省是真实的，但一部分会在运行时被偿还。
+- **延迟模式无缓存收益。** 加载后的 `tool_describe` 结果会进入对话历史（因此会在后续轮次中被缓存），但从未受益于系统提示缓存前缀（system-prompt cache prefix）。
+- **模型质量依赖。** 工具搜索假设模型能够为所需工具编写合理的搜索查询。较小的模型在这方面表现较差；已发布的 Anthropic 数据（使用工具搜索与不使用相比，Opus 4 上从 49% 提升至 74%）显示了优势，但也表明约 26 个百分点的准确率仍然存在检索失败。
+- **工具集编辑会使缓存失效。** 在会话中间添加或移除工具会改变桥接工具的描述（其中包含延迟工具的数量）以及目录，因此提示缓存会失效。这与任何工具集编辑的权衡相同。
 
-## Implementation details
+## 实现细节
 
-- **Retrieval:** BM25 over tokenized tool name + description + parameter
-  names. Falls back to a literal substring match on the tool name when
-  BM25 returns no positive-score hits, which protects against
-  zero-IDF degenerate cases (e.g. searching `"github"` against a
-  catalog where every tool name contains "github").
-- **Catalog is stateless across turns.** It rebuilds from the current
-  tool-defs list every assembly — no session-keyed `Map`. This avoids
-  the class of bug where a stored catalog drifts out of sync with the
-  live tool registry.
-- **The catalog is scoped to the session's toolsets.** `tool_search`,
-  `tool_describe`, and `tool_call` only ever see and invoke tools the
-  session was actually granted. A subagent, kanban worker, or gateway
-  session restricted to a subset of toolsets cannot use the bridge to
-  discover or call a tool outside that subset — the deferred catalog is
-  the deferrable slice of the session's own enabled/disabled toolsets,
-  not the whole process registry.
-- **No JS sandbox.** Hermes uses the simpler "structured tools" mode
-  (search / describe / call as plain functions). The JS-sandbox "code
-  mode" some other implementations offer is a large surface area; we
-  skip it.
+- **检索：** 对分词后的工具名称 + 描述 + 参数名称进行 BM25。当 BM25 返回零正分命中时，回退到工具名称的字面子串匹配，这可以防止零 IDF 的退化情况（例如，在目录中每个工具名称都包含 "github" 时搜索 `"github"`）。
+- **目录在轮次之间是无状态的。** 每次组装时，它都会从当前工具定义列表重新构建——没有会话键控的 `Map`。这避免了存储的目录与实时工具注册表不同步的错误类别。
+- **目录限定于会话的工具集。** `tool_search`、`tool_describe` 和 `tool_call` 只能看到并调用会话实际被授予的工具。被限制到工具集子集的子代理（subagent）、看板工作器（kanban worker）或网关会话，无法使用桥接来发现或调用该子集之外的工具——延迟目录是会话自身启用/禁用工具集的延迟切片，而非整个进程注册表。
+- **无 JS 沙箱。** Hermes 使用更简单的"结构化工具"模式（search / describe / call 作为普通函数）。其他一些实现提供的 JS 沙箱"代码模式"攻击面较大；我们选择跳过它。
 
-## See also
+## 另请参阅
 
-- `tools/tool_search.py` — the implementation
-- `tests/tools/test_tool_search.py` — the regression suite
-- The `openclaw-tool-search-report` PDF in the original implementation
-  PR for the research that shaped the design
+- `tools/tool_search.py` — 实现
+- `tests/tools/test_tool_search.py` — 回归测试套件
+- 原始实现 PR 中的 `openclaw-tool-search-report` PDF，其中包含塑造设计的研究

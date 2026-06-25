@@ -1,199 +1,151 @@
 ---
-title: 宠物系统
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/pets.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/pets.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 11
-title: "Pets (Petdex Mascots)"
-description: "Adopt an animated mascot that reacts to agent activity across the CLI, TUI, and desktop app"
+title: "宠物（Petdex 吉祥物）"
+description: "领养一个动画吉祥物，它会响应代理在 CLI、TUI 和桌面应用中的活动"
 ---
 
-# Pets
+# 宠物
 
-Hermes can show an animated **pet** — a small mascot sprite that reacts to what
-the agent is doing (idle, running a tool, thinking, finishing, failing) across
-the **CLI**, **TUI**, and **desktop app**. Pets come from the public
-[petdex](https://github.com/crafter-station/petdex) gallery.
+Hermes 可以显示一个动画**宠物**——一个小的吉祥物精灵，它会根据代理在 **CLI**、**TUI** 和 **桌面应用** 中的活动（空闲、运行工具、思考、完成、失败）做出反应。宠物来自公开的 [petdex](https://github.com/crafter-station/petdex) 画廊。
 
-Pets are purely cosmetic. They have **no effect on prompt caching, tokens, or
-the agent's behavior** — the sprite is a display concern only. The feature is
-**off by default** and stays dormant until you install and select a pet.
+宠物纯属装饰。它们**不会影响提示缓存、令牌或代理的行为**——精灵仅是显示问题。此功能**默认关闭**，直到你安装并选择宠物后才会激活。
 
-## How it works
+## 工作原理
 
-- Pets are installed into your profile's `pets/` directory
-  (`<HERMES_HOME>/pets/<slug>/`), so each [profile](../profiles.md) keeps its
-  own set.
-- Selecting a pet writes `display.pet.slug` and `display.pet.enabled` to
-  `config.yaml` — nothing is stored as a secret or env var.
-- Each surface watches the activity it already tracks and maps it to one of six
-  animation states. The mapping lives in one place so every surface behaves the
-  same:
+- 宠物安装到你的配置文件的 `pets/` 目录（`<HERMES_HOME>/pets/<slug>/`），因此每个[配置文件](../profiles.md)保留自己的集合。
+- 选择宠物会将 `display.pet.slug` 和 `display.pet.enabled` 写入 `config.yaml`——不存储为密钥或环境变量。
+- 每个界面监视其已跟踪的活动，并将其映射到六种动画状态之一。映射集中在一处，因此每个界面行为一致：
 
-  | Agent activity | Pet state |
-  | --- | --- |
-  | A tool/turn just failed | `failed` |
-  | A plan finished (all todos done) | `jump` (celebrate) |
-  | A turn finished cleanly | `wave` |
-  | A tool is executing | `run` |
-  | The model is thinking/reading | `review` |
-  | Turn in flight (unspecified) | `run` |
-  | Blocked on you (a clarify/approval prompt is open) | `waiting` (falls back to `idle` on legacy 8-row sheets) |
-  | Nothing happening | `idle` |
+| 代理活动 | 宠物状态 |
+| --- | --- |
+| 工具/回合刚刚失败 | `failed` |
+| 计划完成（所有待办事项完成） | `jump`（庆祝） |
+| 回合干净地完成 | `wave` |
+| 工具正在执行 | `run` |
+| 模型正在思考/阅读 | `review` |
+| 回合进行中（未指定） | `run` |
+| 等待你的响应（消息/批准提示打开） | `waiting`（在旧版8行精灵上回退为 `idle`） |
+| 没有任何活动 | `idle` |
 
-## Rendering
+## 渲染
 
-In the terminal (CLI/TUI), Hermes renders the sprite at full fidelity when your
-terminal supports a graphics protocol (**kitty**, **Ghostty**, **WezTerm**,
-**iTerm2**, or **sixel**). Otherwise it falls back automatically to a truecolor
-Unicode **half-block** rendering. Inside a pipe or redirect (no TTY), terminal
-rendering is disabled by design.
+在终端（CLI/TUI）中，当你的终端支持图形协议（**kitty**、**Ghostty**、**WezTerm**、**iTerm2** 或 **sixel**）时，Hermes 全保真渲染精灵。否则自动回退到真彩色 Unicode **半块**渲染。在管道或重定向中（无 TTY），终端渲染默认禁用。
 
-The desktop app draws the pet as a floating sprite on a canvas and toggles it
-from **Settings → Appearance**.
+桌面应用将宠物绘制为画布上的浮动精灵，并通过**设置 → 外观**切换。
 
-## Quick start (CLI)
+## 快速开始（CLI）
 
 ```bash
-# Browse the gallery (filter by substring)
+# 浏览画廊（按子字符串过滤）
 hermes pets list
 hermes pets list cat
 
-# Install a pet and make it active in one step
+# 安装宠物并一次性激活
 hermes pets install boba --select
 
-# Preview / animate it in your terminal (Ctrl+C to stop)
+# 在终端中预览/动画（Ctrl+C 停止）
 hermes pets show
 
-# Check your setup
+# 检查你的设置
 hermes pets doctor
 ```
 
-## `hermes pets` commands
+## `hermes pets` 命令
 
-| Goal | Command |
+| 目标 | 命令 |
 | --- | --- |
-| Browse the gallery | `hermes pets list [query] [--limit N]` |
-| List installed pets | `hermes pets list --installed` |
-| Install a pet | `hermes pets install <slug> [--select] [--force]` |
-| Set the active pet | `hermes pets select [slug]` (omit slug for a picker) |
-| Resize the pet everywhere | `hermes pets scale <factor>` (e.g. `0.5`, clamped 0.1–3.0) |
-| Preview/animate | `hermes pets show [slug] [--state <s>] [--cycle] [--once] [--mode <m>] [--scale <f>]` |
-| Disable the pet | `hermes pets off` |
-| Remove an installed pet | `hermes pets remove <slug>` |
-| Diagnose setup | `hermes pets doctor` |
+| 浏览画廊 | `hermes pets list [query] [--limit N]` |
+| 列出已安装的宠物 | `hermes pets list --installed` |
+| 安装宠物 | `hermes pets install <slug> [--select] [--force]` |
+| 设置活动宠物 | `hermes pets select [slug]`（不带 slug 将显示选择器） |
+| 调整宠物大小（全局） | `hermes pets scale <factor>`（例如 `0.5`，限制在 0.1–3.0） |
+| 预览/动画 | `hermes pets show [slug] [--state <s>] [--cycle] [--once] [--mode <m>] [--scale <f>]` |
+| 禁用宠物 | `hermes pets off` |
+| 移除已安装的宠物 | `hermes pets remove <slug>` |
+| 诊断设置 | `hermes pets doctor` |
 
-`hermes pets show` flags:
+`hermes pets show` 标志：
 
-- `--state` — play a single state (`idle`, `wave`, `run`, `failed`, `review`,
-  `jump`).
-- `--cycle` — cycle through every state.
-- `--once` — play once instead of looping.
-- `--mode` — override the render protocol (`kitty`, `iterm`, `sixel`,
-  `unicode`, `auto`).
-- `--scale` — override the on-screen scale (`0` = use config).
+- `--state` — 播放单个状态（`idle`、`wave`、`run`、`failed`、`review`、`jump`）。
+- `--cycle` — 循环播放所有状态。
+- `--once` — 仅播放一次，不循环。
+- `--mode` — 覆盖渲染协议（`kitty`、`iterm`、`sixel`、`unicode`、`auto`）。
+- `--scale` — 覆盖屏幕缩放比例（`0` = 使用配置）。
 
-## `/pet` slash command
+## `/pet` 斜杠命令
 
-Inside the CLI and TUI you can manage the pet without leaving the session:
+在 CLI 和 TUI 中，无需离开会话即可管理宠物：
 
-- `/pet` — toggle the pet on/off (adopts the first installed pet if none is
-  active).
-- `/pet list` — browse the gallery.
-- `/pet scale <factor>` — resize the pet everywhere (e.g. `/pet scale 0.5`).
-- `/pet <slug>` — adopt a specific pet.
-- `/pet off` — disable the pet.
+- `/pet` — 切换宠物开启/关闭（如果没有活动宠物，则领养第一个已安装的宠物）。
+- `/pet list` — 浏览画廊。
+- `/pet scale <factor>` — 全局调整宠物大小（例如 `/pet scale 0.5`）。
+- `/pet <slug>` — 领养特定宠物。
+- `/pet off` — 禁用宠物。
 
-In the TUI, `/pet list` opens an interactive picker overlay; in the desktop app
-it opens the Cmd+K pet palette.
+在 TUI 中，`/pet list` 打开交互式选择器覆盖层；在桌面应用中，它打开 Cmd+K 宠物面板。
 
-## Desktop app
+## 桌面应用
 
-In the desktop app you can manage the pet two ways:
+在桌面应用中，你可以通过两种方式管理宠物：
 
-- **Cmd+K → "Pets…"** — browse, search, adopt, and toggle pets without leaving
-  the keyboard (mirrors the theme picker).
-- **Settings → Appearance** — the same gallery plus a **size slider** that
-  resizes the floating mascot live as you drag.
+- **Cmd+K → "宠物…"** — 浏览、搜索、领养和切换宠物，无需离开键盘（与主题选择器类似）。
+- **设置 → 外观** — 相同的画廊，外加一个**大小滑块**，拖拽时实时调整浮动吉祥物的大小。
 
-Both adopt/toggle/resize the floating mascot in place — size changes apply
-instantly; adopting a new pet lights it up within a moment.
+两者都会在原地领养/切换/调整浮动吉祥物——大小更改立即生效；领养新宠物后片刻即可显示。
 
-### Pop-out overlay
+### 弹出覆盖层
 
-**Shift-click** the floating pet to pop it out into its own transparent,
-always-on-top desktop window. Out there it stays visible while Hermes is
-minimized (Codex-style), so a glance tells you what the agent is doing.
+**Shift+点击**浮动宠物，将其弹出到独立的透明、始终置顶的桌面窗口。当 Hermes 最小化时（类似 Codex 风格），宠物仍保持可见，因此一眼就能知道代理正在做什么。
 
-Gestures once it's popped out:
+弹出后的操作：
 
-| Gesture | Action |
+| 操作 | 行为 |
 | --- | --- |
-| **Drag** | Move the pet anywhere on screen, even outside the app. Its spot and in/out state persist across restarts. |
-| **Single-click** | Open a mini composer to send a prompt to the most recent session — without surfacing the app. |
-| **Double-click** | Toggle the app window: minimize it if it's up front, restore it if it's hidden. |
-| **Shift-click** | Pop the pet back into the window. |
-| **Mail icon** | Appears only when a turn finished while you were away; click to raise the app on the most recent thread (and mark it read). |
+| **拖拽** | 将宠物移动到屏幕任意位置，甚至应用之外。其位置和弹出/嵌入状态在重启后保持不变。 |
+| **单击** | 打开迷你编辑器，向最近的会话发送提示——无需显示应用。 |
+| **双击** | 切换应用窗口：如果应用在前台则最小化，如果隐藏则恢复。 |
+| **Shift+点击** | 将宠物弹回窗口。 |
+| **邮件图标** | 仅在你离开时回合完成时出现；点击将应用提升到最近的线程（并标记为已读）。 |
 
-Only the popped-out pet shows a **speech bubble** (`working…`, `thinking…`,
-`your turn`, …) — in-window the app itself is the surface, so the pet stays
-quiet there.
+只有弹出的宠物会显示**气泡**（`工作中…`、`思考中…`、`轮到你了`……）——在窗口内，应用本身是界面，因此宠物保持静默。
 
-The overlay is a pure puppet of the in-app pet — it carries no separate gateway
-connection and never appears in the dock or app switcher.
+覆盖层是应用内宠物的纯粹傀儡——它没有独立的网关连接，也不会出现在 dock 或应用切换器中。
 
-## Configuration
+## 配置
 
-All settings live under `display.pet` in `config.yaml`:
+所有设置均位于 `config.yaml` 的 `display.pet` 下：
 
 ```yaml
 display:
   pet:
-    enabled: false        # master on/off (true once you select a pet)
-    slug: ""              # active pet; empty = first installed
+    enabled: false        # 主开关（选择宠物后变为 true）
+    slug: ""              # 活动宠物；空 = 第一个安装的
     render_mode: auto      # auto | kitty | iterm | sixel | unicode | off
-    scale: 0.33           # master size knob (relative to native 192x208 frames)
-    unicode_cols: 0       # hard override for terminal width (0 = derive from scale)
+    scale: 0.33           # 主大小旋钮（相对于原生 192x208 帧）
+    unicode_cols: 0       # 硬性覆盖终端宽度（0 = 从 scale 推导）
 ```
 
-- **`scale`** is the single master size knob. One number shrinks every surface:
-  the desktop canvas scales its pixels by it, and the CLI/TUI derive their
-  terminal column width from it. The half-block fallback clamps to a legibility
-  floor — it can't shrink as far as true-pixel kitty/GUI rendering without
-  turning to mush, so the same `scale` looks crisp under kitty but is floored in
-  half-blocks.
-- **`render_mode: auto`** detects kitty/iTerm2/sixel and falls back to unicode
-  half-blocks. Set it explicitly to force a protocol or `off` to disable
-  terminal rendering while keeping the pet on the desktop.
-- **`unicode_cols`** pins the terminal column width independently of `scale`;
-  leave it at `0` to derive width from `scale`.
+- **`scale`** 是唯一的主大小旋钮。一个数字同时缩小所有表面：桌面画布按此比例缩放像素，CLI/TUI 从此推导终端列宽度。半块回退会限制在可读性下限——它无法像真实像素的 kitty/GUI 渲染那样缩小而不变得模糊，因此相同的 `scale` 在 kitty 下清晰，但在半块中受到限制。
+- **`render_mode: auto`** 检测 kitty/iTerm2/sixel，并回退到 unicode 半块。显式设置它可强制使用某个协议，或设为 `off` 以禁用终端渲染，同时保持桌面上的宠物。
+- **`unicode_cols`** 独立于 `scale` 固定终端列宽度；留为 `0` 则从 `scale` 推导宽度。
 
-## Troubleshooting
+## 故障排除
 
-Run `hermes pets doctor` — it reports:
+运行 `hermes pets doctor`——它会报告：
 
-- the pets directory and which pets are installed,
-- `display.pet.enabled`, `display.pet.slug`, and the resolved active pet,
-- the configured `render_mode`, the detected terminal graphics protocol, and the
-  effective mode for a TTY,
-- whether Pillow (used for sprite decoding) is importable.
+- 宠物目录以及安装了哪些宠物，
+- `display.pet.enabled`、`display.pet.slug` 以及解析后的活动宠物，
+- 配置的 `render_mode`、检测到的终端图形协议以及 TTY 的有效模式，
+- 是否可导入 Pillow（用于精灵解码）。
 
-It prints `✓ ready` once a pet is installed, selected, enabled, and Pillow is
-available.
+当宠物已安装、已选择、已启用且 Pillow 可用时，它将打印 `✓ ready`。
 
-Common gotchas:
+常见问题：
 
-- A pet only shows once one is **installed AND selected** (`enabled: true`).
-- Inside a pipe/redirect (no TTY), terminal rendering is disabled by design.
-- The petdex npm CLI installs to `~/.codex/pets`; Hermes uses its own
-  profile-scoped `<HERMES_HOME>/pets/` instead — install through `hermes pets`.
+- 只有当你**安装并选择**了宠物（`enabled: true`）后，宠物才会显示。
+- 在管道/重定向中（无 TTY），终端渲染默认禁用。
+- petdex npm CLI 安装到 `~/.codex/pets`；Hermes 使用其自身的作用域 `<HERMES_HOME>/pets/`——请通过 `hermes pets` 安装。
 
-## See also
+## 另请参阅
 
-- The [`petdex` skill](../skills/bundled/productivity/productivity-petdex.md)
-  lets the agent install and switch pets for you on request.
+- [`petdex` 技能](../skills/bundled/productivity/productivity-petdex.md) 允许代理按请求安装和切换宠物。

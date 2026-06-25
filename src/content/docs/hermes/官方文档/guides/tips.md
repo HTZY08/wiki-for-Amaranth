@@ -1,247 +1,223 @@
----
-title: 使用技巧
-description: Hermes Agent 官方文档汉化版
----
+## 获取最佳结果
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`guides/tips.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/tips.md)
-> 本版本为自用学习用途，非官方翻译。
+### 明确说明你的需求
 
----
-sidebar_position: 1
-title: "Tips & Best Practices"
-description: "Practical advice to get the most out of Hermes Agent — prompt tips, CLI shortcuts, context files, memory, cost optimization, and security"
----
+模糊的提示会产生模糊的结果。与其说“修复代码”，不如说“修复`api/handlers.py`第47行的`TypeError`——`process_request()`函数从`parse_body()`接收到了`None`”。你提供的上下文越多，需要的迭代次数就越少。
 
-# Tips & Best Practices
+### 提前提供上下文
 
-A quick-wins collection of practical tips that make you immediately more effective with Hermes Agent. Each section targets a different aspect — scan the headers and jump to what's relevant.
+在请求中前置相关信息：文件路径、错误信息、预期行为。一条精心编写的消息胜过三轮澄清。直接粘贴错误回溯（traceback）——代理（Agent）可以解析它。
 
-:::tip Confused which model to pick?
-Run `hermes setup --portal` — you get 300+ models including Claude, GPT-5, and Gemini under one subscription. See [Nous Portal](/integrations/nous-portal).
-:::
+### 使用上下文文件处理重复指令
 
----
+如果你发现自己重复同样的指令（“使用制表符而不是空格”、“我们使用pytest”、“API在`/api/v2`”），将它们放在一个`AGENTS.md`文件中。代理每次会话都会自动读取它——设置后零成本。
 
-## Getting the Best Results
+### 让代理使用其工具
 
-### Be Specific About What You Want
+不要尝试手把手指导每一步。说“找到并修复失败的测试”，而不是“打开`tests/test_foo.py`，看第42行，然后……”代理拥有文件搜索、终端访问和代码执行能力——让它自主探索和迭代。
 
-Vague prompts produce vague results. Instead of "fix the code," say "fix the TypeError in `api/handlers.py` on line 47 — the `process_request()` function receives `None` from `parse_body()`." The more context you give, the fewer iterations you need.
+### 对复杂工作流使用技能（Skills）
 
-### Provide Context Up Front
+在编写长提示解释如何做某事之前，先检查是否有现成的技能。输入`/skills`浏览可用技能，或直接调用如`/axolotl`或`/github-pr-workflow`。
 
-Front-load your request with the relevant details: file paths, error messages, expected behavior. One well-crafted message beats three rounds of clarification. Paste error tracebacks directly — the agent can parse them.
+## CLI 高级用户技巧
 
-### Use Context Files for Recurring Instructions
+### 多行输入
 
-If you find yourself repeating the same instructions ("use tabs not spaces," "we use pytest," "the API is at `/api/v2`"), put them in an `AGENTS.md` file. The agent reads it automatically every session — zero effort after setup.
+按 **Alt+Enter**、**Ctrl+J** 或 **Shift+Enter** 来插入换行而不发送。`Shift+Enter` 仅在终端将其作为独立按键发送时才有效（Kitty / foot / WezTerm / Ghostty 默认；iTerm2 / Alacritty / VS Code 终端在启用 Kitty 键盘协议后）。另外两个按键在所有终端中都有效。
 
-### Let the Agent Use Its Tools
+### 粘贴检测
 
-Don't try to hand-hold every step. Say "find and fix the failing test" rather than "open `tests/test_foo.py`, look at line 42, then..." The agent has file search, terminal access, and code execution — let it explore and iterate.
+CLI 自动检测多行粘贴。直接粘贴代码块或错误回溯——它不会将每一行作为单独消息发送。粘贴内容会被缓冲并作为一条消息发送。
 
-### Use Skills for Complex Workflows
+### 中断与重定向
 
-Before writing a long prompt explaining how to do something, check if there's already a skill for it. Type `/skills` to browse available skills, or just invoke one directly like `/axolotl` or `/github-pr-workflow`.
+按一次 **Ctrl+C** 可中断代理的响应。之后你可以输入新消息来重定向它。在 2 秒内双击 Ctrl+C 可强制退出。当代理开始走错方向时，这非常有用。
 
-## CLI Power User Tips
+### 使用 `-c` 恢复会话
 
-### Multi-Line Input
+上次会话遗漏了什么？运行 `hermes -c` 可精确恢复到上次离开的地方，恢复完整的对话历史。你也可以按标题恢复：`hermes -r "我的研究项目"`。
 
-Press **Alt+Enter**, **Ctrl+J**, or **Shift+Enter** to insert a newline without sending. `Shift+Enter` only works when the terminal sends it as a distinct keystroke (Kitty / foot / WezTerm / Ghostty by default; iTerm2 / Alacritty / VS Code terminal once the Kitty keyboard protocol is enabled). The other two work in every terminal.
+### 剪贴板图片粘贴
 
-### Paste Detection
+按 **Ctrl+V** 可将剪贴板中的图片直接粘贴到聊天中。代理使用视觉能力分析截图、图表、错误弹窗或 UI 原型——无需先保存到文件。
 
-The CLI auto-detects multi-line pastes. Just paste a code block or error traceback directly — it won't send each line as a separate message. The paste is buffered and sent as one message.
+### 斜杠命令自动补全
 
-### Interrupt and Redirect
-
-Press **Ctrl+C** once to interrupt the agent mid-response. You can then type a new message to redirect it. Double-press Ctrl+C within 2 seconds to force exit. This is invaluable when the agent starts going down the wrong path.
-
-### Resume Sessions with `-c`
-
-Forgot something from your last session? Run `hermes -c` to resume exactly where you left off, with full conversation history restored. You can also resume by title: `hermes -r "my research project"`.
-
-### Clipboard Image Paste
-
-Press **Ctrl+V** to paste an image from your clipboard directly into the chat. The agent uses vision to analyze screenshots, diagrams, error popups, or UI mockups — no need to save to a file first.
-
-### Slash Command Autocomplete
-
-Type `/` and press **Tab** to see all available commands. This includes built-in commands (`/compress`, `/model`, `/title`) and every installed skill. You don't need to memorize anything — Tab completion has you covered.
+输入 `/` 并按 **Tab** 可查看所有可用命令。这包括内置命令（`/compress`、`/model`、`/title`）和所有已安装的技能。你不需要记住任何东西——Tab 补全为你搞定。
 
 :::tip
-Use `/verbose` to cycle through tool output display modes: **off → new → all → verbose**. The "all" mode is great for watching what the agent does; "off" is cleanest for simple Q&A.
+使用 `/verbose` 可切换工具输出显示模式：**off → new → all → verbose**。“all”模式适合观察代理的操作；“off”模式对简单的问答最干净。
 :::
 
-## Context Files
+## 上下文文件
 
-### AGENTS.md: Your Project's Brain
+### AGENTS.md：项目的核心
 
-Create an `AGENTS.md` in your project root with architecture decisions, coding conventions, and project-specific instructions. This is automatically injected into every session, so the agent always knows your project's rules.
-
-```markdown
-# Project Context
-- This is a FastAPI backend with SQLAlchemy ORM
-- Always use async/await for database operations
-- Tests go in tests/ and use pytest-asyncio
-- Never commit .env files
-```
-
-### SOUL.md: Customize Personality
-
-Want Hermes to have a stable default voice? Edit `~/.hermes/SOUL.md` (or `$HERMES_HOME/SOUL.md` if you use a custom Hermes home). Hermes now seeds a starter SOUL automatically and uses that global file as the instance-wide personality source.
-
-For a full walkthrough, see [Use SOUL.md with Hermes](/guides/use-soul-with-hermes).
+在项目根目录创建 `AGENTS.md`，包含架构决策、编码规范和项目特定指令。这个文件会自动注入到每次会话中，因此代理始终知道你的项目规则。
 
 ```markdown
-# Soul
-You are a senior backend engineer. Be terse and direct.
-Skip explanations unless asked. Prefer one-liners over verbose solutions.
-Always consider error handling and edge cases.
+# 项目上下文
+- 这是一个使用 SQLAlchemy ORM 的 FastAPI 后端
+- 始终对数据库操作使用 async/await
+- 测试放在 tests/ 目录并使用 pytest-asyncio
+- 绝不提交 .env 文件
 ```
 
-Use `SOUL.md` for durable personality. Use `AGENTS.md` for project-specific instructions.
+### SOUL.md：自定义个性
 
-### .cursorrules Compatibility
+希望 Hermes 拥有稳定的默认语气？编辑 `~/.hermes/SOUL.md`（如果使用自定义 Hermes Home 目录则为 `$HERMES_HOME/SOUL.md`）。Hermes 现在会自动生成一个启动版 SOUL，并使用该全局文件作为整个实例的个性来源。
 
-Already have a `.cursorrules` or `.cursor/rules/*.mdc` file? Hermes reads those too. No need to duplicate your coding conventions — they're loaded automatically from the working directory.
+有关完整指南，请参阅 [与 Hermes 使用 SOUL.md](/guides/use-soul-with-hermes)。
 
-### Discovery
+```markdown
+# 灵魂
+你是一位资深后端工程师。言简意赅，直截了当。
+除非被问到，否则跳过解释。倾向于用一行代码解决而非冗长方案。
+始终考虑错误处理和边界情况。
+```
 
-Hermes loads the top-level `AGENTS.md` from the current working directory at session start. Subdirectory `AGENTS.md` files are discovered lazily during tool calls (via `subdirectory_hints.py`) and injected into tool results — they are not loaded upfront into the system prompt.
+用 `SOUL.md` 设置持久个性。用 `AGENTS.md` 设置项目特定指令。
+
+### .cursorrules 兼容性
+
+已有 `.cursorrules` 或 `.cursor/rules/*.mdc` 文件？Hermes 也会读取它们。无需重复你的编码规范——它们会自动从工作目录加载。
+
+### 发现机制
+
+Hermes 在会话开始时从当前工作目录加载顶层的 `AGENTS.md`。子目录中的 `AGENTS.md` 文件会在工具调用期间（通过 `subdirectory_hints.py`）被延迟发现并注入到工具结果中——它们不会预先加载到系统提示中。
 
 :::tip
-Keep context files focused and concise. Every character counts against your token budget since they're injected into every single message.
+保持上下文文件专注且简洁。每个字符都计入你的 token 预算，因为它们会被注入到每一条消息中。
 :::
 
-## Memory & Skills
+## 记忆与技能
 
-### Memory vs. Skills: What Goes Where
+### 记忆 vs. 技能：放哪里
 
-**Memory** is for facts: your environment, preferences, project locations, and things the agent has learned about you. **Skills** are for procedures: multi-step workflows, tool-specific instructions, and reusable recipes. Use memory for "what," skills for "how."
+**记忆**用于存储事实：你的环境、偏好、项目位置以及代理了解到的关于你的信息。**技能**用于存储过程：多步骤工作流、特定工具指令和可复用的流程。用记忆存储“是什么”，用技能存储“怎么做”。
 
-### When to Create Skills
+### 何时创建技能
 
-If you find a task that takes 5+ steps and you'll do it again, ask the agent to create a skill for it. Say "save what you just did as a skill called `deploy-staging`." Next time, just type `/deploy-staging` and the agent loads the full procedure.
+如果你发现某个任务需要 5 步以上并且你会再次执行，可以要求代理为此创建一个技能。说“把刚才做的保存为一个名为 `deploy-staging` 的技能”。下次只需输入 `/deploy-staging`，代理就会加载完整的流程。
 
-### Managing Memory Capacity
+### 管理记忆容量
 
-Memory is intentionally bounded (~2,200 chars for MEMORY.md, ~1,375 chars for USER.md). When it fills up, the agent consolidates entries. You can help by saying "clean up your memory" or "replace the old Python 3.9 note — we're on 3.12 now."
+记忆有容量限制（`MEMORY.md` 约 2,200 字符，`USER.md` 约 1,375 字符）。当内存满时，代理会合并条目。你可以通过说“清理你的记忆”或“替换旧的 Python 3.9 记录——我们现在用 3.12 了”来帮助它。
 
-### Let the Agent Remember
+### 让代理记住
 
-After a productive session, say "remember this for next time" and the agent will save the key takeaways. You can also be specific: "save to memory that our CI uses GitHub Actions with the `deploy.yml` workflow."
+在一次富有成效的会话后，说“记住这个以备下次使用”，代理会保存关键要点。你也可以具体说明：“保存到记忆：我们的 CI 使用 GitHub Actions 的 `deploy.yml` 工作流”。
 
 :::warning
-Memory is a frozen snapshot — changes made during a session don't appear in the system prompt until the next session starts. The agent writes to disk immediately, but the prompt cache isn't invalidated mid-session.
+记忆是一个冻结的快照——会话期间所做的更改在下一次会话开始前不会出现在系统提示中。代理会立即写入磁盘，但提示缓存不会在会话中途失效。
 :::
 
-## Performance & Cost
+## 性能与成本
 
-### Don't Break the Prompt Cache
+### 不要破坏提示缓存
 
-Most LLM providers cache the system prompt prefix. If you keep your system prompt stable (same context files, same memory), subsequent messages in a session get **cache hits** that are significantly cheaper. Avoid changing the model or system prompt mid-session.
+大多数 LLM 提供商会缓存系统提示前缀。如果你保持系统提示稳定（相同的上下文文件、相同的记忆），会话中后续的消息将获得**缓存命中**，从而显著降低成本。避免在会话中途更改模型或系统提示。
 
-### Use /compress Before Hitting Limits
+### 在达到限制前使用 /compress
 
-Long sessions accumulate tokens. When you notice responses slowing down or getting truncated, run `/compress`. This summarizes the conversation history, preserving key context while dramatically reducing token count. Use `/usage` to check where you stand.
+长会话会积累大量 token。当你注意到响应变慢或被截断时，运行 `/compress`。这会总结对话历史，保留关键上下文同时大幅减少 token 数量。使用 `/usage` 检查当前状态。
 
-### Delegate for Parallel Work
+### 委托并行工作
 
-Need to research three topics at once? Ask the agent to use `delegate_task` with parallel subtasks. Each subagent runs independently with its own context, and only the final summaries come back — massively reducing your main conversation's token usage.
+需要同时研究三个主题？让代理使用 `delegate_task` 执行并行子任务。每个子代理独立运行并拥有自己的上下文，只返回最终摘要——大幅减少主对话的 token 使用量。
 
-### Use execute_code for Batch Operations
+### 使用 execute_code 进行批量操作
 
-Instead of running terminal commands one at a time, ask the agent to write a script that does everything at once. "Write a Python script to rename all `.jpeg` files to `.jpg` and run it" is cheaper and faster than renaming files individually.
+与其逐个运行终端命令，不如让代理编写一个一次性完成所有操作的脚本。“编写一个 Python 脚本将所有 `.jpeg` 文件重命名为 `.jpg` 并运行它”比逐个重命名文件更经济高效。
 
-### Choose the Right Model
+### 选择正确的模型
 
-Use `/model` to switch models mid-session. Use a frontier model (Claude Sonnet/Opus, GPT-4o) for complex reasoning and architecture decisions. Switch to a faster model for simple tasks like formatting, renaming, or boilerplate generation.
+使用 `/model` 在会话中切换模型。对于复杂的推理和架构决策，使用前沿模型（Claude Sonnet/Opus、GPT-4o）。对于简单任务如格式化、重命名或模板生成，切换到更快的模型。
 
 :::tip
-Run `/usage` periodically to see your token consumption. Run `/insights` for a broader view of usage patterns over the last 30 days.
+定期运行 `/usage` 查看 token 消耗。运行 `/insights` 获取过去 30 天使用模式的更广泛视图。
 :::
 
-## Messaging Tips
+## 消息技巧
 
-### Set a Home Channel
+### 设置主频道
 
-Use `/sethome` in your preferred Telegram or Discord chat to designate it as the home channel. Cron job results and scheduled task outputs are delivered here. Without it, the agent has nowhere to send proactive messages.
+在你偏好的 Telegram 或 Discord 聊天中使用 `/sethome` 将其设为主频道。Cron 任务结果和定时任务输出会发送到这里。如果没有设置，代理就没有地方发送主动消息。
 
-### Use /title to Organize Sessions
+### 使用 /title 组织会话
 
-Name your sessions with `/title auth-refactor` or `/title research-llm-quantization`. Named sessions are easy to find with `hermes sessions list` and resume with `hermes -r "auth-refactor"`. Unnamed sessions pile up and become impossible to distinguish.
+使用 `/title auth-refactor` 或 `/title research-llm-quantization` 为会话命名。命名后的会话可以通过 `hermes sessions list` 轻松找到，并使用 `hermes -r "auth-refactor"` 恢复。未命名的会话会堆积起来并变得难以区分。
 
-### DM Pairing for Team Access
+### 通过 DM 配对实现团队访问
 
-Instead of manually collecting user IDs for allowlists, enable DM pairing. When a teammate DMs the bot, they get a one-time pairing code. You approve it with `hermes pairing approve telegram XKGH5N7P` — simple and secure.
+无需手动收集用户 ID 来建立白名单，启用 DM 配对即可。当队友向机器人发送 DM 时，他们会收到一次性配对码。你通过 `hermes pairing approve telegram XKGH5N7P` 批准——简单又安全。
 
-### Tool Progress Display Modes
+### 工具进展显示模式
 
-Use `/verbose` to control how much tool activity you see. In messaging platforms, less is usually more — keep it on "new" to see just new tool calls. In the CLI, "all" gives you a satisfying live view of everything the agent does.
+使用 `/verbose` 控制你能看到多少工具活动。在消息平台上，少即是多——保持在“new”模式可以只看到新工具调用。在 CLI 中，“all”模式可以让你实时看到代理的所有操作。
 
 :::tip
-On messaging platforms, sessions auto-reset after idle time (default: 24 hours) or daily at 4 AM. Adjust per-platform in `~/.hermes/config.yaml` if you need longer sessions.
+在消息平台上，会话会在空闲超时（默认 24 小时）或每天凌晨 4 点自动重置。如果需要更长的会话，可以在 `~/.hermes/config.yaml` 中按平台调整。
 :::
 
-## Security
+## 安全
 
-### Use Docker for Untrusted Code
+### 对不可信代码使用 Docker
 
-When working with untrusted repositories or running unfamiliar code, use Docker or Daytona as your terminal backend. Set `TERMINAL_BACKEND=docker` in your `.env`. Destructive commands inside a container can't harm your host system.
+当处理不可信仓库或运行不熟悉的代码时，使用 Docker 或 Daytona 作为终端后端。在你的 `.env` 中设置 `TERMINAL_BACKEND=docker`。容器内的破坏性命令不会损害你的宿主机系统。
 
 ```bash
-# In your .env:
+# 在 .env 中：
 TERMINAL_BACKEND=docker
 TERMINAL_DOCKER_IMAGE=hermes-sandbox:latest
 ```
 
-### Avoid Windows Encoding Pitfalls
+### 避免 Windows 编码陷阱
 
-On Windows, some default encodings (such as `cp125x`) cannot represent all Unicode characters, which can cause `UnicodeEncodeError` when writing files in tests or scripts.
+在 Windows 上，某些默认编码（如 `cp125x`）不能表示所有 Unicode 字符，这可能导致在测试或脚本中写入文件时出现 `UnicodeEncodeError`。
 
-- Prefer opening files with an explicit UTF-8 encoding:
+- 建议显式使用 UTF-8 编码打开文件：
 
 ```python
 with open("results.txt", "w", encoding="utf-8") as f:
-    f.write("✓ All good\n")
+    f.write("✓ 一切正常\n")
 ```
 
-- In PowerShell, you can also switch the current session to UTF-8 for console and native command output:
+- 在 PowerShell 中，你也可以将会话切换到 UTF-8 以处理控制台和本机命令输出：
 
 ```powershell
 $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 ```
 
-This keeps PowerShell and child processes on UTF-8 and helps avoid Windows-only failures.
+这会使 PowerShell 和子进程保持 UTF-8，有助于避免仅限 Windows 的错误。
 
-### Review Before Choosing "Always"
+### 在选择“始终”前请三思
 
-When the agent triggers a dangerous command approval (`rm -rf`, `DROP TABLE`, etc.), you get four options: **once**, **session**, **always**, **deny**. Think carefully before choosing "always" — it permanently allowlists that pattern. Start with "session" until you're comfortable.
+当代理触发危险命令批准（`rm -rf`、`DROP TABLE` 等）时，你会看到四个选项：**一次**、**会话**、**始终**、**拒绝**。在选择“始终”前请仔细考虑——这会永久地将该模式加入白名单。建议先选择“会话”，直到你感到习惯。
 
-### Command Approval Is Your Safety Net
+### 命令批准是你的安全网
 
-Hermes checks every command against a curated list of dangerous patterns before execution. This includes recursive deletes, SQL drops, piping curl to shell, and more. Don't disable this in production — it exists for good reasons.
+Hermes 在执行每个命令之前，会对照精心策划的危险模式列表进行检查。这包括递归删除、SQL 删除、将 curl 通过管道传给 shell 等。不要在生产环境中禁用此功能——它存在是有充分理由的。
 
 :::warning
-When running in a container backend (Docker, Singularity, Modal, Daytona), dangerous command checks are **skipped** because the container is the security boundary. Make sure your container images are properly locked down.
+当在容器后端（Docker、Singularity、Modal、Daytona）中运行时，危险命令检查会被**跳过**，因为容器本身就是安全边界。请确保你的容器镜像已妥善锁定。
 :::
 
-### Use Allowlists for Messaging Bots
+### 为消息机器人使用白名单
 
-Never set `GATEWAY_ALLOW_ALL_USERS=true` on a bot with terminal access. Always use platform-specific allowlists (`TELEGRAM_ALLOWED_USERS`, `DISCORD_ALLOWED_USERS`) or DM pairing to control who can interact with your agent.
+切勿在具有终端访问权限的机器人上设置 `GATEWAY_ALLOW_ALL_USERS=true`。始终使用平台特定的白名单（`TELEGRAM_ALLOWED_USERS`、`DISCORD_ALLOWED_USERS`）或 DM 配对来控制谁可以与你的代理交互。
 
 ```bash
-# Recommended: explicit allowlists per platform
+# 推荐：按平台使用显式白名单
 TELEGRAM_ALLOWED_USERS=123456789,987654321
 DISCORD_ALLOWED_USERS=123456789012345678
 
-# Or use cross-platform allowlist
+# 或使用跨平台白名单
 GATEWAY_ALLOWED_USERS=123456789,987654321
 ```
 
 ---
 
-*Have a tip that should be on this page? Open an issue or PR — community contributions are welcome.*
+--- body ---
+*这条页面有应该收录的小技巧吗？提交 issue 或 PR —— 欢迎社区贡献。*

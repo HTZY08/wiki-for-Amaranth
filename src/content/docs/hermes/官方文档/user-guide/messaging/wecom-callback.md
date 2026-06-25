@@ -1,103 +1,94 @@
 ---
-title: 企业微信回调
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/messaging/wecom-callback.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/messaging/wecom-callback.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 15
 ---
 
-# WeCom Callback (Self-Built App)
+# 企业微信回调（自建应用）
 
-Connect Hermes to WeCom (Enterprise WeChat) as a self-built enterprise application using the callback/webhook model.
+通过回调/Webhook 模式，将 Hermes 连接到企业微信，作为自建企业应用。
 
-:::info WeCom Bot vs WeCom Callback
-Hermes supports two WeCom integration modes:
-- **[WeCom Bot](wecom.md)** — bot-style, connects via WebSocket. Simpler setup, works in group chats.
-- **WeCom Callback** (this page) — self-built app, receives encrypted XML callbacks. Shows as a first-class app in users' WeCom sidebar. Supports multi-corp routing.
+:::info 企业微信机器人 vs 企业微信回调
+Hermes 支持两种企业微信集成模式：
+- **[企业微信机器人](wecom.md)** — 机器人模式，通过 WebSocket 连接。设置更简单，可在群聊中使用。
+- **企业微信回调**（本页）— 自建应用，接收加密的 XML 回调。作为一级应用显示在用户的企业微信侧边栏中。支持多企业路由。
 :::
 
-See also: [WeCom Bot](./wecom.md) for the bot-style integration.
+另请参见：[企业微信机器人](./wecom.md) 了解机器人集成方式。
 
-> Run `hermes gateway setup` and pick **WeCom Callback** for a guided walk-through.
+> 运行 `hermes gateway setup` 并选择 **企业微信回调** 以获取引导式教程。
 
-## How It Works
+## 工作原理
 
-1. You register a self-built application in the WeCom Admin Console
-2. WeCom pushes encrypted XML to your HTTP callback endpoint
-3. Hermes decrypts the message, queues it for the agent
-4. Immediately acknowledges (silent — nothing displayed to the user)
-5. The agent processes the request (typically 3–30 minutes)
-6. The reply is delivered proactively via the WeCom `message/send` API
+1. 在企业微信管理后台注册一个自建应用
+2. 企业微信将加密的 XML 推送到你的 HTTP 回调端点
+3. Hermes 解密消息，放入代理（Agent）队列
+4. 立即确认（静默——不向用户显示任何内容）
+5. 代理处理请求（通常需要 3–30 分钟）
+6. 通过企业微信的 `message/send` API 主动发送回复
 
-## Prerequisites
+## 前提条件
 
-- A WeCom enterprise account with admin access
-- `aiohttp` and `httpx` Python packages (included in the default install)
-- A publicly reachable server for the callback URL (or a tunnel like ngrok)
+- 一个拥有管理员权限的企业微信企业账号
+- `aiohttp` 和 `httpx` Python 包（默认安装中包含）
+- 一个可公开访问的回调 URL 服务器（或类似 ngrok 的隧道）
 
-## Setup
+## 设置步骤
 
-### 1. Create a Self-Built App in WeCom
+### 1. 在企业微信中创建自建应用
 
-1. Go to [WeCom Admin Console](https://work.weixin.qq.com/) → **Applications** → **Create App**
-2. Note your **Corp ID** (shown at the top of the admin console)
-3. In the app settings, create a **Corp Secret**
-4. Note the **Agent ID** from the app's overview page
-5. Under **Receive Messages**, configure the callback URL:
-   - URL: `http://YOUR_PUBLIC_IP:8645/wecom/callback`
-   - Token: Generate a random token (WeCom provides one)
-   - EncodingAESKey: Generate a key (WeCom provides one)
+1. 前往 [企业微信管理后台](https://work.weixin.qq.com/) → **应用管理** → **创建应用**
+2. 记下你的 **企业ID**（显示在管理后台顶部）
+3. 在应用设置中，创建一个 **企业 Secret**
+4. 在应用概览页面记下 **Agent ID**
+5. 在 **接收消息** 中，配置回调 URL：
+   - URL：`http://你的公网IP:8645/wecom/callback`
+   - Token：生成一个随机 Token（企业微信会提供一个）
+   - EncodingAESKey：生成一个密钥（企业微信会提供一个）
 
-### 2. Configure Environment Variables
+### 2. 配置环境变量
 
-Add to your `.env` file:
+添加到你的 `.env` 文件中：
 
 ```bash
-WECOM_CALLBACK_CORP_ID=your-corp-id
-WECOM_CALLBACK_CORP_SECRET=your-corp-secret
+WECOM_CALLBACK_CORP_ID=你的企业ID
+WECOM_CALLBACK_CORP_SECRET=你的企业Secret
 WECOM_CALLBACK_AGENT_ID=1000002
-WECOM_CALLBACK_TOKEN=your-callback-token
-WECOM_CALLBACK_ENCODING_AES_KEY=your-43-char-aes-key
+WECOM_CALLBACK_TOKEN=你的回调Token
+WECOM_CALLBACK_ENCODING_AES_KEY=你的43字符AES密钥
 
-# Optional
+# 可选
 WECOM_CALLBACK_HOST=0.0.0.0
 WECOM_CALLBACK_PORT=8645
 WECOM_CALLBACK_ALLOWED_USERS=user1,user2
 ```
 
-### 3. Start the Gateway
+### 3. 启动网关
 
 ```bash
 hermes gateway
 ```
 
-(Use `hermes gateway start` only after `hermes gateway install` has registered the systemd/launchd service.)
+（只有在 `hermes gateway install` 注册了 systemd/launchd 服务后，才使用 `hermes gateway start`。）
 
-The callback adapter starts an HTTP server on the configured port. WeCom will verify the callback URL via a GET request, then begin sending messages via POST.
+回调适配器会在配置的端口上启动一个 HTTP 服务器。企业微信将通过 GET 请求验证回调 URL，然后开始通过 POST 发送消息。
 
-## Configuration Reference
+## 配置参考
 
-Set these in `config.yaml` under `platforms.wecom_callback.extra`, or use environment variables:
+在 `config.yaml` 的 `platforms.wecom_callback.extra` 下设置这些参数，或使用环境变量：
 
-| Setting | Default | Description |
+| 设置项 | 默认值 | 描述 |
 |---------|---------|-------------|
-| `corp_id` | — | WeCom enterprise Corp ID (required) |
-| `corp_secret` | — | Corp secret for the self-built app (required) |
-| `agent_id` | — | Agent ID of the self-built app (required) |
-| `token` | — | Callback verification token (required) |
-| `encoding_aes_key` | — | 43-character AES key for callback encryption (required) |
-| `host` | `0.0.0.0` | Bind address for the HTTP callback server |
-| `port` | `8645` | Port for the HTTP callback server |
-| `path` | `/wecom/callback` | URL path for the callback endpoint |
+| `corp_id` | — | 企业微信企业 ID（必填） |
+| `corp_secret` | — | 自建应用的 corp secret（必填） |
+| `agent_id` | — | 自建应用的 Agent ID（必填） |
+| `token` | — | 回调验证 Token（必填） |
+| `encoding_aes_key` | — | 回调加密用的 43 字符 AES 密钥（必填） |
+| `host` | `0.0.0.0` | HTTP 回调服务器的绑定地址 |
+| `port` | `8645` | HTTP 回调服务器的端口 |
+| `path` | `/wecom/callback` | 回调端点的 URL 路径 |
 
-## Multi-App Routing
+## 多应用路由
 
-For enterprises running multiple self-built apps (e.g., across different departments or subsidiaries), configure the `apps` list in `config.yaml`:
+对于运行多个自建应用的企业（例如，跨不同部门或子公司），在 `config.yaml` 中配置 `apps` 列表：
 
 ```yaml
 platforms:
@@ -107,13 +98,13 @@ platforms:
       host: "0.0.0.0"
       port: 8645
       apps:
-        - name: "dept-a"
+        - name: "部门A"
           corp_id: "ww_corp_a"
           corp_secret: "secret-a"
           agent_id: "1000002"
           token: "token-a"
           encoding_aes_key: "key-a-43-chars..."
-        - name: "dept-b"
+        - name: "部门B"
           corp_id: "ww_corp_b"
           corp_secret: "secret-b"
           agent_id: "1000003"
@@ -121,67 +112,56 @@ platforms:
           encoding_aes_key: "key-b-43-chars..."
 ```
 
-Users are scoped by `corp_id:user_id` to prevent cross-corp collisions. When a user sends a message, the adapter records which app (corp) they belong to and routes replies through the correct app's access token.
+用户通过 `corp_id:user_id` 进行范围限定，以防止跨企业冲突。当用户发送消息时，适配器会记录他们所属的应用（企业），并通过正确的应用 access token 路由回复。
 
-## Access Control
+## 访问控制
 
-Restrict which users can interact with the app:
+限制哪些用户可以与应用交互：
 
 ```bash
-# Allowlist specific users
+# 允许特定用户
 WECOM_CALLBACK_ALLOWED_USERS=zhangsan,lisi,wangwu
 
-# Or allow all users
+# 或者允许所有用户
 WECOM_CALLBACK_ALLOW_ALL_USERS=true
 ```
 
-## Endpoints
+## 端点
 
-The adapter exposes:
+适配器暴露以下端点：
 
-| Method | Path | Purpose |
+| 方法 | 路径 | 用途 |
 |--------|------|---------|
-| GET | `/wecom/callback` | URL verification handshake (WeCom sends this during setup) |
-| POST | `/wecom/callback` | Encrypted message callback (WeCom sends user messages here) |
-| GET | `/health` | Health check — returns `{"status": "ok"}` |
+| GET | `/wecom/callback` | URL 验证握手（企业微信在设置时发送） |
+| POST | `/wecom/callback` | 加密消息回调（企业微信在此处发送用户消息） |
+| GET | `/health` | 健康检查——返回 `{"status": "ok"}` |
 
-## Encryption
+## 加密
 
-All callback payloads are encrypted with AES-CBC using the EncodingAESKey. The adapter handles:
+所有回调负载都使用 EncodingAESKey 进行 AES-CBC 加密。适配器负责处理：
 
-- **Inbound**: Decrypt XML payload, verify SHA1 signature
-- **Outbound**: Replies sent via proactive API (not encrypted callback response)
+- **入站**：解密 XML 负载，验证 SHA1 签名
+- **出站**：通过主动 API 发送回复（非加密的回调响应）
 
-The crypto implementation is compatible with Tencent's official WXBizMsgCrypt SDK.
+加密实现与腾讯官方的 WXBizMsgCrypt SDK 兼容。
 
-## Limitations
+## 限制
 
-- **No streaming** — replies arrive as complete messages after the agent finishes
-- **No typing indicators** — the callback model doesn't support typing status
-- **Text only** — currently supports text messages for input; image/file/voice input not yet implemented. The agent is aware of outbound media capabilities via the WeCom platform hint (images, documents, video, voice).
-- **Response latency** — agent sessions take 3–30 minutes; users see the reply when processing completes
+- **无流式传输** — 回复在代理完成后作为完整消息到达
+- **无输入状态指示** — 回调模式不支持输入状态
+- **仅支持文本** — 目前仅支持文本消息输入；图像/文件/语音输入尚未实现。代理通过企业微信平台提示了解出站媒体能力（图片、文档、视频、语音）。
+- **响应延迟** — 代理会话需要 3–30 分钟；用户在处理完成后看到回复
 
-## Troubleshooting
+## 故障排除
 
-**Signature verification failing.**
-WeCom signs every request with the **Token** you registered in the admin
-console. A mismatch between the token configured in Hermes and the token the
-admin console expects is the most common cause. Re-copy both the **Token** and
-**EncodingAESKey** from the admin console — they're easy to truncate. Whitespace
-in `~/.hermes/.env` values around `=` will also break signature checks. After
-fixing, restart `hermes gateway run`.
+**签名验证失败。**
+企业微信使用你在管理后台注册的 **Token** 对每个请求进行签名。Hermes 中配置的 Token 与管理后台期望的 Token 不匹配是最常见的原因。请从管理后台重新复制 **Token** 和 **EncodingAESKey** ——它们很容易被截断。`~/.hermes/.env` 中 `=` 号周围的空白字符也会破坏签名检查。修复后，重新启动 `hermes gateway run`。
 
-**Callback URL not reachable / verification step fails.**
-WeCom hits the public URL you registered. Confirm:
-1. Your reverse proxy / tunnel forwards `/wecom/callback` to the gateway's port.
-2. The URL in the admin console is HTTPS (WeCom rejects plain HTTP).
-3. From outside your network, `curl -i https://<your-domain>/wecom/callback`
-   returns something other than a timeout (a 4xx without query params is fine —
-   it just means the listener is reachable).
+**回调 URL 无法访问 / 验证步骤失败。**
+企业微信会访问你注册的公网 URL。请确认：
+1. 你的反向代理/隧道已将 `/wecom/callback` 转发到网关的端口。
+2. 管理后台中的 URL 是 HTTPS（企业微信拒绝纯 HTTP）。
+3. 从你的网络外部，`curl -i https://<你的域名>/wecom/callback` 返回的不是超时（没有查询参数时返回 4xx 也没关系——这只表示监听器可达）。
 
-**Port not reachable / listener not bound.**
-Check `hermes gateway run` logs for the bound host/port. If the adapter bound to
-`127.0.0.1` you must front it with a reverse proxy or tunnel — WeCom's servers
-can't reach loopback. Set `extra.host: 0.0.0.0` in `config.yaml` (plus
-`allowed_source_cidrs` if exposing directly) or keep loopback and use a tunnel
-such as Cloudflare Tunnel / nginx.
+**端口无法访问 / 监听器未绑定。**
+检查 `hermes gateway run` 日志中绑定的主机/端口。如果适配器绑定到了 `127.0.0.1`，你必须使用反向代理或隧道将其暴露——企业微信的服务器无法访问回环地址。在 `config.yaml` 中设置 `extra.host: 0.0.0.0`（如果直接暴露，还需设置 `allowed_source_cidrs`），或者保持回环地址并使用 Cloudflare Tunnel / nginx 等隧道。

@@ -1,660 +1,127 @@
----
-title: 配置分发
-description: Hermes Agent 官方文档汉化版
+--- frontmatter ---
 ---
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/profile-distributions.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/profile-distributions.md)
-> 本版本为自用学习用途，非官方翻译。
+## 配方（Recipes）
 
----
-sidebar_position: 3
----
-
-# Profile Distributions: Share a Whole Agent
-
-A **profile distribution** packages a complete Hermes agent — personality, skills, cron jobs, MCP connections, config — as a git repository. Anyone with access to the repo can install the whole agent with one command, update it in place, and keep their own memories, sessions, and API keys untouched.
-
-If a [profile](./profiles.md) is a local agent, a distribution is that agent made shareable.
-
-## What this means
-
-Before distributions, sharing a Hermes agent meant sending someone:
-
-1. Your SOUL.md
-2. A list of skills to install
-3. Your config.yaml, minus the secrets
-4. A description of which MCP servers you wired up
-5. Any cron jobs you scheduled
-6. Instructions for which env vars to set
-
-…and hoping they assembled it correctly. Every version bump or bug fix meant repeating the handoff.
-
-With distributions, all of that lives in one git repo:
-
-```
-my-research-agent/
-├── distribution.yaml    # manifest: name, version, env-var requirements
-├── SOUL.md              # the agent's personality / system prompt
-├── config.yaml          # model, temperature, reasoning, tool defaults
-├── skills/              # bundled skills that come with the agent
-├── cron/                # scheduled tasks the agent runs
-└── mcp.json             # MCP servers the agent connects to
-```
-
-Recipients run:
-
-```bash
-hermes profile install github.com/you/my-research-agent --alias
-```
-
-…and they now have the whole agent. They fill in their own API keys (`.env.EXAMPLE` → `.env`), and they can run `my-research-agent chat` or address it through Telegram / Discord / Slack / any gateway platform. When you push a new version, they run `hermes profile update my-research-agent` and pull your changes — their memories and sessions stay put.
-
-## Why git?
-
-We considered tarballs, HTTP archives, a custom format. None of them beat git:
-
-- **Zero build step for authors.** Push to GitHub; consumers install. There's no "pack this, upload that, update the index" loop.
-- **Tags, branches, and commits are already the versioning system.** A tag push does for us what "pack + upload a release" does for other tools.
-- **Updates are a fetch.** Not a re-download of the whole archive.
-- **Transparent.** Users can browse the repo, read diffs between versions, open issues against it, fork it to customize.
-- **Private repos work for free.** SSH keys, `git credential` helpers, GitHub CLI stored credentials — whatever auth your terminal is already set up for applies transparently.
-- **Reproducibility is a commit SHA.** The same thing pip and npm record.
-
-The tradeoff: recipients need git installed. On any machine running Hermes in 2026, that's already true.
-
-## When should you use a distribution?
-
-Good fits:
-
-- **You're sharing a specialized agent** — a compliance monitor, a code reviewer, a research assistant, a customer-support bot — with a team or with the community.
-- **You're deploying the same agent to multiple machines** and don't want to copy files manually each time.
-- **You're iterating on an agent** and want recipients to pick up new versions with one command.
-- **You're building an agent as a product** — opinionated defaults, curated skills, tuned prompts — that other people should use as a starting point.
-
-Not a fit:
-
-- **You just want to back up a profile on your own machine.** Use [`hermes profile export` / `import`](../reference/profile-commands.md#hermes-profile-export) — that's what those are for.
-- **You want to share API keys alongside the agent.** `auth.json` and `.env` are deliberately excluded from distributions. Each installer brings their own credentials.
-- **You want to share memories / sessions / conversation history.** Those are user data, not distribution content. Never shipped.
-
-:::caution
-**Hermes does not control git.** The file exclusions described on this page are applied by the **installer** when someone runs `hermes profile install` or `hermes profile update`. They are **not** applied when you run `git add` or `git commit`.
-:::
-
-## The lifecycle: author to installer to update
-
-Below is the full end-to-end flow. Pick the side you care about.
-
----
-
-## For authors: publishing a distribution
-
-### Step 1 — Start from a working profile
-
-Build and refine the agent like any other profile:
-
-```bash
-hermes profile create research-bot
-research-bot setup                    # configure model, API keys
-# Edit ~/.hermes/profiles/research-bot/SOUL.md
-# Install skills, wire up MCP servers, schedule cron jobs, etc.
-research-bot chat                     # dogfood until it feels right
-```
-
-### Step 2 — Add a `distribution.yaml`
-
-Create `~/.hermes/profiles/research-bot/distribution.yaml`:
-
-```yaml
-name: research-bot
-version: 1.0.0
-description: "Autonomous research assistant with arXiv and web tools"
-hermes_requires: ">=0.12.0"
-author: "Your Name"
-license: "MIT"
-
-# Tell installers which env vars the agent needs. These are checked against
-# the installer's shell and existing .env file so they don't get nagged
-# about keys they already have configured.
-env_requires:
-  - name: OPENAI_API_KEY
-    description: "OpenAI API key (for model access)"
-    required: true
-  - name: SERPAPI_KEY
-    description: "SerpAPI key for web search"
-    required: false
-    default: ""
-```
-
-That's the whole manifest. Every field except `name` has a sensible default.
-
-### Step 3 — Create a `.gitignore` before the first commit
-
-:::warning
-Do this **before** running `git init` or `git add`. If you have already chatted with the profile, run setup, or otherwise used it, the directory now contains files you must not ship: `.env`, `auth.json`, `memories/`, `sessions/`, `state.db*`, `logs/`, and more. 
-:::
-
-Create `~/.hermes/profiles/research-bot/.gitignore` with at minimum:
-
-```gitignore
-# Credentials & secrets — NEVER commit
-auth.json
-.env
-.env.EXAMPLE    # generated by install, not authorship domain
-
-# Runtime databases & state
-state.db
-state.db-shm
-state.db-wal
-hermes_state.db
-response_store.db
-response_store.db-shm
-response_store.db-wal
-gateway.pid
-gateway_state.json
-processes.json
-auth.lock
-active_profile
-.update_check
-
-# User data — NEVER commit
-memories/
-sessions/
-logs/
-plans/
-workspace/
-home/
-
-# Caches & generated artifacts
-image_cache/
-audio_cache/
-document_cache/
-browser_screenshots/
-cache/
-
-# Infrastructure (should not be in profile dir, but safe to exclude)
-hermes-agent/
-.worktrees/
-profiles/
-bin/
-node_modules/
-
-# User customization namespace — your local overrides
-local/
-
-# Checkpoints & backups (can be huge)
-checkpoints/
-sandboxes/
-backups/
-
-# Logs
-errors.log
-.hermes_history
-```
-
-This mirrors the [hard-excluded paths](#whats-not-in-a-distribution-ever) that the installer strips on its end. Anything else you want to keep out of the repo (scratch files, large assets, local-only skills) should also go in here.
-
-### Step 4 — Push to a git repo
-
-```bash
-cd ~/.hermes/profiles/research-bot
-git init
-git add .
-git commit -m "v1.0.0"
-git remote add origin git@github.com:you/research-bot.git
-git tag v1.0.0
-git push -u origin main --tags
-```
-
-The repo is now a distribution. Anyone with access can install it.
+### 固定到特定版本
 
 :::note
-The installer will additionally strip the [hard-excluded paths](#whats-not-in-a-distribution-ever) even if an author somehow ships them — but that only protects installers, not the author. 
+Git引用固定（`#v1.2.0`）已规划但尚未在初始版本中提供——当前安装会跟踪默认分支。通过`hermes profile info <name>`跟踪你所安装的版本，并在准备好之前暂缓更新。
 :::
 
-### Step 5 — Tag versioned releases
-
-Every time the agent reaches a stable point, bump the version and tag:
+### 检查你所使用的版本与最新版本
 
 ```bash
-# Edit distribution.yaml: version: 1.1.0
-git add distribution.yaml SOUL.md skills/
-git commit -m "v1.1.0: tighter research SOUL, add arxiv skill"
-git tag v1.1.0
-git push --tags
-```
-
-Recipients who run `hermes profile update research-bot` will pull the latest.
-
-### What the repo looks like
-
-A complete authored distribution:
-
-```
-research-bot/
-├── .gitignore                   # excludes secrets & user data (see Step 3)
-├── distribution.yaml            # required
-├── SOUL.md                      # strongly recommended
-├── config.yaml                  # model, provider, tool defaults
-├── mcp.json                     # MCP server connections
-├── skills/
-│   ├── arxiv-search/SKILL.md
-│   ├── paper-summarization/SKILL.md
-│   └── citation-lookup/SKILL.md
-├── cron/
-│   └── weekly-digest.json       # scheduled tasks
-└── README.md                    # human-facing description (optional)
-```
-
-### Distribution-owned vs user-owned
-
-When an installer updates to a new version, some things get replaced (author's domain) and some things stay put (installer's domain). Defaults:
-
-| Category | Paths | On update |
-|---|---|---|
-| **Distribution-owned** | `SOUL.md`, `config.yaml`, `mcp.json`, `skills/`, `cron/`, `distribution.yaml` | Replaced from the new clone |
-| **Config override** | `config.yaml` | Actually preserved by default — the installer may have tuned model or provider. Pass `--force-config` on update to reset. |
-| **User-owned** | `memories/`, `sessions/`, `state.db*`, `auth.json`, `.env`, `logs/`, `workspace/`, `plans/`, `home/`, `*_cache/`, `local/` | Never touched |
-
-You can override the distribution-owned list in the manifest:
-
-```yaml
-distribution_owned:
-  - SOUL.md
-  - skills/research/            # only my research skills; other installed skills stay
-  - cron/digest.json
-```
-
-When omitted, the defaults above apply — which is what most distributions want.
-
----
-
-## For installers: using a distribution
-
-### Install
-
-```bash
-hermes profile install github.com/you/research-bot --alias
-```
-
-What happens:
-
-1. Clones the repo into a temporary directory.
-2. Reads `distribution.yaml`, shows you the manifest (name, version, description, author, required env vars).
-3. Checks each required env var against your shell environment and the target profile's existing `.env`. Marks each as `✓ set` or `needs setting` so you know exactly what to configure.
-4. Asks for confirmation. Pass `-y` / `--yes` to skip.
-5. Copies distribution-owned files into `~/.hermes/profiles/research-bot/` (or wherever the manifest's `name` resolves). The [hard-excluded paths](#whats-not-in-a-distribution-ever) are stripped during this copy, even if the author accidentally left them in the repo.
-6. Writes `.env.EXAMPLE` with the required keys commented out — copy to `.env` and fill in.
-7. With `--alias`, creates a wrapper so you can run `research-bot chat` directly.
-
-### Source types
-
-Any git URL works:
-
-```bash
-# GitHub shorthand
-hermes profile install github.com/you/research-bot
-
-# Full HTTPS
-hermes profile install https://github.com/you/research-bot.git
-
-# SSH
-hermes profile install git@github.com:you/research-bot.git
-
-# Self-hosted, GitLab, Gitea, Forgejo — any Git host
-hermes profile install https://git.example.com/team/research-bot.git
-
-# Private repo using your configured git auth
-hermes profile install git@github.com:your-org/internal-bot.git
-
-# Local directory during development (no git push needed)
-hermes profile install ~/my-profile-in-progress/
-```
-
-### Override the profile name
-
-Two users wanting the same distribution under different profile names:
-
-```bash
-# Alice
-hermes profile install github.com/acme/support-bot --name support-us --alias
-# Bob (same distribution, different local name)
-hermes profile install github.com/acme/support-bot --name support-eu --alias
-```
-
-### Fill in env vars
-
-After install, the agent's profile contains a `.env.EXAMPLE`:
-
-```
-# Environment variables required by this Hermes distribution.
-# Copy to `.env` and fill in your own values before running.
-
-# OpenAI API key (for model access)
-# (required)
-OPENAI_API_KEY=
-
-# SerpAPI key for web search
-# (optional)
-# SERPAPI_KEY=
-```
-
-Copy it:
-
-```bash
-cp ~/.hermes/profiles/research-bot/.env.EXAMPLE ~/.hermes/profiles/research-bot/.env
-# Edit .env, paste your real keys
-```
-
-Required keys that were already in your shell environment (e.g. `OPENAI_API_KEY` exported in your `~/.zshrc`) are marked `✓ set` during install — you don't need to duplicate them in `.env`.
-
-### Check what you installed
-
-```bash
-hermes profile info research-bot
-```
-
-Shows:
-
-```
-Distribution: research-bot
-Version:      1.0.0
-Description:  Autonomous research assistant with arXiv and web tools
-Author:       Your Name
-Requires:     Hermes >=0.12.0
-Source:       https://github.com/you/research-bot
-Installed:    2026-05-08T17:04:32+00:00
-
-Environment variables:
-  OPENAI_API_KEY (required) — OpenAI API key (for model access)
-  SERPAPI_KEY (optional) — SerpAPI key for web search
-```
-
-`hermes profile list` also shows a `Distribution` column so at a glance you can see which of your profiles came from repos and which you hand-built:
-
-```
- Profile          Model                        Gateway      Alias        Distribution
- ───────────────    ───────────────────────────    ───────────    ───────────    ────────────────────
- ◆default         claude-sonnet-4              stopped      —            —
-  coder           gpt-5                        stopped      coder        —
-  research-bot    claude-opus-4                stopped      research-bot research-bot@1.0.0
-  telemetry       claude-sonnet-4              running      telemetry    telemetry@2.3.1
-```
-
-### Update
-
-```bash
-hermes profile update research-bot
-```
-
-What happens:
-
-1. Re-clones the repo from the recorded source URL.
-2. Replaces distribution-owned files (SOUL, skills, cron, mcp.json).
-3. **Preserves** your `config.yaml` — you may have tuned the model, temperature, or other settings. Pass `--force-config` to overwrite.
-4. **Never touches** user data: memories, sessions, auth, `.env`, logs, state.
-
-No re-downloading the whole archive. No stomping your local changes to config. No deleting your conversation history.
-
-### Remove
-
-```bash
-hermes profile delete research-bot
-```
-
-The delete prompt surfaces distribution info before asking you to confirm:
-
-```
-Profile: research-bot
-Path:    ~/.hermes/profiles/research-bot
-Model:   claude-opus-4 (anthropic)
-Skills:  12
-Distribution: research-bot@1.0.0
-Installed from: https://github.com/you/research-bot
-
-This will permanently delete:
-  • All config, API keys, memories, sessions, skills, cron jobs
-  • Command alias (~/.local/bin/research-bot)
-
-Type 'research-bot' to confirm:
-```
-
-So you never accidentally delete an agent without knowing where it came from or being able to re-install it.
-
----
-
-## Use cases and patterns
-
-### Personal: sync one agent across machines
-
-You built a research assistant on your laptop. You want the same agent on your workstation.
-
-```bash
-# Laptop — create .gitignore first (see "For authors" Step 3), then:
-cd ~/.hermes/profiles/research-bot
-git init && git add . && git status   # confirm no secrets staged
-git commit -m "initial"
-git remote add origin git@github.com:you/research-bot.git
-git push -u origin main
-
-# Workstation
-hermes profile install github.com/you/research-bot --alias
-# Fill in .env. Done.
-```
-
-Any iteration on the laptop (`git commit && push`) pulls onto the workstation with `hermes profile update research-bot`. Memories stay per-machine — the laptop remembers its own conversations, the workstation remembers its own, they don't collide.
-
-### Team: ship a reviewed internal agent
-
-Your engineering team wants a shared PR-review bot with a specific SOUL, specific skills, and a cron that runs every PR through it.
-
-```bash
-# Engineering lead — create .gitignore first (see "For authors" Step 3), then:
-cd ~/.hermes/profiles/pr-reviewer
-# ... build and tune ...
-git init && git add . && git status   # confirm no secrets staged
-git commit -m "v1.0 PR reviewer"
-git tag v1.0.0
-git push -u origin main --tags    # push to your company's internal Git host
-
-# Each engineer
-hermes profile install git@github.com:your-org/pr-reviewer.git --alias
-# Fill in .env with their own API key (billed to them), .env.EXAMPLE points at what's required
-pr-reviewer chat
-```
-
-When the lead ships v1.1 (better SOUL, new skill), engineers run `hermes profile update pr-reviewer` and everyone's on the new version within minutes.
-
-### Community: publish a public agent
-
-You built something novel — maybe a "Polymarket trader" or an "academic paper summarizer" or a "Minecraft server ops assistant." You want to share it.
-
-```bash
-# You — create .gitignore first (see "For authors" Step 3), then:
-cd ~/.hermes/profiles/polymarket-trader
-# Write a solid README.md at the repo root — GitHub shows it on the repo page
-git init && git add . && git status   # confirm no secrets staged
-git commit -m "v1.0"
-git tag v1.0.0
-# Publish to a public GitHub repo
-git remote add origin https://github.com/you/hermes-polymarket-trader.git
-git push -u origin main --tags
-
-# Anyone
-hermes profile install github.com/you/hermes-polymarket-trader --alias
-```
-
-Tweet the install command. People who try it send you issues and PRs. If someone wants to customize, they fork — same git workflow everyone already knows.
-
-### Product: ship an opinionated agent
-
-You built Hermes-on-top — maybe a compliance-monitoring harness, a customer-support stack, a domain-specific research platform. You want to distribute it as a product.
-
-```yaml
-# distribution.yaml
-name: telemetry-harness
-version: 2.3.1
-description: "Compliance telemetry harness — monitors and reviews regulated workflows"
-hermes_requires: ">=0.13.0"
-author: "Acme Compliance Inc."
-license: "Commercial"
-
-env_requires:
-  - name: ACME_API_KEY
-    description: "Your Acme Compliance license key (email support@acme.com)"
-    required: true
-  - name: OPENAI_API_KEY
-    description: "OpenAI API key for model access"
-    required: true
-  - name: GRAPHITI_MCP_URL
-    description: "URL for your Graphiti knowledge graph instance"
-    required: false
-    default: "http://127.0.0.1:8000/sse"
-```
-
-Your customers install via a single command; the install preview tells them exactly which keys to have ready; updates roll out the moment you tag a new release; their compliance data (`memories/`, `sessions/`) never leaves their machine.
-
-### Ephemeral: one-off scripts on shared infra
-
-You're the ops lead. You want a temporary agent that diagnoses a production incident — a canned SOUL with the right tools and MCP connections — and runs on three on-call engineers' laptops for the next week.
-
-```bash
-# You — create .gitignore first (see "For authors" Step 3), then:
-# Build the profile, commit, push a private repo
-git push -u origin main
-
-# Each on-call
-hermes profile install git@github.com:your-org/incident-2026-q2.git --alias
-
-# Incident resolved — tear it down
-hermes profile delete incident-2026-q2
-```
-
-The install-delete cycle is cheap enough to be disposable.
-
----
-
-## Recipes
-
-### Pin to a specific version
-
-:::note
-Git ref pinning (`#v1.2.0`) is planned but not in the initial release — install currently tracks the default branch. Track your installed version via `hermes profile info <name>` and hold off on updates until you're ready.
-:::
-
-### Check what version you're on vs. latest
-
-```bash
-# Your installed version
+# 你已安装的版本
 hermes profile info research-bot | grep Version
 
-# Latest upstream (without installing)
+# 上游最新版本（不安装的情况）
 git ls-remote --tags https://github.com/you/research-bot | tail -5
 ```
 
-### Keep local config customizations through updates
+### 通过更新保留本地配置自定义
 
-The default update behavior already does this: `config.yaml` is preserved. To be safe, write your local tweaks to a file the distribution doesn't own:
+默认更新行为已经做到这一点：`config.yaml`会被保留。为了安全起见，将你的本地调整写入分发版不会触及的文件中：
 
 ```yaml
 # ~/.hermes/profiles/research-bot/local/my-overrides.yaml
-# (distribution never touches local/)
+# （分发版永远不会触及 local/ 目录）
 ```
 
-…and reference it from `config.yaml` or your SOUL as needed.
+…然后根据需要从 `config.yaml` 或你的 SOUL 中引用它。
 
-### Force a clean re-install
+### 强制完全重新安装
 
 ```bash
-# Nuke and re-install from scratch (loses memories/sessions too)
+# 彻底删除并从头重新安装（也会丢失记忆/会话）
 hermes profile delete research-bot --yes
 hermes profile install github.com/you/research-bot --alias
 
-# Update to current main but reset config.yaml to the distribution's default
+# 更新到当前主分支，但将 config.yaml 重置为分发版的默认配置
 hermes profile update research-bot --force-config --yes
 ```
 
-### Fork and customize
+### 分叉（Fork）并定制
 
-The standard git workflow — distributions are just repos:
+标准的 git 工作流——分发版就是仓库：
 
 ```bash
-# Fork the repo on GitHub, then install your fork
+# 在 GitHub 上分叉该仓库，然后安装你的分叉版本
 hermes profile install github.com/yourname/forked-research-bot --alias
 
-# Iterate locally in ~/.hermes/profiles/forked-research-bot/
-# Edit SOUL.md, commit, push to your fork
-# Upstream changes: pull them into your fork the usual way
+# 在 ~/.hermes/profiles/forked-research-bot/ 中本地迭代
+# 编辑 SOUL.md，提交，推送到你的分叉版本
+# 上游变更：按照常规方式拉取到你的分叉版本中
 ```
 
-### Test a distribution before pushing
+### 在推送前测试分发版
 
-From the author's machine:
+在作者机器上：
 
 ```bash
-# Install from a local directory (no git push needed)
+# 从本地目录安装（无需推送 git）
 hermes profile install ~/.hermes/profiles/research-bot --name research-bot-test --alias
 
-# Tweak, delete, re-install until it's right
+# 调整、删除、重新安装，直到正确为止
 hermes profile delete research-bot-test --yes
 hermes profile install ~/.hermes/profiles/research-bot --name research-bot-test
 ```
 
 ---
 
-## What's NOT in a distribution (ever)
+--- body ---
+## 分发版中永远不包含的内容
 
-The installer hard-excludes these paths even if an author accidentally ships them. No config option lets you override this — the safety guard is a regression-tested invariant:
+即使作者意外包含了这些路径，安装程序也会硬性排除它们。没有配置选项可以覆盖此限制——此安全防护是一个经过回归测试的不变量：
 
-- `auth.json` — OAuth tokens, platform credentials
-- `.env` — API keys, secrets
-- `memories/` — conversation memory
-- `sessions/` — conversation history
-- `state.db`, `state.db-shm`, `state.db-wal` — session metadata
-- `logs/` — agent and error logs
-- `workspace/` — generated working files
-- `plans/` — scratch plans
-- `home/` — user's home mount in Docker backends
-- `*_cache/` — image / audio / document caches
-- `local/` — user-reserved customization namespace
+- `auth.json` —— OAuth 令牌、平台凭证
+- `.env` —— API 密钥、机密信息
+- `memories/` —— 对话记忆
+- `sessions/` —— 对话历史
+- `state.db`、`state.db-shm`、`state.db-wal` —— 会话元数据
+- `logs/` —— 代理（Agent）和错误日志
+- `workspace/` —— 生成的工作文件
+- `plans/` —— 临时计划
+- `home/` —— Docker 后端中用户的主目录挂载点
+- `*_cache/` —— 图片/音频/文档缓存
+- `local/` —— 用户保留的自定义命名空间
 
-When you clone a distribution as an installer, these simply aren't copied into your profile directory. When you update, your copies stay put. If you installed the same distribution on five machines, you have five isolated sets of this data — one per machine.
+当你作为安装者克隆一个分发版时，这些文件根本就不会被复制到你的配置文件目录中。当你更新时，你的副本保持不变。如果你在五台机器上安装了同一个分发版，你会得到五组完全独立的数据——每台机器一组。
 
 :::caution
-This exclusion runs at **install / update time on the installer's machine**. It does **not** prevent an author from commiting sensitive/unnecessary files. Authors must use a [`.gitignore`](#step-3--create-a-gitignore-before-the-first-commit) to keep secrets out of the repo.
+此排除操作在**安装/更新时，在安装者机器上**执行。它**不会**阻止作者提交敏感或不必要的文件。作者必须使用 [`.gitignore`](#step-3--create-a-gitignore-before-the-first-commit) 来将机密信息排除在仓库之外。
 :::
 
-## Security and trust
+## 安全与信任
 
-Profile distributions are unsigned by default. You're trusting:
+配置文件分发版默认是未签名的。你信任的是：
 
-- **The git host** (GitHub / GitLab / wherever) to serve the bytes the author pushed.
-- **The author** to not ship a malicious SOUL, skills, or cron jobs.
+- **Git 托管平台**（GitHub / GitLab / 其他）提供作者推送的字节内容。
+- **作者**不会发布恶意的 SOUL、技能（Skill）或定时任务（cron job）。
 
-Cron jobs from a distribution are **not auto-scheduled** — the installer prints `hermes -p <name> cron list` and you enable them explicitly. SOUL.md and skills ARE active as soon as you start chatting with the profile, so read them before your first run if you're installing from someone you don't know.
+来自分发版的定时任务**不会自动调度**——安装程序会打印 `hermes -p <name> cron list`，你需要明确启用它们。SOUL.md 和技能（Skill）在你开始与该配置文件对话时立即生效，因此如果你从你信任的人那里安装，请在首次运行前阅读它们。
 
-Rough analogy: installing a distribution is like installing a browser extension or a VS Code extension. Low friction, high power, trust the source. For internal company distributions, use a private repo and your normal git auth — nothing new to configure.
+粗略类比：安装分发版就像安装浏览器扩展或 VS Code 扩展。低摩擦、高能力、信任来源。对于公司内部分发版，请使用私有仓库和常规的 git 认证——无需额外配置。
 
-Future versions may add signing, a lockfile (`.distribution-lock.yaml`) with a resolved commit SHA, and a `--dry-run` flag that prints the diff before applying an update. None of those are shipping yet.
+未来版本可能会增加签名、带有已解析提交 SHA 的锁文件（`.distribution-lock.yaml`），以及在应用更新前打印差异的 `--dry-run` 标志。这些功能目前都尚未发布。
 
-## Under the hood
+## 底层实现
 
-For implementation details, precise CLI behavior, and all flags, see the [Profile Commands reference](../reference/profile-commands.md#distribution-commands).
+有关实现细节、精确的 CLI 行为以及所有标志，请参阅[配置文件命令参考](../reference/profile-commands.md#distribution-commands)。
 
-The short version:
+简要说明：
 
-- `install`, `update`, `info` live inside `hermes profile` — not a parallel command tree.
-- The manifest format is YAML with a tiny required schema (`name` only).
-- The installer uses your local `git` binary for cloning, so any auth your shell already handles (SSH keys, credential helpers) works transparently.
-- After clone, `.git/` is stripped — the installed profile isn't itself a git checkout, avoiding "oh my, I accidentally committed my `.env` to the distribution's git history" traps.
-- Reserved profile names (`hermes`, `test`, `tmp`, `root`, `sudo`) are rejected at install time to avoid collisions with common binaries.
+- `install`、`update`、`info` 位于 `hermes profile` 之下——而不是一个并行的命令树。
+- 清单格式为 YAML，带有极小的必要模式（仅需要 `name`）。
+- 安装程序使用你本地的 `git` 二进制文件进行克隆，因此你的 shell 已经处理的任何认证（SSH 密钥、凭据助手）都可以透明地工作。
+- 克隆后，会剥离 `.git/` 目录——安装后的配置文件本身不是一个 git 检出，从而避免“哎呀，我不小心把 `.env` 提交到分发版的 git 历史中了”这种陷阱。
+- 保留的配置文件名称（`hermes`、`test`、`tmp`、`root`、`sudo`）在安装时会被拒绝，以避免与常见二进制文件冲突。
 
-## See also
+## 另请参阅
 
-- [Profiles: Running Multiple Agents](./profiles.md) — the base concept
-- [Profile Commands reference](../reference/profile-commands.md) — every flag, every option
-- [`hermes profile export` / `import`](../reference/profile-commands.md#hermes-profile-export) — local backup / restore (not distribution)
-- [Using SOUL with Hermes](../guides/use-soul-with-hermes.md) — authoring personalities
-- [Personality & SOUL](./features/personality.md) — how SOUL fits into the agent
-- [Skills catalog](../reference/skills-catalog.md) — skills you can bundle
+- [配置文件：运行多个代理](./profiles.md) —— 基本概念
+- [配置文件命令参考](../reference/profile-commands.md) —— 所有标志和选项
+- [`hermes profile export` / `import`](../reference/profile-commands.md#hermes-profile-export) —— 本地备份/恢复（非分发版）
+- [在 Hermes 中使用 SOUL](../guides/use-soul-with-hermes.md) —— 创作个性
+- [个性与 SOUL](./features/personality.md) —— SOUL 如何融入代理
+- [技能目录](../reference/skills-catalog.md) —— 你可以捆绑的技能

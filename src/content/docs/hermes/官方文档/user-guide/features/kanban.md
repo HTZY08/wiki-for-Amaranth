@@ -1,265 +1,199 @@
----
-title: 看板系统
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/kanban.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/kanban.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 12
-title: "Kanban (Multi-Agent Board)"
-description: "Durable SQLite-backed task board for coordinating multiple Hermes profiles"
+title: "看板（多智能体看板）"
+description: "基于 SQLite 的持久化任务板，用于协调多个 Hermes 配置文件的协作"
 ---
 
-# Kanban — Multi-Agent Profile Collaboration
+--- body ---
+# 看板 — 多智能体配置文件协作
 
-> **Want a walkthrough?** Read the [Kanban tutorial](./kanban-tutorial) — four user stories (solo dev, fleet farming, role pipeline with retry, circuit breaker) with dashboard screenshots of each. This page is the reference; the tutorial is the narrative.
+> **想要一步一步指导？** 阅读[看板教程](./kanban-tutorial)——四个用户故事（独立开发者、农场机群、带重试的角色流水线、断路器），每个都配有仪表盘截图。本页面是参考文档；教程是叙事性说明。
 
-Hermes Kanban is a durable task board, shared across all your Hermes profiles, that lets multiple named agents collaborate on work without fragile in-process subagent swarms. Every task is a row in `~/.hermes/kanban.db`; every handoff is a row anyone can read and write; every worker is a full OS process with its own identity.
+Hermes 看板是一个持久化任务板，在你的所有 Hermes 配置文件之间共享，允许多个命名智能体协作完成工作，而无需脆弱的进程内子智能体集群。每个任务都是 `~/.hermes/kanban.db` 中的一行；每次交接都是一行任何人都可以读写的数据；每个工作者都是一个拥有自己身份的完整操作系统进程。
 
-### Two surfaces: the model talks through tools, you talk through the CLI
+### 两个界面：模型通过工具进行交互，你通过 CLI 进行交互
 
-The board has two front doors, both backed by the same `~/.hermes/kanban.db`:
+看板有两个入口，都基于同一个 `~/.hermes/kanban.db`：
 
-- **Agents drive the board through a dedicated `kanban_*` toolset** — `kanban_show`, `kanban_list`, `kanban_complete`, `kanban_block`, `kanban_heartbeat`, `kanban_comment`, `kanban_create`, `kanban_link`, `kanban_unblock`. The dispatcher spawns each worker with these tools already in its schema; orchestrator profiles can also enable the `kanban` toolset explicitly. The model reads and routes tasks by calling tools directly, *not* by shelling out to `hermes kanban`. See [How workers interact with the board](#how-workers-interact-with-the-board) below.
-- **You (and scripts, and cron) drive the board through `hermes kanban …`** on the CLI, `/kanban …` as a slash command, or the dashboard. These are for humans and automation — the places without a tool-calling model behind them.
+- **智能体通过专用的 `kanban_*` 工具集驱动看板**——`kanban_show`、`kanban_list`、`kanban_complete`、`kanban_block`、`kanban_heartbeat`、`kanban_comment`、`kanban_create`、`kanban_link`、`kanban_unblock`。调度器在生成工作者时，这些工具已经包含在它的模式中；编排器配置文件也可以显式启用 `kanban` 工具集。模型通过直接调用工具来读取和路由任务，*而不是*通过 `hermes kanban` 的外部命令。参见下面的[工作者如何与看板交互](#工作者如何与看板交互)。
+- **你（以及脚本、cron）通过 CLI 的 `hermes kanban …`、斜杠命令 `/kanban …` 或仪表盘来驱动看板。** 这些是为人类和自动化准备的——背后没有工具调用模型的地方。
 
-Both surfaces route through the same `kanban_db` layer, so reads see a consistent view and writes can't drift. The rest of this page shows CLI examples because they're easy to copy-paste, but every CLI verb has a tool-call equivalent the model uses.
+两个接口都通过相同的 `kanban_db` 层路由，因此读取看到一致的视图，写入不会漂移。本页面的其余部分展示了 CLI 示例，因为它们易于复制粘贴，但每个 CLI 动词都有一个模型使用的等价工具调用。
 
-This is the shape that covers the workloads `delegate_task` can't:
+这是涵盖 `delegate_task` 无法完成的工作负载的形状：
 
-- **Research triage** — parallel researchers + analyst + writer, human-in-the-loop.
-- **Scheduled ops** — recurring daily briefs that build a journal over weeks.
-- **Digital twins** — persistent named assistants (`inbox-triage`, `ops-review`) that accumulate memory over time.
-- **Engineering pipelines** — decompose → implement in parallel worktrees → review → iterate → PR.
-- **Fleet work** — one specialist managing N subjects (50 social accounts, 12 monitored services).
+- **研究分类**——并行研究员 + 分析师 + 作者，人机回环。
+- **计划运维**——每周生成日志的每日简报。
+- **数字孪生**——持久的命名助手（`inbox-triage`、`ops-review`），随时间积累记忆。
+- **工程流水线**——分解 → 在并行工作树中实现 → 审查 → 迭代 → PR。
+- **机群工作**——一个专家管理 N 个主体（50 个社交账号、12 个监控服务）。
 
-For the full design rationale, comparative analysis against Cline Kanban / Paperclip / NanoClaw / Google Gemini Enterprise, and the eight canonical collaboration patterns, see `docs/hermes-kanban-v1-spec.pdf` in the repository.
+对于完整的设计原理、与 Cline Kanban / Paperclip / NanoClaw / Google Gemini Enterprise 的对比分析，以及八种经典协作模式，请参阅仓库中的 `docs/hermes-kanban-v1-spec.pdf`。
 
-## Kanban vs. `delegate_task`
+## 看板 vs. `delegate_task`
 
-They look similar; they are not the same primitive.
+它们看起来很相似，但并非同一原语。
 
-| | `delegate_task` | Kanban |
+| | `delegate_task` | 看板 |
 |---|---|---|
-| Shape | RPC call (fork → join) | Durable message queue + state machine |
-| Parent | Blocks until child returns | Fire-and-forget after `create` |
-| Child identity | Anonymous subagent | Named profile with persistent memory |
-| Resumability | None — failed = failed | Block → unblock → re-run; crash → reclaim |
-| Human in the loop | Not supported | Comment / unblock at any point |
-| Agents per task | One call = one subagent | N agents over task's life (retry, review, follow-up) |
-| Audit trail | Lost on context compression | Durable rows in SQLite forever |
-| Coordination | Hierarchical (caller → callee) | Peer — any profile reads/writes any task |
+| 形状 | RPC 调用（分叉 → 合并） | 持久化消息队列 + 状态机 |
+| 父级 | 阻塞直到子级返回 | 创建后即忘 |
+| 子级身份 | 匿名子智能体 | 具有持久记忆的命名配置文件 |
+| 可恢复性 | 无——失败 = 失败 | 阻塞 → 解除阻塞 → 重新运行；崩溃 → 回收 |
+| 人工介入 | 不支持 | 随时评论/解除阻塞 |
+| 每任务智能体数 | 一次调用 = 一个子智能体 | 任务生命周期内的 N 个智能体（重试、审查、后续） |
+| 审计追踪 | 上下文压缩后丢失 | SQLite 中持久存储的行 |
+| 协调 | 层次化（调用者 → 被调用者） | 对等——任何配置文件可以读取/写入任何任务 |
 
-**One-sentence distinction:** `delegate_task` is a function call; Kanban is a work queue where every handoff is a row any profile (or human) can see and edit.
+**一句话区别：** `delegate_task` 是一个函数调用；看板是一个工作队列，每个交接都是一行，任何配置文件（或人类）都可以看到和编辑。
 
-**Use `delegate_task` when** the parent agent needs a short reasoning answer before continuing, no humans involved, result goes back into the parent's context.
+**何时使用 `delegate_task`：** 当父智能体在继续之前需要一个简短的推理答案，不涉及人类，结果返回父智能体的上下文。
 
-**Use Kanban when** work crosses agent boundaries, needs to survive restarts, might need human input, might be picked up by a different role, or needs to be discoverable after the fact.
+**何时使用看板：** 当工作跨越智能体边界，需要存活于重启，可能需要人类输入，可能由不同的角色接手，或者需要在事后被发现。
 
-They coexist: a kanban worker may call `delegate_task` internally during its run.
+它们可以共存：看板工作者在运行期间可以在内部调用 `delegate_task`。
 
-## Core concepts
+## 核心概念
 
-- **Board** — a standalone queue of tasks with its own SQLite DB, workspaces
-  directory, and dispatcher loop. A single install can have many boards
-  (e.g. one per project, repo, or domain); see [Boards (multi-project)](#boards-multi-project)
-  below. Single-project users stay on the `default` board and never see the
-  word "board" outside this docs section.
-- **Task** — a row with title, optional body, one assignee (a profile name), status (`triage | todo | ready | running | blocked | done | archived`), optional tenant namespace, optional idempotency key (dedup for retried automation).
-- **Link** — `task_links` row recording a parent → child dependency. The dispatcher promotes `todo → ready` when all parents are `done`.
-- **Comment** — the inter-agent protocol. Agents and humans append comments; when a worker is (re-)spawned it reads the full comment thread as part of its context.
-- **Workspace** — the directory a worker operates in. Three kinds:
-  - `scratch` (default) — fresh tmp dir under `~/.hermes/kanban/workspaces/<id>/` (or `~/.hermes/kanban/boards/<slug>/workspaces/<id>/` on non-default boards). **Deleted when the task completes** — scratch is ephemeral by design, so the dir is wiped the moment the worker (or `hermes kanban complete <id>`) marks the task done. If you want to keep the worker's output, use `worktree:` or `dir:<path>` instead. The first time a scratch workspace is created on an install, the dispatcher logs a warning and emits a `tip_scratch_workspace` event on the task (visible via `hermes kanban show <id>`).
-  - `dir:<path>` — an existing shared directory (Obsidian vault, mail ops dir, per-account folder). **Must be an absolute path.** Relative paths like `dir:../tenants/foo/` are rejected at dispatch because they'd resolve against whatever CWD the dispatcher happens to be in, which is ambiguous and a confused-deputy escape vector. The path is otherwise trusted — it's your box, your filesystem, the worker runs with your uid. This is the trusted-local-user threat model; kanban is single-host by design. **Preserved on completion.**
-  - `worktree` — a git worktree under `.worktrees/<id>/` for coding tasks. Use `worktree:<path>` to pin the exact target path. Worker-side `git worktree add` creates it, using `--branch` when provided. **Preserved on completion.**
-- **Dispatcher** — a long-lived loop that, every N seconds (default 60): reclaims stale claims, reclaims crashed workers (PID gone but TTL not yet expired), promotes ready tasks, atomically claims, spawns assigned profiles. Runs **inside the gateway** by default (`kanban.dispatch_in_gateway: true`). One dispatcher sweeps all boards per tick; workers are spawned with `HERMES_KANBAN_BOARD` pinned so they can't see other boards. After `kanban.failure_limit` consecutive spawn failures on the same task (default: 2) the dispatcher auto-blocks it with the last error as the reason — prevents thrashing on tasks whose profile doesn't exist, workspace can't mount, etc.
-- **Tenant** — optional string namespace *within* a board. One specialist fleet can serve multiple businesses (`--tenant business-a`) with data isolation by workspace path and memory key prefix. Tenants are a soft filter; boards are the hard isolation boundary.
+- **看板**——一个独立的任务队列，拥有自己的 SQLite 数据库、工作空间目录和调度器循环。一个安装可以拥有多个看板（例如，每个项目、仓库或域一个）；参见下面的[看板（多项目）](#看板多项目)。单项目用户保持在 `default` 看板上，除了本文档这一部分外，永远不会看到“看板”这个词。
+- **任务**——包含标题、可选正文、一个负责人（配置文件名称）、状态（`triage | todo | ready | running | blocked | done | archived`）、可选租户命名空间、可选幂等键（用于重试自动化的去重）的行。
+- **链接**——`task_links` 行记录父 → 子依赖关系。当所有父任务完成时，调度器将 `todo → ready` 提升。
+- **评论**——智能体间协议。智能体和人类追加评论；当工作者（重新）生成时，它读取完整评论线程作为其上下文的一部分。
+- **工作空间**——工作者操作的目录。三种类型：
+  - `scratch`（默认）——在 `~/.hermes/kanban/workspaces/<id>/`（或非默认看板下的 `~/.hermes/kanban/boards/<slug>/workspaces/<id>/`）下创建的临时目录。**任务完成时删除**——scratch 设计为临时性的，因此在工作者（或 `hermes kanban complete <id>`）标记任务完成的那一刻，目录被清除。如果你想保留工作者的输出，请改用 `worktree:` 或 `dir:<path>`。第一次在安装中创建 scratch 工作空间时，调度器会记录一条警告，并在任务上发出 `tip_scratch_workspace` 事件（通过 `hermes kanban show <id>` 可见）。
+  - `dir:<path>`——一个现有的共享目录（Obsidian vault、邮件操作目录、每个账户的文件夹）。**必须是绝对路径。** 像 `dir:../tenants/foo/` 这样的相对路径在调度时被拒绝，因为它们会相对于调度器的当前工作目录解析，这是歧义的，并且是混淆代理转义向量。路径在其他方面是受信任的——这是你的机器、你的文件系统，工作者使用你的 uid 运行。这是受信任本地用户的威胁模型；看板设计为单主机。**完成后保留。**
+  - `worktree`——在 `.worktrees/<id>/` 下的一个 git 工作树，用于编码任务。使用 `worktree:<path>` 固定确切的目标路径。工作者端的 `git worktree add` 创建它，在提供 `--branch` 时使用。**完成后保留。**
+- **调度器**——一个长期运行的循环，每 N 秒（默认 60）执行：回收过期的声明、回收崩溃的工作者（PID 已消失但 TTL 尚未过期）、提升就绪任务、原子性地声明、生成分配的工作者。**默认在网关内部运行**（`kanban.dispatch_in_gateway: true`）。一个调度器每秒扫描所有看板；工作者生成时设置了 `HERMES_KANBAN_BOARD`，因此它们不能看到其他看板。在同一个任务上连续生成失败 `kanban.failure_limit` 次后（默认：2），调度器自动将其阻塞并提供最后一个错误作为原因——防止在配置文件不存在、工作空间无法挂载等任务上反复抖动。
+- **租户**——看板*内部*的可选字符串命名空间。一个专家机群可以通过工作空间路径和记忆键前缀的数据隔离服务于多个业务（`--tenant business-a`）。租户是一个软过滤器；看板是硬隔离边界。
 
-## Boards (multi-project)
+## 看板（多项目）
 
-Boards let you separate unrelated streams of work — one per project, repo,
-or domain — into isolated queues. A new install has exactly one board
-called `default` (DB at `~/.hermes/kanban.db` for back-compat). Users who
-only want one stream of work never need to know about boards; the feature
-is opt-in.
+看板允许你将不相关的工作流分离到隔离的队列中——每个项目、仓库或域一个。一个新的安装只有一个名为 `default` 的看板（数据库在 `~/.hermes/kanban.db` 以保持向后兼容）。只需要一个工作流的用户永远不需要了解看板；此功能是可选的。
 
-Per-board isolation is absolute:
+每个看板之间的隔离是绝对的：
 
-- Separate SQLite DB per board (`~/.hermes/kanban/boards/<slug>/kanban.db`).
-- Separate `workspaces/` and `logs/` directories.
-- Workers spawned for a task see **only** their board's tasks — the
-  dispatcher sets `HERMES_KANBAN_BOARD` in the child env and every
-  `kanban_*` tool the worker has access to reads it.
-- Linking tasks across boards is not allowed (keeps the schema simple; if
-  you really need cross-project refs, use free-text mentions and look
-  them up by id manually).
+- 每个看板独立的 SQLite 数据库（`~/.hermes/kanban/boards/<slug>/kanban.db`）。
+- 独立的 `workspaces/` 和 `logs/` 目录。
+- 为任务生成的工作者只能看到**其看板**的任务——调度器在子环境变量中设置 `HERMES_KANBAN_BOARD`，并且工作者可以访问的每个 `kanban_*` 工具都会读取它。
+- 不允许跨看板链接任务（保持模式简单；如果你真的需要跨项目引用，使用自由文本提及并在事后通过 id 手动查找）。
 
-### Managing boards from the CLI
+### 从 CLI 管理看板
 
 ```bash
-# See what's on disk. Fresh installs show only "default".
+# 查看磁盘上的内容。全新安装只显示 "default"。
 hermes kanban boards list
 
-# Create a new board.
+# 创建一个新看板。
 hermes kanban boards create atm10-server \
     --name "ATM10 Server" \
     --description "Minecraft modded server ops" \
     --icon 🎮 \
-    --switch                   # optional: make it the active board
+    --switch                   # 可选：使其成为活动看板
 
-# Operate on a specific board without switching.
+# 在不切换的情况下操作特定看板。
 hermes kanban --board atm10-server list
 hermes kanban --board atm10-server create "Restart ATM server" --assignee ops
 
-# Change which board is "current" for subsequent calls.
+# 更改后续调用的“当前”看板。
 hermes kanban boards switch atm10-server
-hermes kanban boards show             # who's active right now?
+hermes kanban boards show             # 当前哪个看板是活动的？
 
-# Rename the display name (the slug is immutable — it's the directory name).
+# 重命名显示名称（slug 是不可变的——它是目录名）。
 hermes kanban boards rename atm10-server "ATM10 (Prod)"
 
-# Archive (default) — moves the board's dir to boards/_archived/<slug>-<ts>/.
-# Recoverable by moving the dir back.
+# 归档（默认）——将看板的目录移动到 boards/_archived/<slug>-<ts>/。
+# 可以通过将目录移回来恢复。
 hermes kanban boards rm atm10-server
 
-# Hard delete — `rm -rf` the board dir. No recovery.
+# 硬删除——`rm -rf` 看板目录。不可恢复。
 hermes kanban boards rm atm10-server --delete
 ```
 
-Board resolution order (highest precedence first):
+看板解析顺序（最高优先级优先）：
 
-1. Explicit `--board <slug>` on the CLI call.
-2. `HERMES_KANBAN_BOARD` env var (set by the dispatcher when spawning a
-   worker, so workers can't see other boards).
-3. `~/.hermes/kanban/current` — the slug persisted by `hermes kanban
-   boards switch`.
-4. `default`.
+1. 在 CLI 调用中显式指定 `--board <slug>`。
+2. `HERMES_KANBAN_BOARD` 环境变量（由调度器在生成工作者时设置，因此工作者不能看到其他看板）。
+3. `~/.hermes/kanban/current`——由 `hermes kanban boards switch` 持久化的 slug。
+4. `default`。
 
-Slugs are validated: lowercase alphanumerics + hyphens + underscores, 1-64
-chars, must start with alphanumeric. Uppercase input is auto-downcased.
-Anything else (slashes, spaces, dots, `..`) is rejected at the CLI layer
-so path-traversal tricks can't name a board.
+Slug 经过验证：小写字母数字 + 连字符 + 下划线，1-64 个字符，必须以字母数字开头。大写输入自动转为小写。任何其他内容（斜杠、空格、点、`..`）在 CLI 层被拒绝，因此路径遍历技巧无法命名看板。
 
-### Managing boards from the dashboard
+### 从仪表盘管理看板
 
-`hermes dashboard` → Kanban tab shows a board switcher at the top as soon
-as more than one board exists (or any board has tasks). Single-board users
-see only a small `+ New board` button; the switcher is hidden until it
-matters.
+`hermes dashboard` → 看板标签页在导航栏中，图标在“技能”之后。当存在多个看板（或者任何看板有任务）时，顶部会显示看板切换器。单看板用户只看到一个小的 `+ New board` 按钮；切换器在需要时才显示。
 
-- **Board dropdown** — pick the active board. Your selection is saved to
-  the browser's `localStorage` so it persists across reloads without
-  shifting the CLI's `current` pointer out from under a terminal you left
-  open.
-- **+ New board** — opens a modal asking for slug, display name,
-  description, and icon. Option to auto-switch to the new board.
-- **Archive** — only shown on non-`default` boards. Confirms, then moves
-  the board dir to `boards/_archived/`.
+- **看板下拉菜单**——选择活动看板。你的选择保存在浏览器的 `localStorage` 中，因此跨重载保持，而不会在你离开的终端下改变 CLI 的 `current` 指针。
+- **+ New board**——打开一个模态窗口，要求输入 slug、显示名称、描述和图标。可以选择自动切换到新看板。
+- **Archive**——仅在非 `default` 看板上显示。确认后，将看板目录移动到 `boards/_archived/`。
 
-All dashboard API endpoints accept `?board=<slug>` for board scoping. The
-events WebSocket is pinned to a board at connection time; switching in
-the UI opens a fresh WS against the new board.
+所有仪表盘 API 端点接受 `?board=<slug>` 作为看板范围。事件 WebSocket 在连接时固定到一个看板；在 UI 中切换会打开一个针对新看板的新 WS。
 
+## 文件附件
 
-## File attachments
+任务可以携带文件附件——PDF、图片、源文档——这样工作者就有所需的源材料，而无需你将路径粘贴到正文中并希望它能找到它们。
 
-Tasks can carry file attachments — PDFs, images, source documents — so a
-worker has the source material it needs without you pasting paths into the
-body and hoping it finds them.
+- **上传**——在仪表盘抽屉中打开一个任务，使用**附件**部分的 *Upload file* 按钮（一次多个文件都没问题）。每个上传上限为 25 MB。
+- **存储**——文件存放在 `<hermes-home>/kanban/attachments/<task_id>/`（默认看板）或 `<hermes-home>/kanban/boards/<slug>/attachments/<task_id>/`（命名看板）。设置 `HERMES_KANBAN_ATTACHMENTS_ROOT` 来固定自定义位置。
+- **工作者看到的内容**——当调度器将任务交给工作者时，工作者的上下文包含一个**附件**部分，列出每个文件的名称和**绝对路径**。工作者拥有完整的文件/终端工具访问权限，因此可以直接读取附件（`read_file`，或像 `pdftotext` 这样的 shell 工具）。
+- **下载/移除**——抽屉列出每个附件，带有下载链接和移除（×）控件。移除附件会删除元数据行和磁盘上的文件。
 
-- **Upload** — open a task in the dashboard drawer and use the
-  **Attachments** section's *Upload file* button (multiple files at once
-  are fine). Each upload is capped at 25 MB.
-- **Storage** — files land under
-  `<hermes-home>/kanban/attachments/<task_id>/` for the default board, or
-  `<hermes-home>/kanban/boards/<slug>/attachments/<task_id>/` for a named
-  board. Set `HERMES_KANBAN_ATTACHMENTS_ROOT` to pin a custom location.
-- **What the worker sees** — when the dispatcher hands a task to a worker,
-  the worker's context includes an **Attachments** section listing each
-  file's name and its **absolute path**. The worker has full file/terminal
-  tool access, so it reads attachments directly (`read_file`, or shell
-  tools like `pdftotext`).
-- **Download / remove** — the drawer lists each attachment with a download
-  link and a remove (×) control. Removing an attachment deletes both the
-  metadata row and the on-disk file.
-
-:::note Remote terminal backends
-Attachment paths resolve directly on the **local** terminal backend, which
-is the default for Kanban workers. If you run workers on a remote backend
-(Docker, Modal), mount the board's `attachments/` directory into the
-sandbox so the absolute paths in the worker context are reachable.
+:::note 远程终端后端
+附件路径直接在**本地**终端后端解析，这是看板工作者的默认设置。如果你在远程后端（Docker、Modal）上运行工作者，将看板的 `attachments/` 目录挂载到沙箱中，以便工作者上下文中的绝对路径可达。
 :::
 
+## 快速入门
 
-## Quick start
-
-The commands below are **you** (the human) setting up the board and creating tasks. Once a task is assigned, the dispatcher spawns the assigned profile as a worker, and from there **the model drives the task through `kanban_*` tool calls, not CLI commands** — see [How workers interact with the board](#how-workers-interact-with-the-board).
+下面的命令是**你**（人类）设置看板并创建任务。一旦任务被分配，调度器会生成分配的工作者，之后**模型通过 `kanban_*` 工具调用驱动任务，而不是 CLI 命令**——参见[工作者如何与看板交互](#工作者如何与看板交互)。
 
 ```bash
-# 1. Create the board (you)
+# 1. 创建看板（你）
 hermes kanban init
 
-# 2. Start the gateway (hosts the embedded dispatcher)
+# 2. 启动网关（托管内嵌调度器）
 hermes gateway start
 
-# 3. Create a task (you — or an orchestrator agent via kanban_create)
+# 3. 创建任务（你——或编排智能体通过 kanban_create）
 hermes kanban create "research AI funding landscape" --assignee researcher
 
-# 4. Watch activity live (you)
+# 4. 实时观看活动（你）
 hermes kanban watch
 
-# 5. See the board (you)
+# 5. 查看看板（你）
 hermes kanban list
 hermes kanban stats
 ```
 
-When the dispatcher picks up `t_abcd` and spawns the `researcher` profile, the very first thing that worker's model does is call `kanban_show()` to read its task. It doesn't run `hermes kanban show t_abcd`.
+当调度器拾取 `t_abcd` 并生成 `researcher` 配置文件时，该工作者模型做的第一件事就是调用 `kanban_show()` 来读取其任务。它不会运行 `hermes kanban show t_abcd`。
 
-### Gateway-embedded dispatcher (default)
+### 网关内嵌调度器（默认）
 
-The dispatcher runs inside the gateway process. Nothing to install, no
-separate service to manage — if the gateway is up, ready tasks get picked
-up on the next tick (60s by default).
+调度器在网关进程内运行。无需安装，无需管理独立服务——如果网关正在运行，就绪任务会在下一个滴答中被拾取（默认 60 秒）。
 
 ```yaml
 # config.yaml
 kanban:
-  dispatch_in_gateway: true        # default
-  dispatch_interval_seconds: 60    # default
+  dispatch_in_gateway: true        # 默认
+  dispatch_interval_seconds: 60    # 默认
 ```
 
-Override the config flag at runtime via `HERMES_KANBAN_DISPATCH_IN_GATEWAY=0`
-for debugging. Standard gateway supervision applies: run `hermes gateway
-start` directly, or wire the gateway up as a systemd user unit (see the
-gateway docs). Without a running gateway, `ready` tasks stay where they are
-until one comes up — `hermes kanban create` warns about this at creation
-time.
+在运行时通过 `HERMES_KANBAN_DISPATCH_IN_GATEWAY=0` 覆盖配置标志以进行调试。标准网关监督适用：直接运行 `hermes gateway start`，或者将网关作为 systemd 用户单元连接（参见网关文档）。如果没有运行网关，`ready` 任务会保持在原地直到网关启动——`hermes kanban create` 在创建时对此发出警告。
 
-Running `hermes kanban daemon` as a separate process is **deprecated**;
-use the gateway. If you truly cannot run the gateway (headless host
-policy forbids long-lived services, etc.) a `--force` escape hatch keeps
-the old standalone daemon alive for one release cycle, but running both
-a gateway-embedded dispatcher AND a standalone daemon against the same
-`kanban.db` causes claim races and is not supported.
+作为一个独立进程运行 `hermes kanban daemon` 已被**弃用**；请使用网关。如果你真的无法运行网关（无头主机策略禁止长时间运行的服务等），`--force` 逃生舱将旧独立守护进程保留一个发布周期，但同时在同一个 `kanban.db` 上运行网关内嵌调度器**和**独立守护进程会导致声明竞争，不被支持。
 
-### Idempotent create (for automation / webhooks)
+### 幂等创建（用于自动化/webhooks）
 
 ```bash
-# First call creates the task. Any subsequent call with the same key
-# returns the existing task id instead of duplicating.
+# 第一次调用创建任务。任何后续调用使用相同键时返回现有任务 id 而不是重复。
 hermes kanban create "nightly ops review" \
     --assignee ops \
     --idempotency-key "nightly-ops-$(date -u +%Y-%m-%d)" \
     --json
 ```
 
-### Bulk CLI verbs
+### 批量 CLI 动词
 
-All the lifecycle verbs accept multiple ids so you can clean up a batch
-in one command:
+所有生命周期动词接受多个 id，以便一次命令清理一批：
 
 ```bash
 hermes kanban complete t_abc t_def t_hij --result "batch wrap"
@@ -268,37 +202,37 @@ hermes kanban unblock  t_abc t_def
 hermes kanban block    t_abc "need input" --ids t_def t_hij
 ```
 
-## How workers interact with the board
+## 工作者如何与看板交互
 
-**Workers do not shell out to `hermes kanban`.** When the dispatcher spawns a worker it sets `HERMES_KANBAN_TASK=t_abcd` in the child's env, and that env var flips on a dedicated **kanban toolset** in the model's schema. The same toolset is also available to orchestrator profiles that enable `kanban` in their toolsets config. These tools read and mutate the board directly via the Python `kanban_db` layer, same as the CLI does. A running worker calls these like any other tool; it never sees or needs the `hermes kanban` CLI.
+**工作者不会 shell 调用 `hermes kanban`。** 当调度器生成工作者时，它在子进程环境中设置 `HERMES_KANBAN_TASK=t_abcd`，该环境变量在模型的模式中启用一个专用的**kanban 工具集**。相同的工具集也可用于在工具集配置中启用了 `kanban` 的编排器配置文件。这些工具直接通过 Python `kanban_db` 层读取和修改看板，与 CLI 相同。运行中的工作者像调用其他工具一样调用这些工具；它永远不会看到或需要 `hermes kanban` CLI。
 
-| Tool | Purpose | Required params |
+| 工具 | 用途 | 必需参数 |
 |---|---|---|
-| `kanban_show` | Read the current task (title, body, prior attempts, parent handoffs, comments, full pre-formatted `worker_context`). Defaults to the env's task id. | — |
-| `kanban_list` | List task summaries with filters for `assignee`, `status`, `tenant`, archived visibility, and limit. Intended for orchestrators discovering board work. | — |
-| `kanban_complete` | Finish with `summary` + `metadata` structured handoff. | at least one of `summary` / `result` |
-| `kanban_block` | Escalate for human input with a `reason`. | `reason` |
-| `kanban_heartbeat` | Signal liveness during long operations. Pure side-effect. | — |
-| `kanban_comment` | Append a durable note to the task thread. | `task_id`, `body` |
-| `kanban_create` | (Orchestrators) fan out into child tasks with an `assignee`, optional `parents`, `skills`, etc. | `title`, `assignee` |
-| `kanban_link` | (Orchestrators) add a `parent_id → child_id` dependency edge after the fact. | `parent_id`, `child_id` |
-| `kanban_unblock` | (Orchestrators) move a blocked task back to `ready`. | `task_id` |
+| `kanban_show` | 读取当前任务（标题、正文、先前的尝试、父级交接、评论、完整的预格式化 `worker_context`）。默认使用环境中的任务 id。 | — |
+| `kanban_list` | 列出任务摘要，支持 `assignee`、`status`、`tenant`、归档可见性和限制筛选。用于编排器发现看板工作。 | — |
+| `kanban_complete` | 以结构化的 `summary` + `metadata` 完成，形成正式交接。 | 至少提供 `summary` / `result` 之一 |
+| `kanban_block` | 升级为需要人工输入，附带 `reason`。 | `reason` |
+| `kanban_heartbeat` | 在长时间操作期间发送存活信号。纯副作用。 | — |
+| `kanban_comment` | 向任务线程追加持久化注释。 | `task_id`、`body` |
+| `kanban_create` | （编排器）扇出到子任务，指定 `assignee`、可选的 `parents`、`skills` 等。 | `title`、`assignee` |
+| `kanban_link` | （编排器）事后添加 `parent_id → child_id` 依赖边。 | `parent_id`、`child_id` |
+| `kanban_unblock` | （编排器）将阻塞任务移回 `ready`。 | `task_id` |
 
-A typical worker turn looks like:
+一个典型的工作者轮次如下：
 
 ```
-# Model's tool calls, in order:
-kanban_show()                                     # no args — uses HERMES_KANBAN_TASK
-# (model reads the returned worker_context, does the work via terminal/file tools)
+# 模型的工具调用，按顺序：
+kanban_show()                                     # 无参数——使用 HERMES_KANBAN_TASK
+# (模型读取返回的 worker_context，通过终端/文件工具执行工作)
 kanban_heartbeat(note="halfway through — 4 of 8 files transformed")
-# (more work)
+# (更多工作)
 kanban_complete(
     summary="migrated limiter.py to token-bucket; added 14 tests, all pass",
     metadata={"changed_files": ["limiter.py", "tests/test_limiter.py"], "tests_run": 14},
 )
 ```
 
-An **orchestrator** worker fans out instead:
+**编排器**工作者则扇出：
 
 ```
 kanban_show()
@@ -313,34 +247,31 @@ kanban_create(title="research ICP funding — EU angle", assignee="researcher-b"
 kanban_create(
     title="synthesize findings into launch brief",
     assignee="writer",
-    parents=["t_r1", "t_r2"],                     # promotes to ready when both complete
+    parents=["t_r1", "t_r2"],                     # 两者都完成后提升为 ready
     body="one-pager, 300 words, neutral tone",
 )
 kanban_complete(summary="decomposed into 2 research tasks + 1 writer; linked dependencies")
 ```
 
-The "(Orchestrators)" tools — `kanban_list`, `kanban_create`, `kanban_link`, `kanban_unblock`, and `kanban_comment` on foreign tasks — are available through the same toolset; the convention (encoded in the auto-injected kanban guidance) is that worker profiles don't fan out or route unrelated work, and orchestrator profiles don't execute implementation work. Dispatcher-spawned workers are still task-scoped for destructive lifecycle operations and cannot mutate unrelated tasks.
+工具（编排器）——`kanban_list`、`kanban_create`、`kanban_link`、`kanban_unblock` 和 `kanban_comment`（用于外部任务）——通过同一工具集可用；约定（在自动注入的 kanban 指南中编码）是工作者配置文件不扇出或路由不相关的工作，而编排器配置文件不执行实现工作。调度器生成的工作者仍然针对破坏性生命周期操作限定在任务范围内，不能修改不相关的任务。
 
-### Why tools instead of shelling to `hermes kanban`
+### 为什么使用工具而不是 shell 调用 `hermes kanban`
 
-Three reasons:
+三个原因：
 
-1. **Backend portability.** Workers whose terminal tool points at a remote backend (Docker / Modal / Singularity / SSH) would run `hermes kanban complete` *inside* the container, where `hermes` isn't installed and `~/.hermes/kanban.db` isn't mounted. The kanban tools run in the agent's own Python process and always reach `~/.hermes/kanban.db` regardless of terminal backend.
-2. **No shell-quoting fragility.** Passing `--metadata '{"files": [...]}'` through shlex + argparse is a latent footgun. Structured tool args skip it entirely.
-3. **Better errors.** Tool results are structured JSON the model can reason about, not stderr strings it has to parse.
+1. **后端可移植性。** 终端工具指向远程后端（Docker / Modal / Singularity / SSH）的工作者会在容器*内部*运行 `hermes kanban complete`，其中 `hermes` 未安装且 `~/.hermes/kanban.db` 未挂载。看板工具在智能体自己的 Python 进程中运行，无论终端后端如何，始终能到达 `~/.hermes/kanban.db`。
+2. **无 shell 引用脆弱性。** 通过 shlex + argparse 传递 `--metadata '{"files": [...]}'` 是一个潜在的陷阱。结构化工具参数完全绕过了它。
+3. **更好的错误信息。** 工具结果是模型可以推理的结构化 JSON，而不是它必须解析的 stderr 字符串。
 
-**Zero schema footprint on normal sessions.** A regular `hermes chat` session has zero `kanban_*` tools in its schema unless the active profile explicitly enables the `kanban` toolset for orchestrator work. Dispatcher-spawned task workers get task-scoped tools because `HERMES_KANBAN_TASK` is set; orchestrator profiles get the broader routing surface through config. No tool bloat for users who never touch kanban.
+**常规会话零模式占用。** 一个常规的 `hermes chat` 会话在其模式中没有任何 `kanban_*` 工具，除非活动配置文件显式启用了 `kanban` 工具集用于编排工作。调度器生成的任务工作者获得任务范围工具，因为设置了 `HERMES_KANBAN_TASK`；编排器配置文件通过配置获得更广泛的路由表面。对于从不接触看板的用户，没有工具膨胀。
 
-The auto-injected kanban guidance teaches the model which tool to call when and in what order.
+自动注入的 kanban 指南教会模型何时以及以何种顺序调用哪个工具。
 
-### Recommended handoff evidence
+### 推荐的交接证据
 
-`kanban_complete(summary=..., metadata={...})` is intentionally flexible:
-the summary is the human-readable closeout, and `metadata` is the
-machine-readable handoff that downstream agents, reviewers, or dashboards can
-reuse without scraping prose.
+`kanban_complete(summary=..., metadata={...})` 有意灵活：summary 是人类可读的结束语，而 `metadata` 是机器可读的交接，下游智能体、审查者或仪表盘可以重用而无需解析散文。
 
-For engineering and review tasks, prefer this optional metadata shape:
+对于工程和审查任务，首选以下可选的 metadata 形状：
 
 ```json
 {
@@ -353,43 +284,33 @@ For engineering and review tasks, prefer this optional metadata shape:
 }
 ```
 
-These keys are a convention, not a schema requirement. The useful property is
-that every worker leaves enough evidence for the next reader to answer four
-questions quickly:
+这些键是一个约定，而不是模式要求。有用的属性是每个工作者留下足够的证据，让下一个读者快速回答四个问题：
 
-1. What changed?
-2. How was it verified?
-3. What can unblock or retry this if it fails?
-4. What risk is still deliberately left open?
+1. 改变了什么？
+2. 如何验证的？
+3. 如果失败，什么可以解除阻塞或重试？
+4. 哪些风险仍然故意留开？
 
-Keep secrets, raw logs, tokens, OAuth material, and unrelated transcripts out of
-`metadata`. Store pointers and summaries instead. If a task has no files or
-tests, say so explicitly in `summary` and use `metadata` for the evidence that
-does exist, such as source URLs, issue ids, or manual review steps.
+不要在 `metadata` 中包含秘密、原始日志、令牌、OAuth 材料和不相关的转录内容。存储指针和摘要。如果任务没有文件或测试，在 `summary` 中明确说明，并利用 `metadata` 提供存在的证据，例如源 URL、问题 ID 或人工审查步骤。
 
-### The worker lifecycle
+### 工作者生命周期
 
-Every profile that works kanban tasks automatically gets the worker lifecycle — it's injected into the worker's system prompt at spawn (the `KANBAN_GUIDANCE` block), so there is **nothing to install or configure**. It teaches the worker the full lifecycle in **tool calls**, not CLI commands:
+每个处理看板任务的配置文件自动获得工作者生命周期——它在生成时被注入工作者的系统提示中（`KANBAN_GUIDANCE` 块），因此**无需安装或配置**。它教授工作者完整的生命周期，使用**工具调用**而非 CLI 命令：
 
-1. On spawn, call `kanban_show()` to read title + body + parent handoffs + prior attempts + full comment thread.
-2. `cd $HERMES_KANBAN_WORKSPACE` (via the terminal tool) and do the work there.
-3. Call `kanban_heartbeat(note="...")` every few minutes during long operations. **If your work may run longer than 1 hour, call `kanban_heartbeat` at least once an hour** — the dispatcher reclaims tasks that have been running past `kanban.dispatch_stale_timeout_seconds` (default 4 h) with no heartbeat in the last hour, on the assumption the worker crashed without cleanup. A reclaim is benign (the task goes back to `ready` for re-dispatch without a failure-counter tick) but you lose your current run's progress.
-4. Complete with `kanban_complete(summary="...", metadata={...})`, or `kanban_block(reason="...")` if stuck.
+1. 生成时，调用 `kanban_show()` 读取标题 + 正文 + 父级交接 + 先前尝试 + 完整评论线程。
+2. `cd $HERMES_KANBAN_WORKSPACE`（通过终端工具）并在那里工作。
+3. 在长时间操作期间，每隔几分钟调用 `kanban_heartbeat(note="...")`。**如果你的工作可能运行超过 1 小时，至少每小时调用一次 `kanban_heartbeat`**——调度器会回收那些运行超过 `kanban.dispatch_stale_timeout_seconds`（默认 4 小时）且在过去一小时内没有心跳的任务，假设工作者未清理就崩溃了。回收是良性的（任务回到 `ready` 状态重新调度，不增加失败计数器），但你会丢失当前运行的进度。
+4. 完成后使用 `kanban_complete(summary="...", metadata={...})` 完成，或如果卡住则使用 `kanban_block(reason="...")`。
 
-That final `kanban_complete` / `kanban_block` call is part of the worker
-protocol. If the worker process exits with status 0 while the task is still
-`running`, the dispatcher treats that as a protocol violation, emits a
-`protocol_violation` event, and auto-blocks the task on the next tick instead
-of respawning it into the same loop. This usually means the model wrote a
-plain-text answer and exited without using the Kanban tool surface.
+最后的 `kanban_complete` / `kanban_block` 调用是工作者协议的一部分。如果工作者进程在任务仍处于 `running` 状态时以状态码 0 退出，调度器将其视为协议违规，发出 `protocol_violation` 事件，并在下一个滴答中自动阻塞任务，而不是重新生成进入同一循环。这通常意味着模型写了一个纯文本答案并退出，而没有使用看板工具表面。
 
-The lifecycle plus the load-bearing reference details (workspace kinds, deliverable `artifacts`, claiming created cards) ship in that system-prompt block, so every worker has them regardless of which profile it runs under — no per-profile skill setup required.
+生命周期加上负载相关的参考细节（工作空间类型、交付物 `artifacts`、声明创建的卡片）在该系统提示块中发送，因此每个工作者无论运行在哪个配置文件下都拥有它们——无需每个配置文件的技能设置。
 
-### Pinning extra skills to a specific task
+### 为特定任务固定额外技能
 
-Sometimes a single task needs specialist context the assignee profile doesn't carry by default — a translation job that needs the `translation` skill, a review task that needs `github-code-review`, a security audit that needs `security-pr-audit`. Rather than editing the assignee's profile every time, attach the skills directly to the task.
+有时单个任务需要分配者配置文件默认不携带的专家上下文——一项需要 `translation` 技能的翻译工作、一个需要 `github-code-review` 的审查任务、一个需要 `security-pr-audit` 的安全审计。与其每次编辑分配者的配置文件，不如直接将技能附加到任务上。
 
-**From an orchestrator agent** (the usual case — one agent routing work to another), use the `kanban_create` tool's `skills` array:
+**从编排智能体**（常见情况——一个智能体将工作路由给另一个），使用 `kanban_create` 工具的 `skills` 数组：
 
 ```
 kanban_create(
@@ -405,7 +326,7 @@ kanban_create(
 )
 ```
 
-**From a human (CLI / slash command)**, repeat `--skill` for each one:
+**从人类（CLI / 斜杠命令）**，每个技能重复 `--skill`：
 
 ```bash
 hermes kanban create "translate README to Japanese" \
@@ -418,212 +339,212 @@ hermes kanban create "audit auth flow" \
     --skill github-code-review
 ```
 
-**From the dashboard**, type the skills comma-separated into the **skills** field of the inline create form.
+**从仪表盘**，在行内创建表单的 **skills** 字段中用逗号分隔输入技能。
 
-The dispatcher emits one `--skills <name>` flag per skill listed, so the worker spawns with all of them loaded on top of the auto-injected kanban guidance. The skill names must match skills that are actually installed on the assignee's profile (run `hermes skills list` to see what's available); there's no runtime install.
+调度器为列表中的每个技能发出一个 `--skills <name>` 标志，因此工作者在自动注入的看板指南之上加载所有这些技能。技能名称必须与分配者配置文件上实际安装的技能匹配（运行 `hermes skills list` 查看可用项）；没有运行时安装。
 
-### Goal-mode cards (`--goal`)
+### 目标模式卡片（`--goal`）
 
-By default each worker gets **one shot** at its card — do the work, call `kanban_complete`/`kanban_block`, exit. Pass `--goal` (CLI) or `goal_mode=True` (the `kanban_create` tool / dashboard) to instead run that worker in a **goal loop**, the same Ralph-style engine behind the `/goal` slash command: after every turn an auxiliary judge checks the worker's output against the card's title + body (treated as the acceptance criteria), and if the work isn't done — and the turn budget remains — the worker keeps going **in the same session** until the judge agrees, the worker terminates the task itself, or the budget runs out (which **blocks** the card for human review rather than exiting silently).
+默认情况下每个工作者有**一次机会**处理其卡片——完成工作，调用 `kanban_complete`/`kanban_block`，退出。传递 `--goal`（CLI）或 `goal_mode=True`（`kanban_create` 工具 / 仪表盘）改为在那个工作者中运行**目标循环**，这是 `/goal` 斜杠命令背后的 Ralph 风格引擎：每轮后一个辅助判断器检查工作者的输出是否满足卡片的标题 + 正文（视为接受标准），如果工作未完成——且轮次预算还有剩余——工作者在同一会话中继续，直到判断器同意、工作者自行终止任务、或预算耗尽（此时卡片**阻塞**以待人工审查，而不是静默退出）。
 
 ```bash
 hermes kanban create "Translate the docs site to French" \
     --body "Acceptance: every page translated, no English left, links intact." \
     --assignee linguist \
     --goal \
-    --goal-max-turns 15      # optional; default 20
+    --goal-max-turns 15      # 可选；默认为 20
 ```
 
-Use it for open-ended, multi-step, or "keep going until X is true" cards. Skip it for cheap one-shot work — the per-turn judge overhead isn't worth it, and the dispatcher's existing retry/circuit-breaker already handles transient worker failures. The judge is only as good as your goal text, so write the body as **explicit acceptance criteria**.
+用于开放式、多步骤或“继续直到 X 为真”的卡片。对于廉价的单次工作跳过它——每轮判断器的开销不值得，而且调度器现有的重试/断路器已经处理了临时工作者故障。判断器的好坏取决于你的目标文本，因此将正文写为**明确的接受标准**。
 
-### How the orchestrator behaves
+### 编排器的行为
 
-A **well-behaved orchestrator does not do the work itself.** It decomposes the user's goal into tasks, links them, assigns each to one of the profiles you've set up, and steps back. The orchestrator guidance — anti-temptation rules, a Step-0 profile-discovery prompt (the dispatcher silently fails on unknown assignee names, so the orchestrator must ground every card in profiles that actually exist on your machine), and a decomposition playbook keyed on `kanban_create` / `kanban_link` / `kanban_comment` — is injected into the worker's system prompt automatically; there is nothing to install.
+一个**行为良好的编排器不会亲自完成工作。** 它将用户的目标分解成任务，将它们链接起来，将每个任务分配给你已设置的配置文件之一，然后退后。编排器指南——反诱惑规则、第零步配置文件发现提示（调度器静默失败于未知的分配者名称，因此编排器必须将每个卡片基于你的机器上实际存在的配置文件）、以及一个以 `kanban_create` / `kanban_link` / `kanban_comment` 为键的分解方案——自动注入工作者的系统提示中；无需安装。
 
-A canonical orchestrator turn (two parallel researchers handing off to a writer):
+一个典型的编排器轮次（两个并行研究员转交给写作者）：
 
 ```
-# Goal from user: "draft a launch post on the ICP funding landscape"
+# 用户目标：“草拟一份关于 ICP 融资格局的发布文章”
 kanban_create(title="research ICP funding, NA angle",  assignee="researcher-a", body="…")  # → t_r1
 kanban_create(title="research ICP funding, EU angle",  assignee="researcher-b", body="…")  # → t_r2
 kanban_create(
     title="synthesize ICP funding research into launch post draft",
     assignee="writer",
-    parents=["t_r1", "t_r2"],        # promoted to 'ready' when both researchers complete
+    parents=["t_r1", "t_r2"],        # 两个研究员都完成时提升为“ready”
     body="one-pager, neutral tone, cite sources inline",
 )                                     # → t_w1
-# Optional: add cross-cutting deps discovered later without re-creating tasks
+# 可选：事后添加跨领域依赖而无需重新创建任务
 kanban_link(parent_id="t_r1", child_id="t_followup")
 kanban_complete(
     summary="decomposed into 2 parallel research tasks → 1 synthesis task; writer starts when both researchers finish",
 )
 ```
 
-The orchestrator guidance ships in the worker's system prompt automatically — there is nothing to install or sync per profile.
+编排器指南自动包含在工作者的系统提示中——无需为每个配置文件安装或同步。
 
-For best results, pair it with a profile whose toolsets are restricted to board operations (`kanban`, `gateway`, `memory`) so the orchestrator literally cannot execute implementation tasks even if it tries.
+为了获得最佳效果，将其与一个工具集仅限于看板操作（`kanban`、`gateway`、`memory`）的配置文件配对，这样编排器即使尝试也无法执行实现任务。
 
-## Dashboard (GUI)
+## 仪表盘（GUI）
 
-The `/kanban` CLI and slash command are enough to run the board headlessly, but a visual board is often the right interface for humans-in-the-loop: triage, cross-profile supervision, reading comment threads, and dragging cards between columns. Hermes ships this as a **bundled dashboard plugin** at `plugins/kanban/` — not a core feature, not a separate service — following the model laid out in [Extending the Dashboard](./extending-the-dashboard).
+`/kanban` CLI 和斜杠命令足以无头运行看板，但可视化看板通常是人工介入的正确界面：分类、跨配置文件监督、阅读评论线程、以及在列之间拖拽卡片。Hermes 将其作为**捆绑的仪表盘插件**在 `plugins/kanban/` 中提供——不是核心功能，不是独立服务——遵循[扩展仪表盘](./extending-the-dashboard)中阐述的模型。
 
-Open it with:
+通过以下方式打开：
 
 ```bash
-hermes kanban init      # one-time: create kanban.db if not already present
-hermes dashboard        # "Kanban" tab appears in the nav, after "Skills"
+hermes kanban init      # 一次性：如尚未创建则创建 kanban.db
+hermes dashboard        # “Kanban”标签出现在导航中，位于“Skills”之后
 ```
 
-### What the plugin gives you
+### 插件提供的内容
 
-- A **Kanban** tab showing one column per status: `triage`, `todo`, `ready`, `running`, `blocked`, `done` (plus `archived` when the toggle is on).
-  - `triage` is the parking column for rough ideas. By default (`kanban.auto_decompose: true`), the dispatcher auto-runs the **decomposer** on tasks that land here. The built-in decomposer uses the `auxiliary.kanban_decomposer` model path, reads your profile roster (with descriptions), and fans the task out into a small graph of child tasks routed to the best-fit specialists. The original task stays alive as the parent of every child so its assignee (`kanban.orchestrator_profile`, or the active default profile when unset) wakes back up to judge completion when everything finishes. Flip the **Orchestration: Auto/Manual** pill at the top of the page (emerald = Auto, muted gray = Manual), or by editing `config.yaml` directly. Both modes coexist with `hermes kanban specify` - that's still available as a single-task spec rewrite when you don't want fan-out.
-- Cards show the task id, title, priority badge, tenant tag, assigned profile, comment/link counts, a **progress pill** (`N/M` children done when the task has dependents), and "created N ago". A per-card checkbox enables multi-select.
-- **Per-profile lanes inside Running** — toolbar checkbox toggles sub-grouping of the Running column by assignee.
-- **Live updates via WebSocket** — the plugin tails the append-only `task_events` table on a short poll interval; the board reflects changes the instant any profile (CLI, gateway, or another dashboard tab) acts. Reloads are debounced so a burst of events triggers a single refetch.
-- **Drag-drop** cards between columns to change status. The drop sends `PATCH /api/plugins/kanban/tasks/:id` which routes through the same `kanban_db` code the CLI uses — the three surfaces can never drift. Moves into destructive statuses (`done`, `archived`, `blocked`) prompt for confirmation. Touch devices use a pointer-based fallback so the board is usable from a tablet.
-- **Inline create** — click `+` on any column header to type a title, assignee, priority, and (optionally) a parent task from a dropdown over every existing task. Press Enter to create the task, Shift+Enter to insert a newline in the title field, or Escape to cancel. Creating from the Triage column automatically parks the new task in triage.
-- **Multi-select with bulk actions** — shift/ctrl-click a card or tick its checkbox to add it to the selection. A bulk action bar appears at the top with batch status transitions, archive, and reassign (by profile dropdown, or "(unassign)"). Destructive batches confirm first. Per-id partial failures are reported without aborting the rest.
-- **Click a card** (without shift/ctrl) to open a side drawer (Escape or click-outside closes) with:
-  - **Editable title** — click the heading to rename.
-  - **Editable assignee / priority** — click the meta row to rewrite.
-  - **Editable description** — markdown-rendered by default (headings, bold, italic, inline code, fenced code, `http(s)` / `mailto:` links, bullet lists), with an "edit" button that swaps in a textarea. Markdown rendering is a tiny, XSS-safe renderer — every substitution runs on HTML-escaped input, only `http(s)` / `mailto:` links pass through, and `target="_blank"` + `rel="noopener noreferrer"` are always set.
-  - **Dependency editor** — chip list of parents and children, each with an `×` to unlink, plus dropdowns over every other task to add a new parent or child. Cycle attempts are rejected server-side with a clear message.
-  - **Status action row** (→ triage / → ready / → running / block / unblock / complete / archive) with confirm prompts for destructive transitions. For cards in the **Triage** column the row also exposes two LLM-driven actions: **⚗ Decompose** fans the task out into a graph of child tasks routed to specialist profiles by description, and **✨ Specify** does a single-task spec rewrite. Decompose falls back to specify-style promotion when the LLM decides the task doesn't benefit from fan-out, so it's a strict superset. Both are reachable from the CLI (`hermes kanban decompose <id>` / `specify <id>` / `--all`), from any gateway platform (`/kanban decompose <id>`), and programmatically via `POST /api/plugins/kanban/tasks/:id/decompose` and `…/specify`. Configure the models under `auxiliary.kanban_decomposer` and `auxiliary.triage_specifier` in `config.yaml`.
-  - Result section (also markdown-rendered), comment thread with Enter-to-submit, the last 20 events.
-- **Toolbar filters** — free-text search, tenant dropdown (defaults to `dashboard.kanban.default_tenant` from `config.yaml`), assignee dropdown, "show archived" toggle, "lanes by profile" toggle, and a **Nudge dispatcher** button so you don't have to wait for the next 60 s tick.
+- 一个**看板**标签页，每列显示一个状态：`triage`、`todo`、`ready`、`running`、`blocked`、`done`（以及当切换开启时的 `archived`）。
+  - `triage` 是粗略想法的停放列。默认情况下（`kanban.auto_decompose: true`），调度器自动对部署到此处的任务运行**分解器**。内置分解器使用 `auxiliary.kanban_decomposer` 模型路径，读取你的配置文件名单（含描述），并将任务扇出成一个小的子任务图，路由到最合适的专家。原始任务作为所有子任务的父级存活，这样当所有任务完成时，其分配者（`kanban.orchestrator_profile`，或未设置时的活动默认配置文件）会醒来判断完成。翻转页面顶部的 **Orchestration: Auto/Manual** 药丸（翠绿色 = Auto，哑光灰色 = Manual），或直接编辑 `config.yaml`。两种模式都与 `hermes kanban specify` 共存——如果你不想要扇出，它仍然可以作为单个任务规范重写使用。
+- 卡片显示任务 id、标题、优先级徽章、租户标签、分配配置文件、评论/链接计数、一个进度药丸（当任务有依赖项时显示 `N/M` 子任务完成），以及“在 N 前创建”。每张卡片有一个复选框用于多选。
+- **每个配置文件的泳道在 Running 内**——工具栏复选框切换 Running 列的子分组，按分配者分组。
+- **通过 WebSocket 实时更新**——插件以短轮询间隔追踪仅追加的 `task_events` 表；看板在任何配置文件（CLI、网关或另一个仪表盘标签）采取行动时立即反映变化。重新加载被去抖，因此事件突发只触发一次重新获取。
+- **拖拽**卡片在各列之间移动以改变状态。放下发送 `PATCH /api/plugins/kanban/tasks/:id`，该调用通过 CLI 使用的相同 `kanban_db` 代码路由——三个表面永远不会漂移。移动到破坏性状态（`done`、`archived`、`blocked`）会提示确认。触摸设备使用基于指针的回退，因此看板在平板电脑上也可用。
+- **行内创建**——点击任何列标题上的 `+` 以输入标题、分配者、优先级，以及（可选）从下拉菜单中选择一个父任务。按 Enter 创建任务，Shift+Enter 在标题字段中插入换行，或 Escape 取消。从 `triage` 列创建会自动将新任务停放在 triage 中。
+- **多选与批量操作**——shift/ctrl 点击卡片或勾选其复选框以将其添加到选择中。顶部出现一个批量操作栏，带有批量状态转换、归档和重新分配（通过配置文件下拉菜单，或“(unassign)”）。破坏性批量操作先确认。每个 id 的部分失败会报告而不中止其余任务。
+- **点击一张卡片**（不带 shift/ctrl）打开一个侧边抽屉（Escape 或点击外部关闭），其中包含：
+  - **可编辑标题**——点击标题重命名。
+  - **可编辑分配者/优先级**——点击元数据行进行重写。
+  - **可编辑描述**——默认以 Markdown 渲染（标题、粗体、斜体、内联代码、围栏代码、`http(s)` / `mailto:` 链接、项目列表），带有一个“编辑”按钮切换到文本域。Markdown 渲染是一个微小的、XSS 安全的渲染器——每个替换在 HTML 转义输入上运行，只有 `http(s)` / `mailto:` 链接通过，并且始终设置 `target="_blank"` + `rel="noopener noreferrer"`。
+  - **依赖编辑器**——父级和子级芯片列表，每个带有一个 `×` 解除链接，再加上其他任务的复选框添加新父级或子级。循环尝试在服务器端被拒绝并附带清晰消息。
+  - **状态操作行**（→ triage / → ready / → running / block / unblock / complete / archive）对破坏性转换带有确认提示。对于 **Triage** 列中的卡片，行还暴露两个 LLM 驱动的操作：**⚗ Decompose** 将任务扇出一个子任务图，路由到按描述匹配的专家配置文件；以及 **✨ Specify** 进行单任务规范重写。当 LLM 决定任务不获益于扇出时，Decompose 回退到 specify 风格的提升，因此它是一个严格超集。两者都可以从 CLI（`hermes kanban decompose <id>` / `specify <id>` / `--all`）、从任何网关平台（`/kanban decompose <id>`）和以编程方式通过 `POST /api/plugins/kanban/tasks/:id/decompose` 和 `…/specify` 访问。在 `config.yaml` 中的 `auxiliary.kanban_decomposer` 和 `auxiliary.triage_specifier` 下配置模型。
+  - 结果部分（也 Markdown 渲染）、评论线程（Enter 提交）、最近 20 个事件。
+- **工具栏过滤器**——自由文本搜索、租户下拉菜单（默认为 `config.yaml` 中的 `dashboard.kanban.default_tenant`）、分配者下拉菜单、“显示归档”切换、“按配置文件泳道”切换，以及一个**推送调度器**按钮，这样你就不必等待下一个 60 秒滴答。
 
-Visually the target is the familiar Linear / Fusion layout: dark theme, column headers with counts, coloured status dots, pill chips for priority and tenant. The plugin reads only theme CSS vars (`--color-*`, `--radius`, `--font-mono`, ...), so it reskins automatically with whichever dashboard theme is active.
+视觉上目标是与 Linear / Fusion 类似的布局：深色主题、带计数的列标题、彩色状态点、优先级和租户的药丸芯片。插件只读取主题 CSS 变量（`--color-*`、`--radius`、`--font-mono`、...），因此它会根据当前活动的仪表盘主题自动重新设置样式。
 
-### Auto vs Manual orchestration
+### 自动 vs 手动编排
 
-The kanban board has two ways to handle a task you drop into the Triage column:
+看板有两种方式处理你放入 `triage` 列的任务：
 
-**Auto (default)** — `kanban.auto_decompose: true`. The gateway-embedded dispatcher runs the **decomposer** on each tick, capped by `kanban.auto_decompose_per_tick` (default 3 tasks per tick) so a bulk-load of triage tasks doesn't burst-spend the auxiliary LLM. The decomposer uses the built-in decomposition prompt plus the `auxiliary.kanban_decomposer` model path, reads your installed profiles + their descriptions, and asks the LLM to produce a JSON task graph: which tasks to spawn, who they go to, and which depend on which. The original triage task becomes the parent of every leaf in the graph, so it stays alive until the whole graph completes - and then promotes back to `ready` so its assignee (`kanban.orchestrator_profile`, or the active default profile when unset) can judge completion and add more tasks if the work isn't done. This is the "drop a one-liner, walk away" flow.
+**Auto（默认）**——`kanban.auto_decompose: true`。网关内嵌调度器在每个滴答上运行**分解器**，由 `kanban.auto_decompose_per_tick` 限制（默认每个滴答处理 3 个任务），这样批量加载 triage 任务不会爆发式消耗辅助 LLM。分解器使用内置分解提示加上 `auxiliary.kanban_decomposer` 模型路径，读取你已安装的配置文件及其描述，并要求 LLM 生成一个 JSON 任务图：要生成哪些任务、它们交给谁、哪个依赖哪个。原始 triage 任务成为图中每个叶节点的父级，因此它会一直存活直到整个图完成——然后提升回 `ready`，这样其分配者（`kanban.orchestrator_profile` 或未设置时的活动默认配置文件）可以判断完成，如果工作未完成则添加更多任务。这就是“丢下一行，走开”的流程。
 
-**Manual** — `kanban.auto_decompose: false`. Triage tasks stay in triage until you act. Click the **⚗ Decompose** button on a card, run `hermes kanban decompose <id>` (or `--all`), or use `/kanban decompose <id>` from a chat. This matches the pre-decomposer behavior of the board, useful when you want full control over what runs when.
+**Manual（手动）**——`kanban.auto_decompose: false`。Triage 任务保持在 triage 中直到你采取行动。点击卡片上的 **⚗ Decompose** 按钮，运行 `hermes kanban decompose <id>`（或 `--all`），或从聊天中使用 `/kanban decompose <id>`。这匹配看板在分解器之前的行为，当你想要完全控制何时运行什么时很有用。
 
-Flip between the two modes from the **Orchestration: Auto/Manual** pill at the top of the kanban page (emerald = Auto, muted gray = Manual), or by editing `config.yaml` directly. Both modes coexist with `hermes kanban specify` — that's still available as a single-task spec rewrite when you don't want fan-out.
+通过看板页面顶部的 **Orchestration: Auto/Manual** 药丸（翠绿色 = Auto，哑光灰色 = Manual）翻转两种模式，或直接编辑 `config.yaml`。两种模式与 `hermes kanban specify` 共存——如果你不想要扇出，它仍然可以作为单任务规范重写使用。
 
-The decomposer's routing decisions depend on profile descriptions, which is a per-profile labeling primitive you set with `hermes profile create --description "..."`, `hermes profile describe <name> --text "..."`, `hermes profile describe <name> --auto` (LLM-generates from the profile's installed skills + model), or the dashboard's per-profile editor in the expanded **Orchestration settings** panel. Profiles without a description still appear in the roster — they're routable by name, just less precisely. The decomposer NEVER lands a child task with `assignee=None`: when the LLM picks an unknown profile, the child gets routed to `kanban.default_assignee` (or the active default profile if that's unset).
+分解器的路由决策取决于配置文件描述，这是一个每个配置文件的标签原语，你可以通过 `hermes profile create --description "..."`、`hermes profile describe <name> --text "..."`、`hermes profile describe <name> --auto`（从配置文件的已安装技能 + 模型 LLM 生成）或仪表盘扩展后的 **Orchestration settings** 面板中的每个配置文件编辑器设置。没有描述的配置文件仍然出现在名单中——它们可以按名称路由，只是不够精确。分解器绝不会让子任务的 `assignee=None`：当 LLM 选择一个未知配置文件时，子任务被路由到 `kanban.default_assignee`（或如果未设置则回退到活动默认配置文件）。
 
-`kanban.orchestrator_profile` does not load that profile's prompt, skills, or custom logic into the decomposition call. It controls who owns the root/orchestration task after fan-out. To change the decomposer's model/provider, configure `auxiliary.kanban_decomposer`. To use a profile's custom task-splitting logic instead of the built-in decomposer, switch to Manual mode and have that profile create or decompose tasks explicitly.
+`kanban.orchestrator_profile` 不会将该配置文件的提示、技能或自定义逻辑加载到分解调用中。它控制扇出后谁拥有根/编排任务。要更改分解器的模型/提供者，配置 `auxiliary.kanban_decomposer`。要使用配置文件的自定义任务拆分逻辑而不是内置分解器，切换到手动模式，让该配置文件显式创建或分解任务。
 
-Config knobs (all under `kanban:` in `~/.hermes/config.yaml`):
+配置旋钮（都在 `~/.hermes/config.yaml` 的 `kanban:` 下）：
 
-| Key | Default | Purpose |
+| 键 | 默认值 | 用途 |
 |---|---|---|
-| `auto_decompose` | `true` | Dispatcher auto-runs the decomposer every tick. |
-| `auto_decompose_per_tick` | `3` | Cap on decompositions per dispatcher tick. Excess defers to the next tick. |
-| `orchestrator_profile` | `""` | Profile assigned to the root/orchestration task after decomposition. Empty = fall back to active default profile. |
-| `default_assignee` | `""` | Where a child task lands when the LLM picks an unknown profile. Empty = fall back to active default. |
-| `auto_subscribe_on_create` | `true` | When a worker calls `kanban_create` from inside a session with a persistent delivery channel (messaging gateway or TUI), the originating session is auto-subscribed to the new task's completion/block events. The dispatcher still drives the delivery — this only changes whether the caller's chat/key shows up in the notify-sub table. Set to `false` to require explicit `kanban_notify-subscribe` calls per task. |
+| `auto_decompose` | `true` | 调度器在每个滴答上自动运行分解器。 |
+| `auto_decompose_per_tick` | `3` | 每个调度器滴答允许的最大分解次数。多余的推迟到下一个滴答。 |
+| `orchestrator_profile` | `""` | 分解后分配给根/编排任务的配置文件。空值 = 回退到活动默认配置文件。 |
+| `default_assignee` | `""` | 当 LLM 选择未知配置文件时，子任务被分配到的位置。空值 = 回退到活动默认配置文件。 |
+| `auto_subscribe_on_create` | `true` | 当工作者从具有持久传递渠道的会话内部调用 `kanban_create` 时（消息网关或 TUI），原始会话自动订阅新任务的完成/阻塞事件。调度器仍然驱动传递——这只改变调用者的聊天/键是否出现在通知订阅表中。设置为 `false` 以要求每个任务显式调用 `kanban_notify-subscribe`。 |
 
-And the two auxiliary LLM slots:
+以及两个辅助 LLM 槽位：
 
-| Key | Purpose |
+| 键 | 用途 |
 |---|---|
-| `auxiliary.kanban_decomposer` | Model that produces the task graph (called by Decompose). Set `provider`/`model` to override the main chat model. |
-| `auxiliary.profile_describer` | Model that auto-generates profile descriptions (called by `hermes profile describe --auto`). |
+| `auxiliary.kanban_decomposer` | 生成任务图的模型（由 Decompose 调用）。设置 `provider`/`model` 以覆盖主聊天模型。 |
+| `auxiliary.profile_describer` | 自动生成配置文件描述的模型（由 `hermes profile describe --auto` 调用）。 |
 
-### Architecture
+### 架构
 
-The GUI is strictly a **read-through-the-DB + write-through-kanban_db** layer with no domain logic of its own:
+GUI 严格是一个**通过数据库读取 + 通过 kanban_db 写入**的层，本身没有领域逻辑：
 
 <!-- ascii-guard-ignore -->
 ```
-┌────────────────────────┐      WebSocket (tails task_events)
-│   React SPA (plugin)   │ ◀──────────────────────────────────┐
-│   HTML5 drag-and-drop  │                                    │
+┌────────────────────────┐      WebSocket (追踪 task_events)
+│   React SPA (插件)   │ ◀──────────────────────────────────┐
+│   HTML5 拖拽          │                                    │
 └──────────┬─────────────┘                                    │
-           │ REST over fetchJSON                              │
+           │ REST 通过 fetchJSON                              │
            ▼                                                  │
-┌────────────────────────┐     writes call kanban_db.*        │
-│  FastAPI router        │     directly — same code path      │
-│  plugins/kanban/       │     the CLI /kanban verbs use      │
+┌────────────────────────┐     写入调用 kanban_db.*          │
+│  FastAPI 路由器        │     直接——与 CLI /kanban 动词       │
+│  plugins/kanban/       │     使用的代码路径相同             │
 │  dashboard/plugin_api.py                                    │
 └──────────┬─────────────┘                                    │
            │                                                  │
            ▼                                                  │
 ┌────────────────────────┐                                    │
-│  ~/.hermes/kanban.db   │ ───── append task_events ──────────┘
-│  (WAL, shared)         │
+│  ~/.hermes/kanban.db   │ ───── 追加 task_events ────────────┘
+│  (WAL, 共享)           │
 └────────────────────────┘
 ```
 <!-- ascii-guard-ignore-end -->
 
-### REST surface
+### REST 接口
 
-All routes are mounted under `/api/plugins/kanban/` and protected by the dashboard's ephemeral session token:
+所有路由挂载在 `/api/plugins/kanban/` 下，受仪表盘的短暂会话令牌保护：
 
-| Method | Path | Purpose |
+| 方法 | 路径 | 用途 |
 |---|---|---|
-| `GET` | `/board?tenant=<name>&include_archived=…` | Full board grouped by status column, plus tenants + assignees for filter dropdowns |
-| `GET` | `/tasks/:id` | Task + comments + events + links |
-| `POST` | `/tasks` | Create (wraps `kanban_db.create_task`, accepts `triage: bool` and `parents: [id, …]`) |
-| `PATCH` | `/tasks/:id` | Status / assignee / priority / title / body / result |
-| `POST` | `/tasks/bulk` | Apply the same patch (status / archive / assignee / priority) to every id in `ids`. Per-id failures reported without aborting siblings |
-| `POST` | `/tasks/:id/comments` | Append a comment |
-| `POST` | `/tasks/:id/specify` | Run the triage specifier — auxiliary LLM fleshes out the task body and promotes it from `triage` to `todo`. Returns `{ok, task_id, reason, new_title}`; `ok=false` with a human-readable reason on "not in triage" / no aux client / LLM error is a 200, not a 4xx |
-| `POST` | `/tasks/:id/decompose` | Run the kanban decomposer — auxiliary LLM produces a task graph and the helper atomically creates the children + links the root + flips `triage → todo`. Returns `{ok, task_id, reason, fanout, child_ids, new_title}`. Same 200-on-LLM-error convention as `/specify`. |
-| `GET` | `/profiles` | List installed profiles with their descriptions (consumed by the dashboard's profile-description editor and the orchestrator picker). |
-| `PATCH` | `/profiles/:name` | Set or clear a profile's description (user-authored — `description_auto: false`). Returns `{ok, profile, description}`. |
-| `POST` | `/profiles/:name/describe-auto` | Generate a description for a profile via `auxiliary.profile_describer`. Persists with `description_auto: true` so the dashboard can surface a "review" badge. |
-| `GET` | `/orchestration` | Read the kanban orchestration settings (`orchestrator_profile`, `default_assignee`, `auto_decompose`) plus the *resolved* effective values after fallbacks. |
-| `PUT` | `/orchestration` | Update one or more of the three orchestration keys in `config.yaml`. Validates that non-empty profile names actually exist. |
-| `POST` | `/links` | Add a dependency (`parent_id` → `child_id`) |
-| `DELETE` | `/links?parent_id=…&child_id=…` | Remove a dependency |
-| `POST` | `/dispatch?max=…&dry_run=…` | Nudge the dispatcher — skip the 60 s wait |
-| `GET` | `/config` | Read `dashboard.kanban` preferences from `config.yaml` — `default_tenant`, `lane_by_profile`, `include_archived_by_default`, `render_markdown` |
-| `WS` | `/events?since=<event_id>` | Live stream of `task_events` rows |
+| `GET` | `/board?tenant=<name>&include_archived=…` | 按状态列分组的完整看板，加上用于过滤器下拉菜单的租户和分配者 |
+| `GET` | `/tasks/:id` | 任务 + 评论 + 事件 + 链接 |
+| `POST` | `/tasks` | 创建（包装 `kanban_db.create_task`，接受 `triage: bool` 和 `parents: [id, …]`） |
+| `PATCH` | `/tasks/:id` | 状态 / 分配者 / 优先级 / 标题 / 正文 / 结果 |
+| `POST` | `/tasks/bulk` | 将相同的补丁（状态 / 归档 / 分配者 / 优先级）应用于 `ids` 中的每个 id。每个 id 的失败被报告而不中止兄弟任务 |
+| `POST` | `/tasks/:id/comments` | 追加评论 |
+| `POST` | `/tasks/:id/specify` | 运行 triage 指定器——辅助 LLM 充实任务正文并将其从 `triage` 提升到 `todo`。返回 `{ok, task_id, reason, new_title}`；`ok=false` 并带有可读原因（如“不在 triage”/无辅助客户端/LLM 错误）时返回 200，不是 4xx |
+| `POST` | `/tasks/:id/decompose` | 运行看板分解器——辅助 LLM 生成任务图，然后帮助原子创建子任务 + 链接根任务 + 翻转 `triage → todo`。返回 `{ok, task_id, reason, fanout, child_ids, new_title}`。与 `/specify` 相同的 LLM 错误时返回 200 的约定。 |
+| `GET` | `/profiles` | 列出已安装的配置文件及其描述（由仪表盘的配置文件描述编辑器和编排器选取器使用）。 |
+| `PATCH` | `/profiles/:name` | 设置或清除配置文件的描述（用户创作——`description_auto: false`）。返回 `{ok, profile, description}`。 |
+| `POST` | `/profiles/:name/describe-auto` | 通过 `auxiliary.profile_describer` 为配置文件生成描述。以 `description_auto: true` 持久保存，以便仪表盘可以显示一个“审查”徽章。 |
+| `GET` | `/orchestration` | 读取看板编排设置（`orchestrator_profile`、`default_assignee`、`auto_decompose`）以及回退后的*已解析*有效值。 |
+| `PUT` | `/orchestration` | 更新 `config.yaml` 中三个编排键的一个或多个。验证非空的配置文件名称确实存在。 |
+| `POST` | `/links` | 添加依赖关系（`parent_id` → `child_id`） |
+| `DELETE` | `/links?parent_id=…&child_id=…` | 移除依赖关系 |
+| `POST` | `/dispatch?max=…&dry_run=…` | 推送调度器——跳过 60 秒等待 |
+| `GET` | `/config` | 从 `config.yaml` 读取 `dashboard.kanban` 偏好——`default_tenant`、`lane_by_profile`、`include_archived_by_default`、`render_markdown` |
+| `WS` | `/events?since=<event_id>` | `task_events` 行的实时流 |
 
-Every handler is a thin wrapper — the plugin is ~700 lines of Python (router + WebSocket tail + bulk batcher + config reader) and adds no new business logic. A tiny `_conn()` helper auto-initializes `kanban.db` on every read and write, so a fresh install works whether the user opened the dashboard first, hit the REST API directly, or ran `hermes kanban init`.
+每个处理程序都是一个轻量包装器——插件大约 700 行 Python（路由器 + WebSocket 追踪 + 批量处理器 + 配置读取器），不添加新的业务逻辑。一个微小的 `_conn()` 帮助器在每个读取和写入时自动初始化 `kanban.db`，因此全新安装无论用户是先打开仪表盘、直接访问 REST API 还是运行 `hermes kanban init` 都能工作。
 
-### Dashboard config
+### 仪表盘配置
 
-Any of these keys under `dashboard.kanban` in `~/.hermes/config.yaml` changes the tab's defaults — the plugin reads them at load time via `GET /config`:
+`~/.hermes/config.yaml` 中 `dashboard.kanban` 下的任何键都会更改标签页的默认值——插件在加载时通过 `GET /config` 读取：
 
 ```yaml
 dashboard:
   kanban:
-    default_tenant: acme              # preselects the tenant filter
-    lane_by_profile: true             # default for the "lanes by profile" toggle
+    default_tenant: acme              # 预选租户过滤器
+    lane_by_profile: true             # “lanes by profile”切换的默认值
     include_archived_by_default: false
-    render_markdown: true             # set false for plain <pre> rendering
+    render_markdown: true             # 设置为 false 以使用纯 <pre> 渲染
 ```
 
-Each key is optional and falls back to the shown default.
+每个键是可选的，并回退到显示的默认值。
 
-### Security model
+### 安全模型
 
-The dashboard's HTTP auth middleware [explicitly skips `/api/plugins/`](./extending-the-dashboard#backend-api-routes) — plugin routes are unauthenticated by design because the dashboard binds to localhost by default. That means the kanban REST surface is reachable from any process on the host.
+仪表盘的 HTTP 认证中间件[显式跳过 `/api/plugins/`](./extending-the-dashboard#backend-api-routes)——插件路由默认未认证，因为仪表盘默认绑定到 localhost。这意味着看板 REST 接口可以从主机上的任何进程访问。
 
-The WebSocket takes one additional step: it requires the dashboard's ephemeral session token as a `?token=…` query parameter (browsers can't set `Authorization` on an upgrade request), matching the pattern used by the in-browser PTY bridge.
+WebSocket 多加一步：它需要仪表盘的短暂会话令牌作为 `?token=…` 查询参数（浏览器无法在升级请求上设置 `Authorization`），与浏览器内 PTY 桥使用的模式匹配。
 
-If you run `hermes dashboard --host 0.0.0.0`, every plugin route — kanban included — becomes reachable from the network. **Don't do that on a shared host.** The board contains task bodies, comments, and workspace paths; an attacker reaching these routes gets read access to your entire collaboration surface and can also create / reassign / archive tasks.
+如果你运行 `hermes dashboard --host 0.0.0.0`，每个插件路由——包括看板——都可以从网络访问。**不要在共享主机上这样做。** 看板包含任务正文、评论和工作空间路径；攻击者访问这些路由可以获得对你整个协作表面的读取权限，并且还可以创建/重新分配/归档任务。
 
-Tasks in `~/.hermes/kanban.db` are profile-agnostic on purpose (that's the coordination primitive). If you open the dashboard with `hermes -p <profile> dashboard`, the board still shows tasks created by any other profile on the host. Same user owns all profiles, but this is worth knowing if multiple personas coexist.
+`~/.hermes/kanban.db` 中的任务设计上是配置无关的（这是协调原语）。如果你使用 `hermes -p <profile> dashboard` 打开仪表盘，看板仍然显示主机上任何其他配置文件创建的任务。同一用户拥有所有配置文件，但如果多个角色共存，这一点值得注意。
 
-### Live updates
+### 实时更新
 
-`task_events` is an append-only SQLite table with a monotonic `id`. The WebSocket endpoint holds each client's last-seen event id and pushes new rows as they land. When a burst of events arrives, the frontend reloads the (very cheap) board endpoint — simpler and more correct than trying to patch local state from every event kind. WAL mode means the read loop never blocks the dispatcher's `BEGIN IMMEDIATE` claim transactions.
+`task_events` 是一个仅追加的 SQLite 表，具有单调递增的 `id`。WebSocket 端点持有每个客户端最后看到的事件 id，并在新行到达时推送它们。当事件突发时，前端重新加载（非常便宜的）看板端点——比尝试从每个事件类型修补本地状态更简单、更正确。WAL 模式意味着读取循环永远不会阻塞调度器的 `BEGIN IMMEDIATE` 声明事务。
 
-### Extending it
+### 扩展它
 
-The plugin uses the standard Hermes dashboard plugin contract — see [Extending the Dashboard](./extending-the-dashboard) for the full manifest reference, shell slots, page-scoped slots, and the Plugin SDK. Extra columns, custom card chrome, tenant-filtered layouts, or full `tab.override` replacements are all expressible without forking this plugin.
+插件使用标准的 Hermes 仪表盘插件合约——有关完整的清单参考、shell 槽位、页面范围槽位和插件 SDK，请参阅[扩展仪表盘](./extending-the-dashboard)。额外列、自定义卡片装饰、租户过滤器布局或完整的 `tab.override` 替换都可以实现，而无需派生此插件。
 
-To disable without removing: add `dashboard.plugins.kanban.enabled: false` to `config.yaml` (or delete `plugins/kanban/dashboard/manifest.json`).
+要禁用而不移除：在 `config.yaml` 中添加 `dashboard.plugins.kanban.enabled: false`（或删除 `plugins/kanban/dashboard/manifest.json`）。
 
-### Scope boundary
+### 范围边界
 
-The GUI is deliberately thin. Everything the plugin does is reachable from the CLI; the plugin just makes it comfortable for humans. Auto-assignment, budgets, governance gates, and org-chart views remain user-space — a router profile, another plugin, or a reuse of `tools/approval.py` — exactly as listed in the out-of-scope section of the design spec.
+GUI 特意简单。插件能做的所有事情都可以从 CLI 访问；插件只是让人类更舒适。自动分配、预算、治理门和组织视图仍然是用户空间——一个路由器配置文件、另一个插件或对 `tools/approval.py` 的重用——正如设计规范的范围外部分所列的那样。
 
-## CLI command reference
+## CLI 命令参考
 
-This is the surface **you** (or scripts, cron, the dashboard) use to drive the board. Workers running inside the dispatcher use the `kanban_*` [tool surface](#how-workers-interact-with-the-board) for the same operations — the CLI here and the tools there both route through `kanban_db`, so the two surfaces agree by construction.
+这是**你**（或脚本、cron、仪表盘）用来驱动看板的接口。在调度器内运行的工作者使用 `kanban_*` [工具接口](#工作者如何与看板交互)进行相同操作——此处的 CLI 和那里的工具都通过 `kanban_db` 路由，因此两个接口在构建上一致。
 
 ```
-hermes kanban init                                     # create kanban.db + print daemon hint
+hermes kanban init                                     # 创建 kanban.db + 打印守护进程提示
 hermes kanban create "<title>" [--body ...] [--assignee <profile>]
                                 [--parent <id>]... [--tenant <name>]
                                 [--workspace scratch|worktree|worktree:<path>|dir:<path>]
@@ -639,60 +560,60 @@ hermes kanban list [--mine] [--assignee P] [--status S] [--tenant T] [--archived
         [--sort created|created-desc|priority|priority-desc|status|assignee|title|updated]
         [--json]
 hermes kanban show <id> [--json]
-hermes kanban assign <id> <profile>                    # or 'none' to unassign
-hermes kanban reassign <id>... <profile>               # bulk re-assign tasks to a profile
-hermes kanban edit <id> [--title ...] [--body ...]     # edit task title / body / priority in place
+hermes kanban assign <id> <profile>                    # 或 'none' 取消分配
+hermes kanban reassign <id>... <profile>               # 批量重新分配任务到配置文件
+hermes kanban edit <id> [--title ...] [--body ...]     # 原地编辑任务标题/正文/优先级
         [--priority N]
-hermes kanban promote <id>...                          # move todo/blocked tasks to ready (recovery)
-hermes kanban schedule <id> --at <ISO8601>             # set/clear a task's scheduled_at start time
-hermes kanban diagnostics [--json]                     # board health snapshot (alias: diag)
+hermes kanban promote <id>...                          # 将 todo/blocked 任务移至 ready（恢复）
+hermes kanban schedule <id> --at <ISO8601>             # 设置/清除任务的 scheduled_at 开始时间
+hermes kanban diagnostics [--json]                     # 看板健康快照（别名：diag）
 hermes kanban link <parent_id> <child_id>
 hermes kanban unlink <parent_id> <child_id>
 hermes kanban claim <id> [--ttl SECONDS]
 hermes kanban comment <id> "<text>" [--author NAME]
 
-# Bulk verbs — accept multiple ids:
+# 批量动词——接受多个 id：
 hermes kanban complete <id>... [--result "..."]
 hermes kanban block <id> "<reason>" [--ids <id>...]
 hermes kanban unblock <id>...
 hermes kanban archive <id>...
 
-hermes kanban tail <id>                                # follow a single task's event stream
-hermes kanban watch [--assignee P] [--tenant T]        # live stream ALL events to the terminal
+hermes kanban tail <id>                                # 追踪单个任务的事件流
+hermes kanban watch [--assignee P] [--tenant T]        # 实时流式传输所有事件到终端
         [--kinds completed,blocked,…] [--interval SECS]
-hermes kanban heartbeat <id> [--note "..."]            # worker liveness signal for long ops
-hermes kanban runs <id> [--json]                       # attempt history (one row per run)
-hermes kanban assignees [--json]                       # profiles on disk + per-assignee task counts
-hermes kanban dispatch [--dry-run] [--max N]           # one-shot pass
+hermes kanban heartbeat <id> [--note "..."]            # 工作者存活信号，用于长时间操作
+hermes kanban runs <id> [--json]                       # 尝试历史（每次运行一行）
+hermes kanban assignees [--json]                       # 磁盘上的配置文件 + 每个分配者的任务计数
+hermes kanban dispatch [--dry-run] [--max N]           # 单次传递
         [--failure-limit N] [--json]
-hermes kanban daemon --force                           # DEPRECATED — standalone dispatcher (use `hermes gateway start` instead)
+hermes kanban daemon --force                           # 已弃用 — 独立调度器（改用 `hermes gateway start`）
         [--failure-limit N] [--pidfile PATH] [-v]
-hermes kanban stats [--json]                           # per-status + per-assignee counts
-hermes kanban log <id> [--tail BYTES]                  # worker log from ~/.hermes/kanban/logs/
-hermes kanban notify-subscribe <id>                    # gateway bridge hook (used by /kanban in the gateway)
+hermes kanban stats [--json]                           # 每个状态 + 每个分配者的计数
+hermes kanban log <id> [--tail BYTES]                  # 来自 ~/.hermes/kanban/logs/ 的工作者日志
+hermes kanban notify-subscribe <id>                    # 网关桥接钩子（由网关中的 /kanban 使用）
         --platform <name> --chat-id <id> [--thread-id <id>] [--user-id <id>]
 hermes kanban notify-list [<id>] [--json]
 hermes kanban notify-unsubscribe <id>
         --platform <name> --chat-id <id> [--thread-id <id>]
-hermes kanban context <id>                             # what a worker sees
-hermes kanban specify [<id> | --all] [--tenant T]      # flesh out a triage-column idea
-        [--author NAME] [--json]                       #   into a full spec and promote to todo
-hermes kanban gc [--event-retention-days N]            # workspaces + old events + old logs
+hermes kanban context <id>                             # 工作者看到的内容
+hermes kanban specify [<id> | --all] [--tenant T]      # 充实 triage 列的想法
+        [--author NAME] [--json]                       #   成为完整规范并提升为 todo
+hermes kanban gc [--event-retention-days N]            # 工作空间 + 旧事件 + 旧日志
         [--log-retention-days N]
 ```
 
-All commands are also available as a slash command in the interactive CLI and in the messaging gateway (see [`/kanban` slash command](#kanban-slash-command) below).
+所有命令也可作为交互式 CLI 和消息网关中的斜杠命令使用（见下面的 [`/kanban` 斜杠命令](#kanban-斜杠命令)）。
 
-`--max-retries` is a per-task circuit-breaker override for the dispatcher. `--max-retries 1` blocks the task on the first non-successful attempt, while `--max-retries 3` allows two retries and blocks on the third failure. Omit it to use `kanban.failure_limit` from `config.yaml`, then the built-in default.
+`--max-retries` 是每个任务调度器的断路器覆盖。`--max-retries 1` 在第一次非成功尝试时阻塞任务，而 `--max-retries 3` 允许两次重试，并在第三次失败时阻塞。省略它则使用 `config.yaml` 中的 `kanban.failure_limit`，然后是内置默认值。
 
-### Concurrency, scheduling, and child promotion config
+### 并发、调度和子任务提升配置
 
-| Config key | Default | What it does |
-|------------|---------|--------------|
-| `kanban.max_in_progress` | unset (unlimited) | Caps the number of simultaneously running tasks. When the board already has N running, the dispatcher skips spawning more — useful for slow workers (local LLMs, resource-constrained hosts) so they finish what they have before more pile up and time out. Invalid or below-1 values log a warning and behave as unlimited. |
-| `kanban.max_in_progress_per_profile` | unset (unlimited) | Per-profile variant of `max_in_progress` — caps how many tasks any single assignee profile may run concurrently. Useful when one profile is slow or rate-limited but others should keep flowing. Applies alongside the board-wide `max_in_progress`; both must allow a spawn for it to proceed. |
-| `kanban.auto_promote_children` | `true` | After `decompose_triage_task()` produces children with no parent-blocker dependencies, they're automatically promoted to `ready` so the dispatcher can pick them up. Set to `false` to require manual review — children stay in `todo` until you promote them. |
-| `kanban.default_workdir` | unset | Board-level default working directory applied to new tasks when neither `--workspace` nor the task itself overrides it. Per-task `workspace:` still wins. |
+| 配置键 | 默认值 | 用途 |
+|--------|--------|------|
+| `kanban.max_in_progress` | 未设置（无限制） | 限制同时运行的任务数量。当看板已有 N 个任务正在运行时，调度器跳过生成更多任务——对于慢速工作者（本地 LLM、资源受限的主机）很有用，这样它们能完成已有任务，而不是更多任务堆积并超时。无效或低于 1 的值会记录警告并表现为无限制。 |
+| `kanban.max_in_progress_per_profile` | 未设置（无限制） | `max_in_progress` 的每个配置文件变体——限制任何单个分配者配置文件可以并发运行的任务数量。当一个配置文件慢或受到速率限制，但其他配置文件应继续流动时有用。与看板范围的 `max_in_progress` 一起应用；两者都必须允许生成才能进行。 |
+| `kanban.auto_promote_children` | `true` | 在 `decompose_triage_task()` 生成没有父级阻塞依赖的子任务后，它们自动提升为 `ready` 以便调度器可以拾取。设置为 `false` 需要手动审查——子任务保持在 `todo` 直到你提升它们。 |
+| `kanban.default_workdir` | 未设置 | 看板级别的默认工作目录，应用于新任务，当未指定 `--workspace` 或任务本身未覆盖时。每任务的 `workspace:` 仍然优先。 |
 
 ```yaml
 kanban:
@@ -701,39 +622,39 @@ kanban:
   default_workdir: ~/work/active-project
 ```
 
-### Scheduled task starts (`scheduled_at`)
+### 计划任务启动（`scheduled_at`）
 
-Set `scheduled_at` on a task to delay dispatch until a specific time. The dispatcher skips ready tasks whose `scheduled_at` is in the future and picks them up on the first tick after that timestamp.
+在任务上设置 `scheduled_at` 以将调度延迟到特定时间。调度器跳过那些 `scheduled_at` 在未来时间的就绪任务，并在该时间戳后的第一个滴答拾取它们。
 
 ```bash
 hermes kanban create "nightly backup audit" \
   --assignee ops --scheduled-at "2026-06-01T03:00:00Z"
 ```
 
-### Respawn guard
+### 重生保护
 
-The dispatcher refuses to re-spawn a ready task when it hit a quota/auth/429 error on the previous run (`blocker_auth`), or completed a run successfully within the guard window (`recent_success`), or a recent task comment links to a GitHub PR (`active_pr`). This prevents repeat worker storms on the same bug or task while a human catches up. See the `respawn_guarded` row in the [event reference](#event-reference).
+调度器拒绝在以下情况下重生成一个就绪任务：前一次运行遇到配额/认证/429 错误（`blocker_auth`），或者在保护窗口内成功完成运行（`recent_success`），或者最近的任务评论链接到一个 GitHub PR（`active_pr`）。这防止了在相同 bug 或任务上重复的工作者风暴，而人类正在赶上。参见[事件参考](#事件参考)中的 `respawn_guarded` 行。
 
-### Drag-to-delete and bulk delete (dashboard)
+### 拖拽删除和批量删除（仪表盘）
 
-The dashboard exposes a **trash drop zone** on the kanban page — drag any card into it to delete the task (cascades through `task_events`, child links, and subscriptions). A confirmation prompt protects against accidents. Bulk delete is also reachable via `DELETE /api/plugins/kanban/tasks` with a JSON body `{"ids": ["t_abc", "t_def", ...]}`.
+仪表盘在看板页面上暴露一个**垃圾桶拖放区**——将任何卡片拖入其中以删除任务（级联删除 `task_events`、子链接和订阅）。一个确认提示防止意外。批量删除也可以通过 `DELETE /api/plugins/kanban/tasks` 使用 JSON 主体 `{"ids": ["t_abc", "t_def", ...]}` 访问。
 
-### Worker visibility endpoints
+### 工作者可见性端点
 
-The dashboard plugin API now exposes these read-only endpoints (plus a run-control verb) for external monitors:
+仪表盘插件 API 现在为外部监控器暴露这些只读端点（加上一个运行控制动词）：
 
-| Endpoint | Returns |
-|----------|---------|
-| `GET /api/plugins/kanban/workers/active` | Currently spawned workers with PID, profile, task id, started-at, last heartbeat |
-| `GET /api/plugins/kanban/runs/{id}` | Single-run detail — task id, status, started/ended, exit code, log path |
-| `POST /api/plugins/kanban/runs/{run_id}/terminate` | Terminate a reclaimable run — stops the worker and frees the task for re-dispatch |
-| `GET /api/plugins/kanban/inspect` | Combined dispatcher snapshot — backlog, in-progress count vs. `max_in_progress`, recent events |
+| 端点 | 返回 |
+|------|------|
+| `GET /api/plugins/kanban/workers/active` | 当前生成的工作者，包括 PID、配置文件、任务 id、开始时间、最后心跳 |
+| `GET /api/plugins/kanban/runs/{id}` | 单次运行详情——任务 id、状态、开始/结束、退出代码、日志路径 |
+| `POST /api/plugins/kanban/runs/{run_id}/terminate` | 终止一个可回收的运行——停止工作者并释放任务以便重新调度 |
+| `GET /api/plugins/kanban/inspect` | 组合的调度器快照——积压任务、进行中计数与 `max_in_progress`、最近的事件 |
 
-All of these are gated by the same dashboard plugin auth as the rest of the kanban plugin API.
+所有这些都受与其他看板插件 API 相同的仪表盘插件认证保护。
 
-### Kanban Swarm topology helper
+### 看板群体拓扑助手
 
-`hermes kanban swarm` creates a durable **Kanban Swarm v1** graph in one shot: a completed root/blackboard card, N parallel worker cards, a verifier card gated on all workers, and a synthesizer card gated on the verifier. Shared swarm context (the "blackboard") is stored as structured JSON comments on the root card so any worker can read it.
+`hermes kanban swarm` 一次性创建一个持久的**看板群体 v1** 图：一个已完成的根/黑板书卡、N 个并行工作者卡片、一个依赖于所有工作者的验证者卡片、以及一个依赖于验证者的合成者卡片。共享的群体上下文（“黑板书”）作为结构化 JSON 评论存储在根卡片上，以便任何工作者可以读取。
 
 ```bash
 hermes kanban swarm "Design a multi-region failover plan" \
@@ -741,11 +662,11 @@ hermes kanban swarm "Design a multi-region failover plan" \
   --verifier reviewer --synthesizer writer
 ```
 
-The resulting graph dispatches normally — workers run in parallel, the verifier wakes after they all finish, the synthesizer wakes after the verifier marks the work clean.
+生成的图正常调度——工作者并行运行，验证者在它们全部完成后唤醒，合成者在验证者标记工作干净后唤醒。
 
-## `/kanban` slash command {#kanban-slash-command}
+## `/kanban` 斜杠命令 {#kanban-斜杠命令}
 
-Every `hermes kanban <action>` verb is also reachable as `/kanban <action>` — from inside an interactive `hermes chat` session **and** from any gateway platform (Telegram, Discord, Slack, WhatsApp, Signal, Matrix, Mattermost, email, SMS). Both surfaces call the exact same `hermes_cli.kanban.run_slash()` entry point that reuses the `hermes kanban` argparse tree, so the argument surface, flags, and output format are identical across CLI, `/kanban`, and `hermes kanban`. You don't have to leave the chat to drive the board.
+每个 `hermes kanban <action>` 动词也可通过 `/kanban <action>` 访问——从交互式 `hermes chat` 会话内部**以及**从任何网关平台（Telegram、Discord、Slack、WhatsApp、Signal、Matrix、Mattermost、电子邮件、SMS）。两个接口都调用完全相同的 `hermes_cli.kanban.run_slash()` 入口点，该入口点重用 `hermes kanban` argparse 树，因此参数表面、标志和输出格式在 CLI、`/kanban` 和 `hermes kanban` 之间一致。你无需离开聊天即可驱动看板。
 
 ```
 /kanban list
@@ -754,68 +675,68 @@ Every `hermes kanban <action>` verb is also reachable as `/kanban <action>` — 
 /kanban comment t_abcd "looks good, ship it"
 /kanban unblock t_abcd
 /kanban dispatch --max 3
-/kanban specify t_abcd                  # flesh out a triage one-liner into a real spec
-/kanban specify --all --tenant engineering  # sweep every triage task in one tenant
+/kanban specify t_abcd                  # 充实 triage 单行内容成为真实规范
+/kanban specify --all --tenant engineering  # 扫描一个租户中的每个 triage 任务
 ```
 
-Quote multi-word arguments the same way you would on a shell — `run_slash` parses the rest of the line with `shlex.split`, so `"..."` and `'...'` both work.
+引用多词参数的方式与在 shell 中相同——`run_slash` 使用 `shlex.split` 解析行的其余部分，因此 `"..."` 和 `'...'` 都有效。
 
-### Mid-run usage: `/kanban` bypasses the running-agent guard
+### 运行中用法：`/kanban` 绕过运行中智能体保护
 
-The gateway normally queues slash commands and user messages while an agent is still thinking — that's what stops you from accidentally starting a second turn while the first is in flight. **`/kanban` is explicitly exempted from this guard.** The board lives in `~/.hermes/kanban.db`, not in the running agent's state, so reads (`list`, `show`, `context`, `tail`, `watch`, `stats`, `runs`) and writes (`comment`, `unblock`, `block`, `assign`, `archive`, `create`, `link`, …) all go through immediately, even mid-turn.
+网关通常会在智能体仍在思考时排队斜杠命令和用户消息——这阻止你意外地在第一次飞行中开始第二次轮次。**`/kanban` 明确豁免于此保护。** 看板存在于 `~/.hermes/kanban.db` 中，而不是正在运行的智能体的状态中，因此读取（`list`、`show`、`context`、`tail`、`watch`、`stats`、`runs`）和写入（`comment`、`unblock`、`block`、`assign`、`archive`、`create`、`link`、…）即使在中途也立即通过。
 
-This is the whole point of the separation:
+这是分离的全部意义：
 
-- A worker blocks waiting on a peer → you send `/kanban unblock t_abcd` from your phone and the dispatcher picks the peer up on its next tick. The blocked worker isn't interrupted — it just stops being blocked.
-- You spot a card that needs human context → `/kanban comment t_xyz "use the 2026 schema, not 2025"` lands on the task thread and the *next* run of that task will read it in `kanban_show()`.
-- You want to know what your fleet is doing without stopping the orchestrator → `/kanban list --mine` or `/kanban stats` inspects the board without touching your main conversation.
+- 工作者等待同行阻塞→你从手机发送 `/kanban unblock t_abcd`，调度器在下一个滴答中拾取同行。被阻塞的工作者不会被中断——它只是不再被阻塞。
+- 你注意到一个需要人类上下文的卡片→`/kanban comment t_xyz "use the 2026 schema, not 2025"` 落在任务线程上，该任务的*下一次*运行将会在 `kanban_show()` 中读取它。
+- 你想知道你的机群在做什么而不停止编排器→`/kanban list --mine` 或 `/kanban stats` 检查看板而不触及你的主对话。
 
-### Auto-subscribe on `/kanban create` (gateway only)
+### 在 `/kanban create` 上自动订阅（仅限网关）
 
-When you create a task from the gateway with `/kanban create "…"`, the originating chat (platform + chat id + thread id) is automatically subscribed to that task's terminal events (`completed`, `blocked`, `gave_up`, `crashed`, `timed_out`). You'll get one message back per terminal event — including the first line of the worker's result summary on `completed` — without having to poll or remember the task id.
+当你从网关使用 `/kanban create "…"` 创建任务时，原始聊天（平台 + 聊天 id + 线程 id）会自动订阅该任务的终端事件（`completed`、`blocked`、`gave_up`、`crashed`、`timed_out`）。每个终端事件你会收到一条消息——包括完成时工作者结果摘要的第一行——无需轮询或记住任务 id。
 
 ```
-you> /kanban create "transcribe today's podcast" --assignee transcriber
-bot> Created t_9fc1a3  (ready, assignee=transcriber)
-     (subscribed — you'll be notified when t_9fc1a3 completes or blocks)
+你> /kanban create "transcribe today's podcast" --assignee transcriber
+机器人> Created t_9fc1a3  (ready, assignee=transcriber)
+        (subscribed — you'll be notified when t_9fc1a3 completes or blocks)
 
-… ~8 minutes later …
+… ~8 分钟后 …
 
-bot> ✓ t_9fc1a3 completed by transcriber
-     transcribed 42 minutes, saved to podcast/2026-05-04.md
+机器人> ✓ t_9fc1a3 completed by transcriber
+        transcribed 42 minutes, saved to podcast/2026-05-04.md
 ```
 
-Subscriptions auto-remove themselves once the task reaches `done` or `archived`. If you script a create with `--json` (machine output) the auto-subscribe is skipped — the assumption is that scripted callers want to manage subscriptions explicitly via `/kanban notify-subscribe`.
+一旦任务达到 `done` 或 `archived` 状态，订阅会自动移除。如果你使用 `--json`（机器输出）脚本创建，则跳过自动订阅——假设脚本调用者想要通过 `/kanban notify-subscribe` 显式管理订阅。
 
-### Output truncation in messaging
+### 消息中的输出截断
 
-Gateway platforms have practical message-length caps. If `/kanban list`, `/kanban show`, or `/kanban tail` produce more than ~3800 characters of output, the response is truncated with a `… (truncated; use \`hermes kanban …\` in your terminal for full output)` footer. The CLI surface has no such cap.
+网关平台有实际的消息长度限制。如果 `/kanban list`、`/kanban show` 或 `/kanban tail` 产生超过约 3800 个字符的输出，响应会被截断，并附带 `… (truncated; use \`hermes kanban …\` in your terminal for full output)` 的页脚。CLI 表面没有这样的限制。
 
-### Autocomplete
+### 自动补全
 
-In the interactive CLI, typing `/kanban ` and hitting Tab cycles through the built-in subcommand list (`list`, `ls`, `show`, `create`, `assign`, `link`, `unlink`, `claim`, `comment`, `complete`, `block`, `unblock`, `archive`, `tail`, `dispatch`, `context`, `init`, `gc`). The remaining verbs listed in the CLI reference above (`watch`, `stats`, `runs`, `log`, `assignees`, `heartbeat`, `notify-subscribe`, `notify-list`, `notify-unsubscribe`, `daemon`) also work — they're just not in the autocomplete hint list yet.
+在交互式 CLI 中，输入 `/kanban ` 并按下 Tab 会循环显示内置子命令列表（`list`、`ls`、`show`、`create`、`assign`、`link`、`unlink`、`claim`、`comment`、`complete`、`block`、`unblock`、`archive`、`tail`、`dispatch`、`context`、`init`、`gc`）。上面 CLI 参考中列出的其余动词（`watch`、`stats`、`runs`、`log`、`assignees`、`heartbeat`、`notify-subscribe`、`notify-list`、`notify-unsubscribe`、`daemon`）也有效——它们只是尚未出现在自动补全提示列表中。
 
-## Collaboration patterns
+## 协作模式
 
-The board supports these eight patterns without any new primitives:
+看板支持以下八种模式，无需任何新原语：
 
-| Pattern | Shape | Example |
+| 模式 | 形状 | 示例 |
 |---|---|---|
-| **P1 Fan-out** | N siblings, same role | "research 5 angles in parallel" |
-| **P2 Pipeline** | role chain: scout → editor → writer | daily brief assembly |
-| **P3 Voting / quorum** | N siblings + 1 aggregator | 3 researchers → 1 reviewer picks |
-| **P4 Long-running journal** | same profile + shared dir + cron | Obsidian vault |
-| **P5 Human-in-the-loop** | worker blocks → user comments → unblock | ambiguous decisions |
-| **P6 `@mention`** | inline routing from prose | `@reviewer look at this` |
-| **P7 Thread-scoped workspace** | `/kanban here` in a thread | per-project gateway threads |
-| **P8 Fleet farming** | one profile, N subjects | 50 social accounts |
-| **P9 Triage specifier** | rough idea → `triage` → `hermes kanban specify` expands body → `todo` | "turn this one-liner into a spec'd task" |
+| **P1 扇出** | N 个同辈，相同角色 | “并行研究 5 个角度” |
+| **P2 流水线** | 角色链：侦察 → 编辑 → 写作者 | 每日简报汇编 |
+| **P3 投票/法定人数** | N 个同辈 + 1 个聚合器 | 3 个研究员 → 1 个审查者选择 |
+| **P4 长期运行日志** | 相同配置文件 + 共享目录 + cron | Obsidian vault |
+| **P5 人机回环** | 工作者阻塞 → 用户评论 → 解除阻塞 | 模糊决策 |
+| **P6 `@mention`** | 来自散文的内联路由 | `@reviewer look at this` |
+| **P7 线程范围的工作空间** | 线程中的 `/kanban here` | 每个项目的网关线程 |
+| **P8 农场机群** | 一个配置文件，N 个主体 | 50 个社交账号 |
+| **P9 分类指定器** | 粗略想法 → `triage` → `hermes kanban specify` 扩展正文 → `todo` | “将这行内容变成一个规范任务” |
 
-For worked examples of each, see `docs/hermes-kanban-v1-spec.pdf`.
+有关每个模式的详细示例，请参阅 `docs/hermes-kanban-v1-spec.pdf`。
 
-## Multi-tenant usage
+## 多租户使用
 
-When one specialist fleet serves multiple businesses, tag each task with a tenant:
+当一个专家机群服务于多个业务时，用租户标记每个任务：
 
 ```bash
 hermes kanban create "monthly report" \
@@ -824,13 +745,13 @@ hermes kanban create "monthly report" \
     --workspace dir:~/tenants/business-a/data/
 ```
 
-Workers receive `$HERMES_TENANT` and namespace their memory writes by prefix. The board, the dispatcher, and the profile definitions are all shared; only the data is scoped.
+工作者接收 `$HERMES_TENANT` 并用前缀命名其记忆写入。看板、调度器和配置文件定义都是共享的；只有数据是范围的。
 
-## Gateway notifications
+## 网关通知
 
-When you run `/kanban create …` from the gateway (Telegram, Discord, Slack, etc.), the originating chat is automatically subscribed to the new task. The gateway's background notifier polls `task_events` every few seconds and delivers one message per terminal event (`completed`, `blocked`, `gave_up`, `crashed`, `timed_out`) to that chat. Completed tasks also send the first line of the worker's `--result` so you see the outcome without having to `/kanban show`.
+当你从网关（Telegram、Discord、Slack 等）运行 `/kanban create …` 时，原始聊天会自动订阅新任务。网关的后台通知器每隔几秒轮询 `task_events`，并为每个终端事件（`completed`、`blocked`、`gave_up`、`crashed`、`timed_out`）向该聊天发送一条消息。已完成的任务还发送工作者 `--result` 的第一行，这样你无需 `/kanban show` 就能看到结果。
 
-You can manage subscriptions explicitly from the CLI — useful when a script / cron job wants to notify a chat it didn't originate from:
+你可以从 CLI 显式管理订阅——当脚本/cron 作业想要通知一个它并非源自的聊天时很有用：
 
 ```bash
 hermes kanban notify-subscribe t_abcd \
@@ -840,24 +761,24 @@ hermes kanban notify-unsubscribe t_abcd \
     --platform telegram --chat-id 12345678 --thread-id 7
 ```
 
-A subscription removes itself automatically once the task reaches `done` or `archived`; no cleanup needed.
+一旦任务达到 `done` 或 `archived`，订阅会自动移除；无需清理。
 
-## Runs — one row per attempt
+## 运行——每次尝试一行
 
-A task is a logical unit of work; a **run** is one attempt to execute it. When the dispatcher claims a ready task it creates a row in `task_runs` and points `tasks.current_run_id` at it. When that attempt ends — completed, blocked, crashed, timed out, spawn-failed, reclaimed — the run row closes with an `outcome` and the task's pointer clears. A task that's been attempted three times has three `task_runs` rows.
+任务是一个逻辑工作单元；**运行**是执行它的一次尝试。当调度器声明一个就绪任务时，它会在 `task_runs` 中创建一行，并将 `tasks.current_run_id` 指向它。当该次尝试结束时——完成、阻塞、崩溃、超时、生成失败、回收——运行行会以一个 `outcome` 关闭，任务的指针被清除。一个被尝试了三次的任务有三行 `task_runs`。
 
-Why two tables instead of just mutating the task: you need **full attempt history** for real-world postmortems ("the second reviewer attempt got to approve, the third merged"), and you need a clean place to hang per-attempt metadata — which files changed, which tests ran, which findings a reviewer noted. Those are run facts, not task facts.
+为什么需要两个表而不是仅仅修改任务：你需要**完整的尝试历史**来进行真实世界的事后分析（“第二次审查者尝试到达了批准，第三次合并了”），并且你需要一个干净的地方来挂载每次尝试的元数据——更改了哪些文件、运行了哪些测试、审查者注意到了哪些发现。这些是运行事实，而不是任务事实。
 
-Runs are also where **structured handoff** lives. When a worker completes a task (via `kanban_complete(...)`) it can pass:
+运行也是**结构化交接**所在之处。当工作者完成任务（通过 `kanban_complete(...)`）时，它可以传递：
 
-- `summary` (tool param) / `--summary` (CLI) — human handoff; goes on the run; downstream children see it in their `build_worker_context`.
-- `metadata` (tool param) / `--metadata` (CLI) — free-form JSON dict on the run; children see it serialized alongside the summary.
-- `result` (tool param) / `--result` (CLI) — short log line that goes on the task row (legacy field, kept for back-compat).
+- `summary`（工具参数）/ `--summary`（CLI）——人类交接；保存在运行上；下游子任务在其 `build_worker_context` 中看到它。
+- `metadata`（工具参数）/ `--metadata`（CLI）——自由格式 JSON 字典在运行上；子任务看到它与摘要一起序列化。
+- `result`（工具参数）/ `--result`（CLI）——短日志行，放在任务行上（遗留字段，为向后兼容保留）。
 
-Downstream children read the most recent completed run's summary + metadata for each parent. Retrying workers read the prior attempts on their own task (outcome, summary, error) so they don't repeat a path that already failed.
+下游子任务读取每个父任务的最近一次完成运行的摘要 + 元数据。重试的工作者读取其自身任务的先前尝试（结果、摘要、错误），这样它们不会重复已失败的路径。
 
 ```
-# What a worker actually does — a tool call, from inside the agent loop:
+# 工作者实际做的事情——智能体循环内的工具调用：
 kanban_complete(
     summary="implemented token bucket, keys on user_id with IP fallback, all tests pass",
     metadata={"changed_files": ["limiter.py", "tests/test_limiter.py"], "tests_run": 14},
@@ -865,7 +786,7 @@ kanban_complete(
 )
 ```
 
-The same handoff is reachable from the CLI when you (the human) need to close out a task a worker can't — e.g. a task that was abandoned, or one you marked done manually from the dashboard:
+当人类需要关闭工作者无法完成的任务时，同样的交接也可以从 CLI 访问——例如，一个被放弃的任务，或你从仪表盘手动标记完成的任务：
 
 ```bash
 hermes kanban complete t_abcd \
@@ -873,7 +794,7 @@ hermes kanban complete t_abcd \
     --summary "implemented token bucket, keys on user_id with IP fallback, all tests pass" \
     --metadata '{"changed_files": ["limiter.py", "tests/test_limiter.py"], "tests_run": 14}'
 
-# Review the attempt history on a retried task:
+# 查看重试任务的尝试历史：
 hermes kanban runs t_abcd
 #   #  OUTCOME       PROFILE           ELAPSED  STARTED
 #   1  blocked       worker               12s  2026-04-27 14:02
@@ -882,66 +803,10 @@ hermes kanban runs t_abcd
 #        → implemented token bucket, keys on user_id with IP fallback
 ```
 
-Runs are exposed on the dashboard (Run History section in the drawer, one coloured row per attempt) and on the REST API (`GET /api/plugins/kanban/tasks/:id` returns a `runs[]` array). `PATCH /api/plugins/kanban/tasks/:id` with `{status: "done", summary, metadata}` forwards both to the kernel, so the dashboard's "mark done" button is CLI-equivalent. `task_events` rows carry the `run_id` they belong to so the UI can group them by attempt, and the `completed` event embeds the first-line summary in its payload (capped at 400 chars) so gateway notifiers can render structured handoffs without a second SQL round-trip.
+运行在仪表盘上暴露（抽屉中的运行历史部分，每次尝试一行带颜色），也在 REST API 上暴露（`GET /api/plugins/kanban/tasks/:id` 返回一个 `runs[]` 数组）。`PATCH /api/plugins/kanban/tasks/:id` 带有 `{status: "done", summary, metadata}` 将两者转发给内核，因此仪表盘的“标记完成”按钮与 CLI 等效。`task_events` 行携带它们所属的 `run_id`，以便 UI 可以按尝试分组事件，而 `completed` 事件在其有效载荷中嵌入第一行摘要（上限 400 字符），这样网关通知器可以渲染结构化交接而无需第二次 SQL 往返。
 
-**Bulk close caveat.** `hermes kanban complete a b c --summary X` is refused — structured handoff is per-run, so copy-pasting the same summary to N tasks is almost always wrong. Bulk close *without* `--summary` / `--metadata` still works for the common "I finished a pile of admin tasks" case.
+**批量关闭注意事项。** `hermes kanban complete a b c --summary X` 被拒绝——结构化交接是每次运行的，因此将相同的摘要复制粘贴到 N 个任务几乎总是错误的。批量关闭*不*带 `--summary` / `--metadata` 仍然适用于常见的“我完成了一堆管理任务”的情况。
 
-**Reclaimed runs from status changes.** If you drag a running task off `running` in the dashboard (back to `ready`, or straight to `todo`), or archive a task that was still running, the in-flight run closes with `outcome='reclaimed'` rather than being orphaned. The `task_runs` row is always in a terminal state when `tasks.current_run_id` is `NULL`, and vice versa — that invariant holds across CLI, dashboard, dispatcher, and notifier.
+**从状态更改回收的运行。** 如果你在仪表盘中将一个正在运行的任务拖离 `running`（回到 `ready`，或直接到 `todo`），或者归档一个仍在运行的任务，进行中的运行会以 `outcome='reclaimed'` 关闭，而不是成为孤儿。`task_runs` 行总是在 `tasks.current_run_id` 为 `NULL` 时处于终端状态，反之亦然——这个不变量在 CLI、仪表盘、调度器和通知器之间保持一致。
 
-**Synthetic runs for never-claimed completions.** Completing or blocking a task that was never claimed (e.g. a human closes a `ready` task from the dashboard with a summary, or a CLI user runs `hermes kanban complete <ready-task> --summary X`) would otherwise drop the handoff. Instead the kernel inserts a zero-duration run row (`started_at == ended_at`) carrying the summary / metadata / reason so attempt history stays complete. The `completed` / `blocked` event's `run_id` points at that row.
-
-**Live drawer refresh.** When the dashboard's WebSocket event stream reports new events for the task the user is currently viewing, the drawer reloads itself (via a per-task event counter threaded into its `useEffect` dependency list). Closing and reopening is no longer required to see a run's new row or updated outcome.
-
-### Forward compatibility
-
-Two nullable columns on `tasks` are reserved for v2 workflow routing: `workflow_template_id` (which template this task belongs to) and `current_step_key` (which step in that template is active). The v1 kernel ignores them for routing but lets clients write them, so a v2 release can add the routing machinery without another schema migration.
-
-## Event reference
-
-Every transition appends a row to `task_events`. Each row carries an optional `run_id` so UIs can group events by attempt. Kinds group into three clusters so filtering is easy (`hermes kanban watch --kinds completed,gave_up,timed_out`):
-
-**Lifecycle** (what changed about the task as a logical unit):
-
-| Kind | Payload | When |
-|---|---|---|
-| `created` | `{assignee, status, parents, tenant}` | Task inserted. `run_id` is `NULL`. |
-| `promoted` | — | `todo → ready` because all parents hit `done`. `run_id` is `NULL`. |
-| `claimed` | `{lock, expires, run_id}` | Dispatcher atomically claimed a `ready` task for spawn. |
-| `completed` | `{result_len, summary?}` | Worker wrote `--result` / `--summary` and task hit `done`. `summary` is the first-line handoff (400-char cap); full version lives on the run row. If `complete_task` is called on a never-claimed task with handoff fields, a zero-duration run is synthesized so `run_id` still points at something. |
-| `blocked` | `{reason}` | Worker or human flipped the task to `blocked`. Synthesizes a zero-duration run when called on a never-claimed task with `--reason`. |
-| `unblocked` | — | `blocked → ready`, either manually or via `/unblock`. `run_id` is `NULL`. |
-| `archived` | — | Hidden from the default board. If the task was still running, carries the `run_id` of the run that was reclaimed as a side effect. |
-
-**Edits** (human-driven changes that aren't transitions):
-
-| Kind | Payload | When |
-|---|---|---|
-| `assigned` | `{assignee}` | Assignee changed (including unassignment). |
-| `edited` | `{fields}` | Title or body updated. |
-| `reprioritized` | `{priority}` | Priority changed. |
-| `status` | `{status}` | Dashboard drag-drop wrote a status directly (e.g. `todo → ready`). Carries the `run_id` of the run that was reclaimed when dragging off `running`; otherwise `run_id` is NULL. |
-
-**Worker telemetry** (about the execution process, not the logical task):
-
-| Kind | Payload | When |
-|---|---|---|
-| `spawned` | `{pid}` | Dispatcher successfully started a worker process. |
-| `heartbeat` | `{note?}` | Worker called `hermes kanban heartbeat $TASK` to signal liveness during long operations. |
-| `reclaimed` | `{stale_lock}` | Claim TTL expired without a completion; task goes back to `ready`. |
-| `crashed` | `{pid, claimer}` | Worker PID no longer alive but TTL hadn't expired yet. |
-| `timed_out` | `{pid, elapsed_seconds, limit_seconds, sigkill}` | `max_runtime_seconds` exceeded; dispatcher SIGTERM'd (then SIGKILL'd after 5 s grace) and re-queued. |
-| `stale` | `{elapsed_seconds, last_heartbeat_at, heartbeat_age_seconds, timeout_seconds, pid, terminated}` | Task ran longer than `kanban.dispatch_stale_timeout_seconds` (default 4 h) AND no `kanban_heartbeat` arrived in the last hour. Dispatcher SIGTERM'd the host-local worker (if any), reset the task to `ready` for re-dispatch. Does NOT tick the failure counter (stale is dispatcher-side absence detection, not a worker fault). Workers running long operations should call `kanban_heartbeat` at least once an hour to avoid this. |
-| `respawn_guarded` | `{reason}` | Dispatcher refused to re-spawn this ready task this tick. Reasons: `blocker_auth` (last failure was a quota/auth/429 error — wait for the rate window to reset), `recent_success` (a completed run happened in the last hour — wait for review before re-running), `active_pr` (a GitHub PR URL appears in a recent comment — a prior worker already opened a PR). The task stays in `ready`; the next tick gets another chance to spawn. If the underlying condition persists, the normal `consecutive_failures` circuit breaker will auto-block via `gave_up` after `failure_limit` failures. |
-| `spawn_failed` | `{error, failures}` | One spawn attempt failed (missing PATH, workspace unmountable, …). Counter increments; task returns to `ready` for retry. |
-| `protocol_violation` | `{pid, claimer, exit_code}` | Worker exited successfully while the task was still `running`, usually because it answered without calling `kanban_complete` or `kanban_block`. The dispatcher also emits `gave_up` and auto-blocks immediately instead of retrying. |
-| `gave_up` | `{failures, effective_limit, limit_source, error}` | Circuit breaker fired after N consecutive non-successful attempts. Task auto-blocks with the last error. The effective limit resolves as task `max_retries`, then dispatcher `failure_limit` / `kanban.failure_limit`, then the built-in default. |
-
-`hermes kanban tail <id>` shows these for a single task. `hermes kanban watch` streams them board-wide.
-
-## Out of scope
-
-Kanban is deliberately single-host. `~/.hermes/kanban.db` is a local SQLite file and the dispatcher spawns workers on the same machine. Running a shared board across two hosts is not supported — there's no coordination primitive for "worker X on host A, worker Y on host B," and the crash-detection path assumes PIDs are host-local. If you need multi-host, run an independent board per host and use `delegate_task` / a message queue to bridge them.
-
-## Design spec
-
-The complete design — architecture, concurrency correctness, comparison with other systems, implementation plan, risks, open questions — lives in `docs/hermes-kanban-v1-spec.pdf`. Read that before filing any behavior-change PR.
+**从未声明完成任务的综合运行。** 完成或阻塞一个从未被声明的任务（例如，人类从仪表盘关闭一个 `ready` 任务并带有摘要，或 CLI 用户运行 `hermes kanban complete <ready-task> --summary X`）否则会丢失交接。相反，内核插入一个零持续时间的运行行（`started_at == ended_at`），携带摘要/元数据/原因，以便尝试历史保持完整。

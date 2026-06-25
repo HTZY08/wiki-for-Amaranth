@@ -1,132 +1,123 @@
 ---
-title: 免费运行 Nemotron 3 Ultra
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`guides/run-nemotron-3-ultra-free.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/run-nemotron-3-ultra-free.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 0
-title: "Run Nemotron 3 Ultra free in Hermes Agent"
-description: "Try NVIDIA Nemotron 3 Ultra on Nous Portal — free June 4–18 — with day 0 support in Hermes Agent"
+title: "在 Hermes Agent 中免费运行 Nemotron 3 Ultra"
+description: "在 Nous Portal 上免费体验 NVIDIA Nemotron 3 Ultra（6月4日至18日），Hermes Agent 提供首发支持"
 ---
 
-# Run Nemotron 3 Ultra free in Hermes Agent
+# 在 Hermes Agent 中免费运行 Nemotron 3 Ultra
 
-Nous Research has been inducted into the **Nemotron Coalition** of leading AI labs working with **NVIDIA** to advance open frontier foundation models. In honor of this, we've partnered with **Nebius** to provide **Nemotron 3 Ultra** free on [Nous Portal](https://portal.nousresearch.com) for two weeks (**June 4th – June 18th**). Follow the instructions below to try the model in your Hermes Agent today.
+Nous Research 已入选与 **NVIDIA** 合作推动开放前沿基础模型的顶尖 AI 实验室组成的 **Nemotron 联盟（Nemotron Coalition）**。为庆祝这一成就，我们与 **Nebius** 合作，在 [Nous Portal](https://portal.nousresearch.com) 上免费提供 **Nemotron 3 Ultra** 两周（**6月4日至6月18日**）。请按照以下说明，立即在您的 Hermes Agent 中试用该模型。
 
-:::info Limited-time offer
-The `nvidia/nemotron-3-ultra:free` tier is available from **June 4th to June 18th**. The `:free` tag is what keeps it on the no-cost plan — pick that exact variant.
+:::info 限时优惠
+`nvidia/nemotron-3-ultra:free` 层级自 **6月4日至6月18日** 可用。`:free` 标记使其保持免费计划状态——请选择该确切变体。
 :::
 
-Pick whichever install fits you. The **desktop app** is the easiest — no terminal required. If you live in a terminal, the **command-line** install is right below it.
+选择适合您的安装方式。**桌面应用**最简单——无需终端。如果您偏好终端，下面的**命令行**安装更适合您。
 
-## Option A — Desktop app (recommended)
+## 选项 A — 桌面应用（推荐）
 
-The simplest path: a one-click installer with a guided, point-and-click setup. No terminal needed.
+最简单的路径：一键安装，带有引导式的点击设置。无需终端。
 
-### 1. Download and install
+### 1. 下载并安装
 
-[Download the Hermes Desktop installer](https://hermes-agent.nousresearch.com/) for macOS or Windows, then open it. On first launch it finishes setting itself up (usually under a minute).
+[下载 Hermes Desktop 安装程序](https://hermes-agent.nousresearch.com/)（适用于 macOS 或 Windows），然后打开它。首次启动时会完成自身设置（通常在一分钟内）。
 
-### 2. Connect Nous Portal
+### 2. 连接 Nous Portal
 
-When the app opens, you'll see a "Let's get you set up" screen. Click **Nous Portal** (marked **Recommended**). Your browser opens — create a [Nous Portal](https://portal.nousresearch.com) account (or sign in), choose the **Free** plan, and authorize Hermes. The app connects automatically.
+应用打开时，您将看到“Let's get you set up”屏幕。点击 **Nous Portal**（标记为 **推荐**）。浏览器将打开——创建一个 [Nous Portal](https://portal.nousresearch.com) 账户（或登录），选择**免费**计划，并授权 Hermes。应用会自动连接。
 
-### 3. Pick the free Nemotron 3 Ultra model
+### 3. 选择免费的 Nemotron 3 Ultra 模型
 
-After connecting, the app shows a **Default model** card. Click **Change**, search for **nemotron 3 ultra**, and select the variant tagged **Free tier**:
+连接后，应用会显示一个**默认模型**卡片。点击**更改**，搜索 **nemotron 3 ultra**，并选择标记为**免费层级**的变体：
 
 ```
 nvidia/nemotron-3-ultra:free
 ```
 
-The `:free` tag is what keeps it on the no-cost tier — pick that variant.
+`:free` 标记使其保持免费层级状态——请选择该变体。
 
-### 4. Start chatting
+### 4. 开始聊天
 
-Click **Start chatting**. That's it — you're talking to Nemotron 3 Ultra, free.
+点击**开始聊天**。就这样——您正在免费与 Nemotron 3 Ultra 对话。
 
-## Option B — Command line
+## 选项 B — 命令行
 
-Prefer the terminal?
+偏好终端？
 
-### 1. Install Hermes Agent
+### 1. 安装 Hermes Agent
 
-On macOS/Linux/WSL2/Android, run
+在 macOS/Linux/WSL2/Android 上运行
 
 ```bash
 curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 ```
 
-On Windows, run
+在 Windows 上运行
 
 ```powershell
 iex (irm https://hermes-agent.nousresearch.com/install.ps1)
 ```
 
-Prefer to review first? Download [`install.sh`](https://hermes-agent.nousresearch.com/install.sh), inspect it, then run it.
+希望先审查？下载 [`install.sh`](https://hermes-agent.nousresearch.com/install.sh)，检查后运行。
 
-After it finishes, reload your shell:
+完成后，重新加载 shell：
 
 ```bash
-source ~/.bashrc   # or source ~/.zshrc
+source ~/.bashrc   # 或 source ~/.zshrc
 ```
 
-### 2. Run Quick Setup
+### 2. 运行快速设置
 
 ```bash
 hermes setup
 ```
 
-Select **Quick Setup**. Hermes opens a browser tab and waits for you to finish the next steps.
+选择**快速设置**。Hermes 会打开一个浏览器标签页，等待您完成后续步骤。
 
-### 3. Create a Nous Portal account
+### 3. 创建 Nous Portal 账户
 
-In the browser, create a [Nous Portal](https://portal.nousresearch.com) account (or sign in) and choose the **Free** plan.
+在浏览器中，创建一个 [Nous Portal](https://portal.nousresearch.com) 账户（或登录）并选择**免费**计划。
 
-### 4. Connect your account
+### 4. 连接您的账户
 
-When prompted to connect your account to Hermes Agent, click **Connect**. You'll see a confirmation once it's linked.
+当提示将您的账户连接到 Hermes Agent 时，点击**连接**。连接成功后您会看到确认信息。
 
-### 5. Select the free Nemotron 3 Ultra model
+### 5. 选择免费的 Nemotron 3 Ultra 模型
 
-Return to your terminal. From the model list, select:
+返回到终端。从模型列表中，选择：
 
 ```
 nvidia/nemotron-3-ultra:free
 ```
 
-The `:free` tag is what keeps it on the no-cost tier, so make sure you pick that variant.
+`:free` 标记使其保持免费层级状态，因此请确保选择该变体。
 
-### 6. Start chatting
+### 6. 开始聊天
 
-Complete the remaining Quick Setup prompts, then run:
+完成剩余的快速设置提示，然后运行：
 
 ```bash
 hermes
 ```
 
-That's it — you're talking to Nemotron 3 Ultra, free.
+就这样——您正在免费与 Nemotron 3 Ultra 对话。
 
-## Switching to it later
+## 稍后切换到此模型
 
-Already set up with another model?
+已用其他模型设置好？
 
-- **Desktop app:** open the model picker, search for **nemotron 3 ultra**, and select the **Free tier** variant.
-- **CLI / TUI:** switch any time from inside a session with `/model nvidia/nemotron-3-ultra:free`, or run `/model` to open the picker and choose it from the list.
+- **桌面应用：** 打开模型选择器，搜索 **nemotron 3 ultra**，并选择**免费层级**变体。
+- **CLI / TUI：** 在会话中随时使用 `/model nvidia/nemotron-3-ultra:free` 切换，或者运行 `/model` 打开选择器并从列表中选取。
 
-## Troubleshooting
+## 故障排除
 
-- **Don't see the model in the list?** Make sure you finished the Nous Portal connection and that you're on the **Free** plan. In the CLI, `hermes portal info` confirms you're logged in and routing through Nous.
-- **Picked the wrong variant?** Re-select `nvidia/nemotron-3-ultra:free` — the `:free` suffix is required to stay on the no-cost tier.
-- **Browser didn't open / you're on a remote host (CLI)?** See [OAuth over SSH / Remote Hosts](/guides/oauth-over-ssh) for port-forwarding and manual-paste workarounds.
+- **列表中没有该模型？** 确保您已完成 Nous Portal 连接，并且使用的是**免费**计划。在 CLI 中，`hermes portal info` 可确认您已登录并通过 Nous 路由。
+- **选错了变体？** 重新选择 `nvidia/nemotron-3-ultra:free` — 必须使用 `:free` 后缀才能保持免费层级。
+- **浏览器未打开/您在使用远程主机（CLI）？** 请参阅 [通过 SSH / 远程主机进行 OAuth](/guides/oauth-over-ssh) 了解端口转发和手动粘贴的解决方法。
 
-## See also
+## 参见
 
-- **[Desktop App](/user-guide/desktop)** — The native one-click app (macOS, Windows, Linux)
-- **[Run Hermes Agent with Nous Portal](/guides/run-hermes-with-nous-portal)** — Full Portal walkthrough: models, Tool Gateway, and verification
-- **[Nous Portal integration](/integrations/nous-portal)** — What's in the subscription
-- **[Quickstart](/getting-started/quickstart)** — Install-to-chat in under 5 minutes
+- **[桌面应用](/user-guide/desktop)** — 原生一键应用（macOS、Windows、Linux）
+- **[使用 Nous Portal 运行 Hermes Agent](/guides/run-hermes-with-nous-portal)** — 完整的 Portal 操作指南：模型、工具网关和验证
+- **[Nous Portal 集成](/integrations/nous-portal)** — 订阅包含的内容
+- **[快速入门](/getting-started/quickstart)** — 安装到聊天只需不到 5 分钟

@@ -1,86 +1,79 @@
----
-title: API 服务器
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/api-server.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/api-server.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 14
-title: "API Server"
-description: "Expose hermes-agent as an OpenAI-compatible API for any frontend"
+title: "API 服务器"
+description: "将 hermes-agent 暴露为兼容 OpenAI 的 API，供任何前端使用"
 ---
 
-# API Server
+--- body ---
+# API 服务器
 
-The API server exposes hermes-agent as an OpenAI-compatible HTTP endpoint. Any frontend that speaks the OpenAI format — Open WebUI, LobeChat, LibreChat, NextChat, ChatBox, and hundreds more — can connect to hermes-agent and use it as a backend.
+API 服务器将 hermes-agent 暴露为一个兼容 OpenAI 的 HTTP 端点。任何支持 OpenAI 格式的前端——Open WebUI、LobeChat、LibreChat、NextChat、ChatBox 等——都可以连接到 hermes-agent 并将其用作后端。
 
-Your agent handles requests with its full toolset (terminal, file operations, web search, memory, skills) and returns the final response. When streaming, tool progress indicators appear inline so frontends can show what the agent is doing.
+你的代理（Agent）使用其全套工具（终端、文件操作、网页搜索、记忆、技能）处理请求，并返回最终响应。在流式传输时，工具进度指示器会内联显示，以便前端展示代理正在执行的操作。
 
-:::tip One backend covers models + tools
-Hermes itself needs a configured provider and tool backends for the API server to be useful. A [Nous Portal](/user-guide/features/tool-gateway) subscription handles both — 300+ models plus web/image/TTS/browser via the Tool Gateway. Run `hermes setup --portal` once before starting the API server and frontends like Open WebUI or LobeChat get a fully tool-equipped backend.
+:::tip 一个后端同时覆盖模型和工具
+Hermes 本身需要一个已配置的提供者（provider）和工具后端，API 服务器才能发挥作用。一个 [Nous Portal](/user-guide/features/tool-gateway) 订阅即可处理两者——300+ 模型以及通过工具网关（Tool Gateway）提供的网页/图像/TTS/浏览器功能。在启动 API 服务器之前运行 `hermes setup --portal` 一次，像 Open WebUI 或 LobeChat 这样的前端就能获得一个工具齐全的后端。
 :::
 
-## Quick Start
+## 快速开始
 
-### 1. Enable the API server
+### 1. 启用 API 服务器
 
-Add to `~/.hermes/.env`:
+添加到 `~/.hermes/.env`：
 
 ```bash
 API_SERVER_ENABLED=true
 API_SERVER_KEY=change-me-local-dev
-# Optional: only if a browser must call Hermes directly
+# 可选：仅当浏览器需要直接调用 Hermes 时才需要
 # API_SERVER_CORS_ORIGINS=http://localhost:3000
 ```
 
-### 2. Start the gateway
+### 2. 启动网关
 
 ```bash
 hermes gateway
 ```
 
-You'll see:
+你会看到：
 
 ```
 [API Server] API server listening on http://127.0.0.1:8642
 ```
 
-### 3. Connect a frontend
+### 3. 连接前端
 
-Point any OpenAI-compatible client at `http://localhost:8642/v1`:
+将任何兼容 OpenAI 的客户端指向 `http://localhost:8642/v1`：
 
 ```bash
-# Test with curl
+# 使用 curl 测试
 curl http://localhost:8642/v1/chat/completions \
   -H "Authorization: Bearer change-me-local-dev" \
   -H "Content-Type: application/json" \
   -d '{"model": "hermes-agent", "messages": [{"role": "user", "content": "Hello!"}]}'
 ```
 
-Or connect Open WebUI, LobeChat, or any other frontend — see the [Open WebUI integration guide](/user-guide/messaging/open-webui) for step-by-step instructions.
+或者连接 Open WebUI、LobeChat 或任何其他前端——请参阅 [Open WebUI 集成指南](/user-guide/messaging/open-webui) 获取详细步骤。
 
-## Endpoints
+## 端点
 
 ### POST /v1/chat/completions
 
-Standard OpenAI Chat Completions format. Stateless — the full conversation is included in each request via the `messages` array.
+标准 OpenAI 聊天补全（Chat Completions）格式。无状态——每次请求通过 `messages` 数组包含完整的对话。
 
-**Request:**
+**请求：**
 ```json
 {
   "model": "hermes-agent",
   "messages": [
-    {"role": "system", "content": "You are a Python expert."},
-    {"role": "user", "content": "Write a fibonacci function"}
+    {"role": "system", "content": "你是一个 Python 专家。"},
+    {"role": "user", "content": "写一个斐波那契函数"}
   ],
   "stream": false
 }
 ```
 
-**Response:**
+**响应：**
 ```json
 {
   "id": "chatcmpl-abc123",
@@ -89,14 +82,14 @@ Standard OpenAI Chat Completions format. Stateless — the full conversation is 
   "model": "hermes-agent",
   "choices": [{
     "index": 0,
-    "message": {"role": "assistant", "content": "Here's a fibonacci function..."},
+    "message": {"role": "assistant", "content": "这是一个斐波那契函数..."},
     "finish_reason": "stop"
   }],
   "usage": {"prompt_tokens": 50, "completion_tokens": 200, "total_tokens": 250}
 }
 ```
 
-**Inline image input:** user messages may send `content` as an array of `text` and `image_url` parts. Both remote `http(s)` URLs and `data:image/...` URLs are supported:
+**内联图像输入：** 用户消息可以发送 `content` 作为 `text` 和 `image_url` 部分的数组。支持远程 `http(s)` URL 和 `data:image/...` URL：
 
 ```json
 {
@@ -105,7 +98,7 @@ Standard OpenAI Chat Completions format. Stateless — the full conversation is 
     {
       "role": "user",
       "content": [
-        {"type": "text", "text": "What is in this image?"},
+        {"type": "text", "text": "这张图片里有什么？"},
         {"type": "image_url", "image_url": {"url": "https://example.com/cat.png", "detail": "high"}}
       ]
     }
@@ -113,29 +106,29 @@ Standard OpenAI Chat Completions format. Stateless — the full conversation is 
 }
 ```
 
-Uploaded files (`file` / `input_file` / `file_id`) and non-image `data:` URLs return `400 unsupported_content_type`.
+上传的文件（`file` / `input_file` / `file_id`）和非图像 `data:` URL 会返回 `400 unsupported_content_type`。
 
-**Streaming** (`"stream": true`): Returns Server-Sent Events (SSE) with token-by-token response chunks. For **Chat Completions**, the stream uses standard `chat.completion.chunk` events plus Hermes' custom `hermes.tool.progress` event for tool-start UX. For **Responses**, the stream uses OpenAI Responses event types such as `response.created`, `response.output_text.delta`, `response.output_item.added`, `response.output_item.done`, and `response.completed`.
+**流式传输**（`"stream": true`）：返回服务器推送事件（SSE），包含逐 token 的响应块。对于**聊天补全**，流使用标准的 `chat.completion.chunk` 事件以及 Hermes 自定义的 `hermes.tool.progress` 事件用于工具启动的用户体验。对于**响应**，流使用 OpenAI 响应事件类型，例如 `response.created`、`response.output_text.delta`、`response.output_item.added`、`response.output_item.done` 和 `response.completed`。
 
-**Tool progress in streams**:
-- **Chat Completions**: Hermes emits `event: hermes.tool.progress` for tool-start visibility without polluting persisted assistant text.
-- **Responses**: Hermes emits spec-native `function_call` and `function_call_output` output items during the SSE stream, so clients can render structured tool UI in real time.
+**流中的工具进度：**
+- **聊天补全**：Hermes 发出 `event: hermes.tool.progress` 以提供工具启动可见性，同时不污染持久化的助手文本。
+- **响应**：Hermes 在 SSE 流中发出规范原生的 `function_call` 和 `function_call_output` 输出项，因此客户端可以实时渲染结构化的工具 UI。
 
 ### POST /v1/responses
 
-OpenAI Responses API format. Supports server-side conversation state via `previous_response_id` — the server stores full conversation history (including tool calls and results) so multi-turn context is preserved without the client managing it.
+OpenAI 响应 API 格式。通过 `previous_response_id` 支持服务器端对话状态——服务器存储完整的对话历史（包括工具调用和结果），因此无需客户端管理即可保留多轮上下文。
 
-**Request:**
+**请求：**
 ```json
 {
   "model": "hermes-agent",
-  "input": "What files are in my project?",
-  "instructions": "You are a helpful coding assistant.",
+  "input": "我的项目中有哪些文件？",
+  "instructions": "你是一个有用的编码助手。",
   "store": true
 }
 ```
 
-**Response:**
+**响应：**
 ```json
 {
   "id": "resp_abc123",
@@ -145,13 +138,13 @@ OpenAI Responses API format. Supports server-side conversation state via `previo
   "output": [
     {"type": "function_call", "name": "terminal", "arguments": "{\"command\": \"ls\"}", "call_id": "call_1"},
     {"type": "function_call_output", "call_id": "call_1", "output": "README.md src/ tests/"},
-    {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Your project has..."}]}
+    {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "你的项目有..."}]}
   ],
   "usage": {"input_tokens": 50, "output_tokens": 200, "total_tokens": 250}
 }
 ```
 
-**Inline image input:** `input[].content` can contain `input_text` and `input_image` parts. Both remote URLs and `data:image/...` URLs are supported:
+**内联图像输入：** `input[].content` 可以包含 `input_text` 和 `input_image` 部分。支持远程 URL 和 `data:image/...` URL：
 
 ```json
 {
@@ -160,7 +153,7 @@ OpenAI Responses API format. Supports server-side conversation state via `previo
     {
       "role": "user",
       "content": [
-        {"type": "input_text", "text": "Describe this screenshot."},
+        {"type": "input_text", "text": "描述一下这个屏幕截图。"},
         {"type": "input_image", "image_url": "data:image/png;base64,iVBORw0K..."}
       ]
     }
@@ -168,48 +161,48 @@ OpenAI Responses API format. Supports server-side conversation state via `previo
 }
 ```
 
-Uploaded files (`input_file` / `file_id`) and non-image `data:` URLs return `400 unsupported_content_type`.
+上传的文件（`input_file` / `file_id`）和非图像 `data:` URL 会返回 `400 unsupported_content_type`。
 
-#### Multi-turn with previous_response_id
+#### 使用 previous_response_id 进行多轮对话
 
-Chain responses to maintain full context (including tool calls) across turns:
+链接响应以跨轮保持完整上下文（包括工具调用）：
 
 ```json
 {
-  "input": "Now show me the README",
+  "input": "现在显示 README",
   "previous_response_id": "resp_abc123"
 }
 ```
 
-The server reconstructs the full conversation from the stored response chain — all previous tool calls and results are preserved. Chained requests also share the same session, so multi-turn conversations appear as a single entry in the dashboard and session history.
+服务器从存储的响应链重建完整对话——所有之前的工具调用和结果都会被保留。链式请求也共享同一个会话，因此多轮对话在仪表板和会话历史中显示为单个条目。
 
-#### Named conversations
+#### 命名对话
 
-Use the `conversation` parameter instead of tracking response IDs:
+使用 `conversation` 参数代替跟踪响应 ID：
 
 ```json
-{"input": "Hello", "conversation": "my-project"}
-{"input": "What's in src/?", "conversation": "my-project"}
-{"input": "Run the tests", "conversation": "my-project"}
+{"input": "你好", "conversation": "my-project"}
+{"input": "src/ 里有什么？", "conversation": "my-project"}
+{"input": "运行测试", "conversation": "my-project"}
 ```
 
-The server automatically chains to the latest response in that conversation. Like the `/title` command for gateway sessions.
+服务器自动链接到该对话中的最新响应。类似于网关会话的 `/title` 命令。
 
 ### GET /v1/responses/\{id\}
 
-Retrieve a previously stored response by ID.
+通过 ID 检索之前存储的响应。
 
 ### DELETE /v1/responses/\{id\}
 
-Delete a stored response.
+删除存储的响应。
 
 ### GET /v1/models
 
-Lists the agent as an available model. The advertised model name defaults to the [profile](/user-guide/profiles) name (or `hermes-agent` for the default profile). Required by most frontends for model discovery.
+将代理列为可用模型。广告的模型名称默认为[配置文件](/user-guide/profiles)名称（对于默认配置文件为 `hermes-agent`）。大多数前端需要此端点进行模型发现。
 
 ### GET /v1/capabilities
 
-Returns a machine-readable description of the API server's stable surface for external UIs, orchestrators, and plugin bridges.
+返回 API 服务器稳定表面的机器可读描述，用于外部 UI、编排器和插件桥接。
 
 ```json
 {
@@ -228,23 +221,23 @@ Returns a machine-readable description of the API server's stable surface for ex
 }
 ```
 
-Use this endpoint when integrating dashboards, browser UIs, or control planes so they can discover whether the running Hermes version supports runs, streaming, cancellation, and session continuity without depending on private Python internals.
+在集成仪表板、浏览器 UI 或控制平面时使用此端点，以便它们可以检测运行的 Hermes 版本是否支持 run（运行）、流式传输、取消和会话连续性，而无需依赖私有的 Python 内部实现。
 
 ### GET /health
 
-Health check. Returns `{"status": "ok"}`. Also available at **GET /v1/health** for OpenAI-compatible clients that expect the `/v1/` prefix.
+健康检查。返回 `{"status": "ok"}`。也可通过 **GET /v1/health** 访问，用于期望 `/v1/` 前缀的兼容 OpenAI 的客户端。
 
 ### GET /health/detailed
 
-Extended health check that also reports active sessions, running agents, and resource usage. Useful for monitoring/observability tooling.
+扩展健康检查，还报告活动会话、运行中的代理和资源使用情况。适用于监控/可观测性工具。
 
-## Runs API (streaming-friendly alternative)
+## Runs API（流式友好替代方案）
 
-In addition to `/v1/chat/completions` and `/v1/responses`, the server exposes a **runs** API for long-form sessions where the client wants to subscribe to progress events instead of managing streaming themselves.
+除了 `/v1/chat/completions` 和 `/v1/responses` 之外，服务器还公开了一个 **runs** API，用于长期会话，客户端希望订阅进度事件而不是自己管理流式传输。
 
 ### POST /v1/runs
 
-Create a new agent run. Returns a `run_id` that can be used to subscribe to progress events.
+创建一个新的代理运行。返回一个 `run_id`，可用于订阅进度事件。
 
 ```json
 {
@@ -253,11 +246,11 @@ Create a new agent run. Returns a `run_id` that can be used to subscribe to prog
 }
 ```
 
-Runs accept a simple `input` string and optional `session_id`, `instructions`, `conversation_history`, or `previous_response_id`. When `session_id` is provided, Hermes surfaces it in the run status so external UIs can correlate runs with their own conversation IDs.
+Runs 接受一个简单的 `input` 字符串和可选的 `session_id`、`instructions`、`conversation_history` 或 `previous_response_id`。当提供 `session_id` 时，Hermes 会在运行状态中显示它，以便外部 UI 可以将运行与其自己的对话 ID 关联起来。
 
 ### GET /v1/runs/\{run_id\}
 
-Poll the current run state. This is useful for dashboards that need status without holding an SSE connection open, or for UIs that reconnect after navigation.
+轮询当前运行状态。这对于不需要保持 SSE 连接打开的仪表板，或者在导航后重新连接的 UI 很有用。
 
 ```json
 {
@@ -266,94 +259,94 @@ Poll the current run state. This is useful for dashboards that need status witho
   "status": "completed",
   "session_id": "space-session",
   "model": "hermes-agent",
-  "output": "Done.",
+  "output": "完成。",
   "usage": {"input_tokens": 50, "output_tokens": 200, "total_tokens": 250}
 }
 ```
 
-Statuses are retained briefly after terminal states (`completed`, `failed`, or `cancelled`) for polling and UI reconciliation.
+状态在终端状态（`completed`、`failed` 或 `cancelled`）后会短暂保留，以便轮询和 UI 协调。
 
 ### GET /v1/runs/\{run_id\}/events
 
-Server-Sent Events stream of the run's tool-call progress, token deltas, and lifecycle events. Designed for dashboards and thick clients that want to attach/detach without losing state.
+以服务器推送事件（SSE）流的形式输出运行的工具调用进度、token 增量和生命周期事件。专为希望在不丢失状态的情况下附加/分离的仪表板和厚客户端设计。
 
 ### POST /v1/runs/\{run_id\}/stop
 
-Interrupt a running agent turn. The endpoint returns immediately with `{"status": "stopping"}` while Hermes asks the active agent to stop at the next safe interruption point.
+中断正在进行的代理轮次。端点立即返回 `{"status": "stopping"}`，同时 Hermes 要求活动代理在下一个安全中断点停止。
 
 ### POST /v1/runs/\{run_id\}/approval
 
-Resolve a pending approval for a run that is waiting on a human decision (for example, a tool call gated behind an approval policy). The body carries the approval decision; the run resumes once the decision is recorded. This endpoint is advertised in `/v1/capabilities` as the `run_approval` feature so external UIs can detect support before surfacing an approval prompt.
+解决运行中等待人工决策（例如，受审批策略限制的工具调用）的待处理审批。请求体包含审批决定；一旦记录决定，运行就会恢复。此端点在 `/v1/capabilities` 中以 `run_approval` 特性进行通告，以便外部 UI 在显示审批提示之前检测支持情况。
 
-## Jobs API (background scheduled work)
+## Jobs API（后台定时工作）
 
-The server exposes a lightweight jobs CRUD surface for managing scheduled / background agent runs from a remote client. All endpoints are gated behind the same bearer auth.
+服务器公开了一个轻量级的 jobs CRUD 表面，用于从远程客户端管理定时/后台代理运行。所有端点都受相同的 bearer 认证保护。
 
 ### GET /api/jobs
 
-List all scheduled jobs.
+列出所有定时作业。
 
 ### POST /api/jobs
 
-Create a new scheduled job. Body accepts the same shape as `hermes cron` — prompt, schedule, skills, provider override, delivery target.
+创建一个新的定时作业。请求体接受与 `hermes cron` 相同的结构——提示词、调度、技能、提供者覆盖、交付目标。
 
 ### GET /api/jobs/\{job_id\}
 
-Fetch a single job's definition and last-run state.
+获取单个作业的定义和上次运行状态。
 
 ### PATCH /api/jobs/\{job_id\}
 
-Update fields on an existing job (prompt, schedule, etc.). Partial updates are merged.
+更新现有作业的字段（提示词、调度等）。部分更新会合并。
 
 ### DELETE /api/jobs/\{job_id\}
 
-Remove a job. Also cancels any in-flight run.
+删除作业。同时取消任何正在进行的运行。
 
 ### POST /api/jobs/\{job_id\}/pause
 
-Pause a job without deleting it. Next-scheduled-run timestamps are suspended until resumed.
+暂停作业而不删除它。下次计划运行的时间戳会暂停，直到恢复。
 
 ### POST /api/jobs/\{job_id\}/resume
 
-Resume a previously paused job.
+恢复之前暂停的作业。
 
 ### POST /api/jobs/\{job_id\}/run
 
-Trigger the job to run immediately, out of schedule.
+立即触发作业运行，而不按计划执行。
 
-## Sessions API (session control over REST)
+## Sessions API（通过 REST 控制会话）
 
-External UIs can manage Hermes sessions over REST without standing up the dashboard. All endpoints are gated by `API_SERVER_KEY` and live under `/api/sessions/*`.
+外部 UI 可以通过 REST 管理 Hermes 会话，而无需启动仪表板。所有端点都由 `API_SERVER_KEY` 保护，位于 `/api/sessions/*` 下。
 
-| Method | Path | Description |
+| 方法 | 路径 | 描述 |
 |--------|------|-------------|
-| `GET` | `/api/sessions` | List sessions (paginated — `limit`, `offset`, `source`, `include_children`) |
-| `POST` | `/api/sessions` | Create an empty session |
-| `GET` | `/api/sessions/{id}` | Read session metadata |
-| `PATCH` | `/api/sessions/{id}` | Update title or `end_reason` |
-| `DELETE` | `/api/sessions/{id}` | Delete a session |
-| `GET` | `/api/sessions/{id}/messages` | Message history for a session |
-| `POST` | `/api/sessions/{id}/fork` | Branch the session via `SessionDB` lineage (matches CLI `/branch` semantics) |
-| `POST` | `/api/sessions/{id}/chat` | Run one synchronous agent turn |
-| `POST` | `/api/sessions/{id}/chat/stream` | SSE wrapper over a single turn — emits `assistant.delta`, `tool.started`, `tool.completed`, `run.completed` events |
+| `GET` | `/api/sessions` | 列出会话（分页——`limit`、`offset`、`source`、`include_children`） |
+| `POST` | `/api/sessions` | 创建一个空会话 |
+| `GET` | `/api/sessions/{id}` | 读取会话元数据 |
+| `PATCH` | `/api/sessions/{id}` | 更新标题或 `end_reason` |
+| `DELETE` | `/api/sessions/{id}` | 删除会话 |
+| `GET` | `/api/sessions/{id}/messages` | 会话的消息历史 |
+| `POST` | `/api/sessions/{id}/fork` | 通过 `SessionDB` 血缘分支会话（匹配 CLI `/branch` 语义） |
+| `POST` | `/api/sessions/{id}/chat` | 运行一个同步代理轮次 |
+| `POST` | `/api/sessions/{id}/chat/stream` | 单个轮次的 SSE 封装——发出 `assistant.delta`、`tool.started`、`tool.completed`、`run.completed` 事件 |
 
-`/v1/capabilities` advertises the full surface via `session_*` feature flags and `endpoints.session_*` entries so external UIs can detect support and fall back safely. Inline images are supported in `chat` and `chat/stream` payloads (multimodal-aware path).
+`/v1/capabilities` 通过 `session_*` 特性标志和 `endpoints.session_*` 条目通告完整的表面，以便外部 UI 检测支持并安全地回退。在 `chat` 和 `chat/stream` 请求体中支持内联图像（多模态感知路径）。
 
 ```bash
-# fork a session and run one turn
+# 分支会话并运行一个轮次
 curl -X POST http://localhost:8642/api/sessions/$ID/fork \
   -H "Authorization: Bearer $API_SERVER_KEY" \
-  -d '{"title": "explore alt path"}'
+  -d '{"title": "探索替代路径"}'
 
-# stream a turn over SSE
+# 通过 SSE 流式传输一个轮次
 curl -N -X POST http://localhost:8642/api/sessions/$ID/chat/stream \
   -H "Authorization: Bearer $API_SERVER_KEY" \
-  -d '{"input": "what files changed in the last hour?"}'
+  -d '{"input": "过去一小时哪些文件发生了变化？"}'
 ```
 
-## Skills and toolsets discovery
+## 技能和工具集发现
 
-`GET /v1/skills` and `GET /v1/toolsets` let external clients enumerate the agent's capabilities deterministically over REST instead of asking the model. Both are read-only and gated by `API_SERVER_KEY`.
+`GET /v1/skills` 和 `GET /v1/toolsets` 允许外部客户端通过 REST 确定性地枚举代理的能力，而不是询问模型。两者都是只读的，并由 `API_SERVER_KEY` 保护。
 
 ```bash
 curl http://localhost:8642/v1/skills \
@@ -366,11 +359,11 @@ curl http://localhost:8642/v1/toolsets \
 #     "configured": true, "tools": ["read_file", "write_file", ...]}, ...]
 ```
 
-`/v1/skills` returns the same metadata the skills hub uses internally. `/v1/toolsets` returns toolsets resolved for the `api_server` platform with the concrete `tools` list each one expands to. Both are advertised under `endpoints.*` in `/v1/capabilities`.
+`/v1/skills` 返回技能中心内部使用的相同元数据。`/v1/toolsets` 返回为 `api_server` 平台解析的工具集，包含每个工具集展开的具体 `tools` 列表。两者都在 `/v1/capabilities` 中的 `endpoints.*` 下进行通告。
 
-## Long-term memory scoping (`X-Hermes-Session-Key`)
+## 长期记忆作用域（`X-Hermes-Session-Key`）
 
-Multi-user frontends like Open WebUI need a stable per-channel identifier for long-term memory (Honcho, etc.) that is **independent** of the transcript-scoped `X-Hermes-Session-Id` (which rotates on `/new`). Pass `X-Hermes-Session-Key` on `/v1/chat/completions`, `/v1/responses`, or `/v1/runs` and Hermes threads it through to `AIAgent(gateway_session_key=...)`, where the Honcho memory provider uses it to derive a stable scope.
+像 Open WebUI 这样的多用户前端需要一个稳定的每通道标识符用于长期记忆（Honcho 等），该标识符**独立于**抄本作用域的 `X-Hermes-Session-Id`（后者在 `/new` 时轮换）。在 `/v1/chat/completions`、`/v1/responses` 或 `/v1/runs` 上传递 `X-Hermes-Session-Key`，Hermes 会将其传递到 `AIAgent(gateway_session_key=...)`，其中 Honcho 记忆提供者使用它来推导出稳定的作用域。
 
 ```http
 POST /v1/chat/completions HTTP/1.1
@@ -379,102 +372,102 @@ X-Hermes-Session-Id: transcript-alpha
 X-Hermes-Session-Key: agent:main:webui:dm:user-42
 ```
 
-Rules: max 256 chars, control characters (`\r`, `\n`, `\x00`) are rejected, and the value is echoed back on responses (JSON + SSE). `/v1/capabilities` advertises support via `"session_key_header": "X-Hermes-Session-Key"`. Without the key, Honcho's `per-session` strategy produces a different scope per `session_id` — exactly the behavior Hermes had before.
+规则：最多 256 个字符，拒绝控制字符（`\r`、`\n`、`\x00`），并且该值会在响应中回显（JSON + SSE）。`/v1/capabilities` 通过 `"session_key_header": "X-Hermes-Session-Key"` 通告支持。如果没有此键，Honcho 的 `per-session` 策略会对每个 `session_id` 产生不同的作用域——这正是 Hermes 之前的行为。
 
-## System Prompt Handling
+## 系统提示处理
 
-When a frontend sends a `system` message (Chat Completions) or `instructions` field (Responses API), hermes-agent **layers it on top** of its core system prompt. Your agent keeps all its tools, memory, and skills — the frontend's system prompt adds extra instructions.
+当前端发送 `system` 消息（聊天补全）或 `instructions` 字段（响应 API）时，hermes-agent 会将其**叠加**到其核心系统提示之上。你的代理保留所有工具、记忆和技能——前端的系统提示只是添加额外指令。
 
-This means you can customize behavior per-frontend without losing capabilities:
-- Open WebUI system prompt: "You are a Python expert. Always include type hints."
-- The agent still has terminal, file tools, web search, memory, etc.
+这意味着你可以在不丢失能力的情况下为每个前端定制行为：
+- Open WebUI 系统提示：“你是一个 Python 专家。始终包含类型提示。”
+- 代理仍然拥有终端、文件工具、网页搜索、记忆等。
 
-## Authentication
+## 认证
 
-Bearer token auth via the `Authorization` header:
+通过 `Authorization` 头进行 Bearer token 认证：
 
 ```
 Authorization: Bearer ***
 ```
 
-Configure the key via `API_SERVER_KEY` env var. If you need a browser to call Hermes directly, also set `API_SERVER_CORS_ORIGINS` to an explicit allowlist.
+通过 `API_SERVER_KEY` 环境变量配置密钥。如果你需要浏览器直接调用 Hermes，还需将 `API_SERVER_CORS_ORIGINS` 设置为明确的白名单。
 
-:::warning Security
-The API server gives full access to hermes-agent's toolset, **including terminal commands**. `API_SERVER_KEY` is **required for every deployment**, including the default loopback bind on `127.0.0.1`. Keep `API_SERVER_CORS_ORIGINS` narrow to control browser access when you explicitly allow browser callers.
+:::warning 安全
+API 服务器提供对 hermes-agent 工具集的完全访问权限，**包括终端命令**。`API_SERVER_KEY` 在**每个部署中都是必需的**，包括默认的回环绑定 `127.0.0.1`。保持 `API_SERVER_CORS_ORIGINS` 狭窄，以在你明确允许浏览器调用者时控制浏览器访问。
 :::
 
-## Configuration
+## 配置
 
-### Environment Variables
+### 环境变量
 
-| Variable | Default | Description |
+| 变量 | 默认值 | 描述 |
 |----------|---------|-------------|
-| `API_SERVER_ENABLED` | `false` | Enable the API server |
-| `API_SERVER_PORT` | `8642` | HTTP server port |
-| `API_SERVER_HOST` | `127.0.0.1` | Bind address (localhost only by default) |
-| `API_SERVER_KEY` | _(required)_ | Bearer token for auth |
-| `API_SERVER_CORS_ORIGINS` | _(none)_ | Comma-separated allowed browser origins |
-| `API_SERVER_MODEL_NAME` | _(profile name)_ | Model name on `/v1/models`. Defaults to profile name, or `hermes-agent` for default profile. |
+| `API_SERVER_ENABLED` | `false` | 启用 API 服务器 |
+| `API_SERVER_PORT` | `8642` | HTTP 服务器端口 |
+| `API_SERVER_HOST` | `127.0.0.1` | 绑定地址（默认仅 localhost） |
+| `API_SERVER_KEY` | _(必需)_ | 用于认证的 Bearer token |
+| `API_SERVER_CORS_ORIGINS` | _(无)_ | 允许的浏览器来源，以逗号分隔 |
+| `API_SERVER_MODEL_NAME` | _(配置文件名)_ | `/v1/models` 上的模型名称。默认为配置文件名，对于默认配置文件为 `hermes-agent`。 |
 
 ### config.yaml
 
 ```yaml
-# Not yet supported — use environment variables.
-# config.yaml support coming in a future release.
+# 尚未支持——请使用环境变量。
+# config.yaml 支持将在未来版本中提供。
 ```
 
-## Security Headers
+## 安全头
 
-All responses include security headers:
-- `X-Content-Type-Options: nosniff` — prevents MIME type sniffing
-- `Referrer-Policy: no-referrer` — prevents referrer leakage
+所有响应都包含安全头：
+- `X-Content-Type-Options: nosniff` — 防止 MIME 类型嗅探
+- `Referrer-Policy: no-referrer` — 防止 referrer 泄漏
 
 ## CORS
 
-The API server does **not** enable browser CORS by default.
+默认情况下，API 服务器**不**启用浏览器 CORS。
 
-For direct browser access, set an explicit allowlist:
+对于直接浏览器访问，设置明确的允许列表：
 
 ```bash
 API_SERVER_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
-When CORS is enabled:
-- **Preflight responses** include `Access-Control-Max-Age: 600` (10 minute cache)
-- **SSE streaming responses** include CORS headers so browser EventSource clients work correctly
-- **`Idempotency-Key`** is an allowed request header — clients can send it for deduplication (responses are cached by key for 5 minutes)
+当 CORS 启用时：
+- **预检响应**包含 `Access-Control-Max-Age: 600`（10 分钟缓存）
+- **SSE 流式响应**包含 CORS 头，以便浏览器 EventSource 客户端正常工作
+- **`Idempotency-Key`** 是允许的请求头——客户端可以发送它以进行去重（响应按键缓存 5 分钟）
 
-Most documented frontends such as Open WebUI connect server-to-server and do not need CORS at all.
+大多数有文档的前端（如 Open WebUI）进行服务器到服务器的连接，根本不需要 CORS。
 
-## Compatible Frontends
+## 兼容的前端
 
-Any frontend that supports the OpenAI API format works. Tested/documented integrations:
+任何支持 OpenAI API 格式的前端都可以使用。已测试/有文档的集成：
 
-| Frontend | Stars | Connection |
+| 前端 | Stars | 连接方式 |
 |----------|-------|------------|
-| [Open WebUI](/user-guide/messaging/open-webui) | 126k | Full guide available |
-| LobeChat | 73k | Custom provider endpoint |
-| LibreChat | 34k | Custom endpoint in librechat.yaml |
-| AnythingLLM | 56k | Generic OpenAI provider |
-| NextChat | 87k | BASE_URL env var |
-| ChatBox | 39k | API Host setting |
-| Jan | 26k | Remote model config |
+| [Open WebUI](/user-guide/messaging/open-webui) | 126k | 提供完整指南 |
+| LobeChat | 73k | 自定义提供者端点 |
+| LibreChat | 34k | 在 librechat.yaml 中自定义端点 |
+| AnythingLLM | 56k | 通用 OpenAI 提供者 |
+| NextChat | 87k | BASE_URL 环境变量 |
+| ChatBox | 39k | API 主机设置 |
+| Jan | 26k | 远程模型配置 |
 | HF Chat-UI | 8k | OPENAI_BASE_URL |
-| big-AGI | 7k | Custom endpoint |
+| big-AGI | 7k | 自定义端点 |
 | OpenAI Python SDK | — | `OpenAI(base_url="http://localhost:8642/v1")` |
-| curl | — | Direct HTTP requests |
+| curl | — | 直接 HTTP 请求 |
 
-## Multi-User Setup with Profiles
+## 使用配置文件的多用户设置
 
-To give multiple users their own isolated Hermes instance (separate config, memory, skills), use [profiles](/user-guide/profiles):
+要为多个用户提供他们自己的隔离 Hermes 实例（独立的配置、记忆、技能），请使用[配置文件](/user-guide/profiles)：
 
 ```bash
-# Create a profile per user
+# 为每个用户创建一个配置文件
 hermes profile create alice
 hermes profile create bob
 
-# Configure each profile's API server on a different port. API_SERVER_* are env
-# vars (not config.yaml keys), so write them to each profile's .env:
+# 在每个配置文件的不同端口上配置 API 服务器。API_SERVER_* 是环境变量
+# （不是 config.yaml 键），因此将它们写入每个配置文件的 .env：
 cat >> ~/.hermes/profiles/alice/.env <<EOF
 API_SERVER_ENABLED=true
 API_SERVER_PORT=8643
@@ -487,26 +480,26 @@ API_SERVER_PORT=8644
 API_SERVER_KEY=bob-secret
 EOF
 
-# Start each profile's gateway
+# 启动每个配置文件的网关
 hermes -p alice gateway &
 hermes -p bob gateway &
 ```
 
-Each profile's API server automatically advertises the profile name as the model ID:
+每个配置文件的 API 服务器会自动将配置文件名作为模型 ID 进行通告：
 
-- `http://localhost:8643/v1/models` → model `alice`
-- `http://localhost:8644/v1/models` → model `bob`
+- `http://localhost:8643/v1/models` → 模型 `alice`
+- `http://localhost:8644/v1/models` → 模型 `bob`
 
-In Open WebUI, add each as a separate connection. The model dropdown shows `alice` and `bob` as distinct models, each backed by a fully isolated Hermes instance. See the [Open WebUI guide](/user-guide/messaging/open-webui#multi-user-setup-with-profiles) for details.
+在 Open WebUI 中，将每个作为单独的连接添加。模型下拉菜单会显示 `alice` 和 `bob` 作为不同的模型，每个都后接一个完全隔离的 Hermes 实例。详见 [Open WebUI 指南](/user-guide/messaging/open-webui#multi-user-setup-with-profiles)。
 
-## Limitations
+## 限制
 
-- **Response storage** — stored responses (for `previous_response_id`) are persisted in SQLite and survive gateway restarts. Max 100 stored responses (LRU eviction).
-- **No file upload** — inline images are supported on both `/v1/chat/completions` and `/v1/responses`, but uploaded files (`file`, `input_file`, `file_id`) and non-image document inputs are not supported through the API.
-- **Model field is cosmetic** — the `model` field in requests is accepted but the actual LLM model used is configured server-side in config.yaml.
+- **响应存储** — 存储的响应（用于 `previous_response_id`）会持久化在 SQLite 中，并在网关重启后仍然存在。最多 100 个存储的响应（LRU 淘汰）。
+- **无文件上传** — 在 `/v1/chat/completions` 和 `/v1/responses` 上都支持内联图像，但上传的文件（`file`、`input_file`、`file_id`）和非图像文档输入不支持通过 API 进行。
+- **模型字段是装饰性的** — 请求中的 `model` 字段会被接受，但实际使用的 LLM 模型是在服务器端的 config.yaml 中配置的。
 
-## Proxy Mode
+## 代理模式
 
-The API server also serves as the backend for **gateway proxy mode**. When another Hermes gateway instance is configured with `GATEWAY_PROXY_URL` pointing at this API server, it forwards all messages here instead of running its own agent. This enables split deployments — for example, a Docker container handling Matrix E2EE that relays to a host-side agent.
+API 服务器也用作**网关代理模式**的后端。当另一个 Hermes 网关实例配置了指向此 API 服务器的 `GATEWAY_PROXY_URL` 时，它会将所有消息转发到这里，而不是运行自己的代理。这实现了分离部署——例如，一个处理 Matrix E2EE 的 Docker 容器将中继到主机端的代理。
 
-See [Matrix Proxy Mode](/user-guide/messaging/matrix#proxy-mode-e2ee-on-macos) for the full setup guide.
+请参阅 [Matrix 代理模式](/user-guide/messaging/matrix#proxy-mode-e2ee-on-macos) 获取完整设置指南。

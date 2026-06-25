@@ -1,89 +1,82 @@
----
-title: Azure AI Foundry
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`guides/azure-foundry.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/azure-foundry.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 15
-title: "Microsoft Foundry"
-description: "Use Hermes Agent with Microsoft Foundry — OpenAI-style and Anthropic-style endpoints, auto-detection of transport and deployed models"
+title: "微软 Foundry"
+description: "使用 Hermes Agent 与 Microsoft Foundry — OpenAI 风格和 Anthropic 风格的端点，自动检测传输方式和已部署的模型"
 ---
 
+--- body ---
 # Microsoft Foundry
 
-Hermes Agent's `azure-foundry` provider supports Microsoft Foundry (formerly Azure AI Foundry) and Azure OpenAI. A single Foundry resource can host models with two different wire formats:
+Hermes Agent 的 `azure-foundry` 提供商支持 Microsoft Foundry（原 Azure AI Foundry）和 Azure OpenAI。单个 Foundry 资源可以托管两种不同交互格式的模型：
 
-- **OpenAI-style** — `POST /v1/chat/completions` on endpoints like `https://<resource>.openai.azure.com/openai/v1`. Used for GPT-4.x, GPT-5.x, Llama, Mistral, and most open-weight models.
-- **Anthropic-style** — `POST /v1/messages` on endpoints like `https://<resource>.services.ai.azure.com/anthropic`. Used when Microsoft Foundry serves Claude models via the Anthropic Messages API format.
+- **OpenAI 风格** — 在类似 `https://<resource>.openai.azure.com/openai/v1` 的端点上使用 `POST /v1/chat/completions`。适用于 GPT-4.x、GPT-5.x、Llama、Mistral 以及大多数开源权重模型。
+- **Anthropic 风格** — 在类似 `https://<resource>.services.ai.azure.com/anthropic` 的端点上使用 `POST /v1/messages`。当 Microsoft Foundry 通过 Anthropic Messages API 格式提供 Claude 模型时使用。
 
-The setup wizard probes your endpoint and auto-detects which transport it uses, which deployments are available, and each model's context length.
+设置向导会探测你的端点，自动检测它使用哪种传输方式、哪些部署可用，以及每个模型的上下文长度。
 
-## Prerequisites
+## 先决条件
 
-- A Microsoft Foundry or Azure OpenAI resource with at least one deployment
-- The deployment's endpoint URL
-- **Either** an API key (from the Azure Portal under "Keys and Endpoint") **or** the **Azure AI User** RBAC role on the Foundry resource if you plan to use Microsoft Entra ID (the keyless path Microsoft recommends). Some tenants may show the role as **Foundry User** during Microsoft's rename rollout.
+- 一个 Microsoft Foundry 或 Azure OpenAI 资源，至少包含一个部署
+- 该部署的端点 URL
+- **或者** 一个 API 密钥（来自 Azure Portal 中的 "Keys and Endpoint"），**或者** 如果你计划使用 Microsoft Entra ID（微软推荐的无密钥路径），则需要在 Foundry 资源上具有 **Azure AI User** RBAC 角色。在微软重命名推广期间，某些租户可能将该角色显示为 **Foundry User**。
 
-## Quick Start
+## 快速开始
 
 ```bash
 hermes model
-# → Select "Azure Foundry"
-# → Enter your endpoint URL
-# → Choose Authentication:
-#     1. API key
-#     2. Microsoft Entra ID  (managed identity / workload identity / az login)
-# → (Entra) Hermes probes DefaultAzureCredential; on success it never asks for a key
-# → (API key) Enter your API key
-# Hermes probes the endpoint and auto-detects transport + models
-# → Pick a model from the list (or type a deployment name manually)
+# → 选择 "Azure Foundry"
+# → 输入你的端点 URL
+# → 选择认证方式：
+#     1. API 密钥
+#     2. Microsoft Entra ID（托管标识 / 工作负载标识 / az login）
+# → (Entra) Hermes 探测 DefaultAzureCredential；成功时不再询问密钥
+# → (API 密钥) 输入你的 API 密钥
+# → Hermes 探测端点并自动检测传输方式 + 模型
+# → 从列表中选择一个模型（或手动输入部署名称）
 ```
 
-The wizard will:
+该向导将：
 
-1. **Sniff the URL path** — URLs ending in `/anthropic` are recognised as Microsoft Foundry Claude routes.
-2. **Probe `GET <base>/models`** — if the endpoint returns an OpenAI-shaped model list, Hermes switches to `chat_completions` and prefills a picker with the returned deployment IDs.
-3. **Probe Anthropic Messages shape** — fallback for endpoints that do not expose `/models` but do accept the Anthropic Messages format.
-4. **Fall back to manual entry** — private/gated endpoints that reject every probe still work; you pick the API mode and type a deployment name by hand.
+1. **嗅探 URL 路径** — 以 `/anthropic` 结尾的 URL 被识别为 Microsoft Foundry Claude 路由。
+2. **探测 `GET <base>/models`** — 如果端点返回 OpenAI 风格的模型列表，Hermes 切换为 `chat_completions` 并用返回的部署 ID 预填选择器。
+3. **探测 Anthropic Messages 格式** — 针对未暴露 `/models` 但接受 Anthropic Messages 格式的端点的回退。
+4. **回退到手动输入** — 拒绝所有探测的私有/受限端点仍可正常工作；你手动选择 API 模式并输入部署名称。
 
-Context length for the chosen model is resolved via Hermes' standard metadata chain (`models.dev`, provider metadata, and hardcoded family fallbacks) and stored in `config.yaml` so the model can size its own context window correctly.
+所选模型的上下文长度通过 Hermes 的标准元数据链（`models.dev`、提供商元数据和硬编码的系列回退）解析，并存储在 `config.yaml` 中，以便模型能够正确调整其上下文窗口大小。
 
-## Microsoft Entra ID (keyless, RBAC) — recommended
+## Microsoft Entra ID（无密钥，基于 RBAC）— 推荐
 
-Microsoft recommends [keyless authentication with Microsoft Entra ID](https://learn.microsoft.com/azure/ai-foundry/foundry-models/how-to/configure-entra-id) for production Foundry workloads. Hermes supports Entra ID for **both** API surfaces:
+微软建议对生产环境中的 Foundry 工作负载使用[基于 Microsoft Entra ID 的无密钥认证](https://learn.microsoft.com/azure/ai-foundry/foundry-models/how-to/configure-entra-id)。Hermes 支持 **两种** API 接口的 Entra ID：
 
-- **OpenAI-style** (`api_mode: chat_completions` / `codex_responses`) — GPT-4/5, Llama, Mistral, DeepSeek, etc.
-- **Anthropic-style** (`api_mode: anthropic_messages`) — Claude models on Microsoft Foundry.
+- **OpenAI 风格**（`api_mode: chat_completions` / `codex_responses`）— GPT-4/5、Llama、Mistral、DeepSeek 等。
+- **Anthropic 风格**（`api_mode: anthropic_messages`）— Microsoft Foundry 上的 Claude 模型。
 
-Foundry's RBAC is per-resource (`Azure AI User` grants both surfaces; some tenants may display `Foundry User`) and Microsoft documents the same inference scope (`https://ai.azure.com/.default`) for both. Under the hood:
+Foundry 的 RBAC 是按资源划分的（`Azure AI User` 授权两种接口；某些租户可能显示 `Foundry User`），微软为两者记录了相同的推理范围（`https://ai.azure.com/.default`）。在底层：
 
-- OpenAI-style uses the OpenAI Python SDK's native callable `api_key=` contract — the SDK mints a fresh JWT per request automatically.
-- Anthropic-style uses an `httpx.Client` with a request event hook installed by `agent.azure_identity_adapter.build_bearer_http_client`, because the Anthropic SDK does not accept callable `auth_token` natively. The hook rewrites `Authorization: Bearer <fresh-jwt>` per outbound request. Same Microsoft RBAC, same Foundry scope — the SDK contract is the only difference.
+- OpenAI 风格使用 OpenAI Python SDK 的原生可调用 `api_key=` 契约——SDK 自动为每个请求生成一个全新的 JWT。
+- Anthropic 风格使用一个带有 `agent.azure_identity_adapter.build_bearer_http_client` 安装的请求事件钩子的 `httpx.Client`，因为 Anthropic SDK 本身不接受可调用的 `auth_token`。该钩子会为每个出站请求重写 `Authorization: Bearer <fresh-jwt>`。相同的 Microsoft RBAC，相同的 Foundry 范围——唯一区别在于 SDK 契约。
 
-### Why use Entra ID?
+### 为什么使用 Entra ID？
 
-- No long-lived API keys to rotate or revoke.
-- RBAC-driven access — grant or remove `Azure AI User` on the Foundry resource, no config rewrite needed.
-- Access and audit logs are segmented by assignee instead of all callers sharing one static key.
-- Single auth surface for Azure VMs, AKS pods, App Service, Functions, Container Apps, and Foundry Agent Service via managed identity.
-- Workload identity and service-principal flows for CI/CD pipelines.
+- 无需轮换或吊销长期有效的 API 密钥。
+- 基于 RBAC 的访问——在 Foundry 资源上授予或移除 `Azure AI User` 即可，无需重写配置。
+- 访问和审计日志按分配者区分，而不是所有调用者共享一个静态密钥。
+- 对于 Azure 虚拟机、AKS Pod、App Service、Functions、Container Apps 和 Foundry Agent Service，可通过托管标识使用单一的认证接口。
+- 用于 CI/CD 流水线的工作负载标识和服务主体流程。
 
-### One-time setup (Azure side)
+### 一次性设置（Azure 端）
 
-1. In the Azure Portal, open your Foundry resource → **Access control (IAM)** → **Add → Add role assignment**.
-2. Pick the **Azure AI User** role (or **Foundry User** if your tenant has the renamed role).
-3. Assign it to:
-   - **Your user account** for local development with `az login`.
-   - **A managed identity or workload identity** for Azure-hosted compute (recommended for production).
-   - **A Foundry Agent Service hosted agent's agent identity** when Hermes runs inside a hosted agent.
-   - **A service principal** for CI/CD pipelines when workload identity is not available.
-4. Wait ~5 minutes for the role to propagate.
+1. 在 Azure Portal 中，打开你的 Foundry 资源 → **访问控制 (IAM)** → **添加 → 添加角色分配**。
+2. 选择 **Azure AI User** 角色（如果你的租户使用了重命名后的角色，则选择 **Foundry User**）。
+3. 将其分配给：
+   - **你的用户账户** 用于本地开发（配合 `az login`）。
+   - **托管标识或工作负载标识** 用于 Azure 托管的计算资源（生产环境推荐）。
+   - **当 Hermes 在托管代理内部运行时，分配给 Foundry Agent Service 托管代理的代理标识**。
+   - **用于 CI/CD 流水线的服务主体**（当工作负载标识不可用时）。
+4. 等待约 5 分钟以便角色生效。
 
-Azure CLI equivalent:
+Azure CLI 等效命令：
 
 ```bash
 az role assignment create \
@@ -92,28 +85,28 @@ az role assignment create \
   --scope <foundry-resource-id>
 ```
 
-### One-time setup (Hermes side)
+### 一次性设置（Hermes 端）
 
 ```bash
 hermes model
-# → Select "Azure Foundry"
-# → Enter your endpoint URL
-# → Authentication: 2 (Microsoft Entra ID)
-# → (optional) user-assigned managed identity client ID
-# → (optional) Azure tenant ID
-# → Hermes probes DefaultAzureCredential() and reports which inner
-#    credential succeeded (e.g. AzureCliCredential, ManagedIdentityCredential)
+# → 选择 "Azure Foundry"
+# → 输入你的端点 URL
+# → 认证：2 (Microsoft Entra ID)
+# → (可选) 用户分配的托管标识客户端 ID
+# → (可选) Azure 租户 ID
+# → Hermes 探测 DefaultAzureCredential() 并报告哪个内部凭据成功
+#    例如 AzureCliCredential、ManagedIdentityCredential
 ```
 
-The wizard runs a bounded preflight probe (10 s timeout). On failure it offers to "save anyway, validate later" — useful when configuring on a machine that doesn't yet have credentials but will at runtime (e.g. preparing config for a managed-identity deployment).
+该向导会运行一次有限的预检探测（10 秒超时）。若失败，会提供“仍然保存，稍后验证”的选项——适用于在尚未具备凭据但运行时将会具备的机器上配置（例如为托管标识部署准备配置）。
 
-`azure-identity` is installed automatically on first use via Hermes' lazy-install path. To pre-install:
+`azure-identity` 会在首次使用时通过 Hermes 的延迟安装路径自动安装。若要预安装：
 
 ```bash
 pip install azure-identity
 ```
 
-### Configuration written to `config.yaml`
+### 写入 `config.yaml` 的配置
 
 ```yaml
 model:
@@ -124,69 +117,69 @@ model:
   default: gpt-4o
   context_length: 128000
   entra:
-    scope: https://ai.azure.com/.default        # only when overriding the default
+    scope: https://ai.azure.com/.default        # 仅在覆盖默认值时使用
 ```
 
-Hermes only manages one Entra-specific knob in `config.yaml`:
+Hermes 在 `config.yaml` 中只管理一个与 Entra 相关的参数：
 
-- **`scope`** — the OAuth resource scope. Defaults to Microsoft's documented inference scope (`https://ai.azure.com/.default`). Override only if your resource was provisioned against a non-standard audience.
+- **`scope`** — OAuth 资源范围。默认为微软记录的推理范围（`https://ai.azure.com/.default`）。仅当你的资源针对非标准受众进行配置时才需要覆盖。
 
-Everything else (tenant, service principal secret, federated token file, sovereign cloud authority, broker preferences) is read by `azure-identity` directly from the standard `AZURE_*` environment variables — see the [credential resolution order](#credential-resolution-order) below. Set those in `~/.hermes/.env` or your deployment environment, exactly as Microsoft's SDK reference describes.
+其他所有设置（租户、服务主体密钥、联合令牌文件、主权云颁发机构、代理首选项）均由 `azure-identity` 直接从标准的 `AZURE_*` 环境变量读取——请参阅下面的[凭据解析顺序](#credential-resolution-order)。将这些设置在 `~/.hermes/.env` 或你的部署环境中，完全按照微软 SDK 参考文档的说明操作。
 
-No secrets land in `~/.hermes/.env` for Entra mode — `azure-identity` caches tokens in-process (and where available, in your OS keychain / `~/.IdentityService`).
+Entra 模式下，`~/.hermes/.env` 中不会出现任何机密信息——`azure-identity` 会在进程内（如果可用，还会在你的操作系统钥匙串 / `~/.IdentityService` 中）缓存令牌。
 
-### Credential resolution order
+### 凭据解析顺序
 
-`azure-identity`'s `DefaultAzureCredential` walks this chain on each token request, stopping at the first credential that returns a token:
+`azure-identity` 的 `DefaultAzureCredential` 在每个令牌请求时按以下链顺序执行，停在第一个成功返回令牌的凭据上：
 
-1. **Environment credential** — `AZURE_TENANT_ID` + `AZURE_CLIENT_ID` + `AZURE_CLIENT_SECRET` (or `AZURE_CLIENT_CERTIFICATE_PATH` / `AZURE_FEDERATED_TOKEN_FILE`).
-2. **Workload Identity** — `AZURE_FEDERATED_TOKEN_FILE` (AKS federated tokens / OIDC).
-3. **Managed Identity** — IMDS endpoint (`169.254.169.254`) for virtual machines; `IDENTITY_ENDPOINT` for App Service / Functions / Container Apps. Foundry Agent Service hosted agents use the hosted agent's agent identity.
-4. **Visual Studio Code** — Azure account extension.
-5. **Azure CLI** — `az login` session.
-6. **Azure Developer CLI** — `azd auth login`.
-7. **Azure PowerShell** — `Connect-AzAccount`.
-8. **Broker** (Windows / WSL only) — Web Account Manager.
+1. **环境凭据** — `AZURE_TENANT_ID` + `AZURE_CLIENT_ID` + `AZURE_CLIENT_SECRET`（或 `AZURE_CLIENT_CERTIFICATE_PATH` / `AZURE_FEDERATED_TOKEN_FILE`）。
+2. **工作负载标识** — `AZURE_FEDERATED_TOKEN_FILE`（AKS 联合令牌 / OIDC）。
+3. **托管标识** — 虚拟机使用 IMDS 端点（`169.254.169.254`）；App Service / Functions / Container Apps 使用 `IDENTITY_ENDPOINT`。Foundry Agent Service 托管代理使用托管代理的代理标识。
+4. **Visual Studio Code** — Azure 账户扩展。
+5. **Azure CLI** — `az login` 会话。
+6. **Azure Developer CLI** — `azd auth login`。
+7. **Azure PowerShell** — `Connect-AzAccount`。
+8. **代理**（仅限 Windows / WSL）— Web Account Manager。
 
-Interactive browser credential is excluded by default for unattended Hermes runs; use Azure CLI, Azure Developer CLI, managed identity, workload identity, or service principal credentials instead.
+交互式浏览器凭据默认被排除在无人值守的 Hermes 运行之外；请改用 Azure CLI、Azure Developer CLI、托管标识、工作负载标识或服务主体凭据。
 
-### Deployment patterns
+### 部署模式
 
-**Local development:**
+**本地开发：**
 ```bash
 az login
-hermes model   # pick Azure Foundry → Entra ID
-hermes         # uses your az login token
+hermes model   # 选择 Azure Foundry → Entra ID
+hermes         # 使用你的 az login 令牌
 ```
 
-**Azure VM / Functions / App Service / Container Apps (system-assigned managed identity):**
-1. Enable system-assigned identity on the compute resource.
-2. Grant the identity `Azure AI User` (or `Foundry User`) on the Foundry resource.
-3. Set `model.auth_mode: entra_id` in config.yaml — no env vars needed.
+**Azure 虚拟机 / Functions / App Service / Container Apps（系统分配的托管标识）：**
+1. 在计算资源上启用系统分配的标识。
+2. 在 Foundry 资源上为标识授予 `Azure AI User`（或 `Foundry User`）。
+3. 在 config.yaml 中设置 `model.auth_mode: entra_id`——无需环境变量。
 
-**Azure VM / Functions / App Service / Container Apps (user-assigned managed identity):**
-- Set `AZURE_CLIENT_ID` to the user-assigned identity's client ID so `DefaultAzureCredential` picks the right one.
+**Azure 虚拟机 / Functions / App Service / Container Apps（用户分配的托管标识）：**
+- 设置 `AZURE_CLIENT_ID` 为用户分配的托管标识的客户端 ID，以便 `DefaultAzureCredential` 选择正确的标识。
 
-**Foundry Agent Service hosted agent:**
-- Create the hosted agent and grant that agent's identity `Azure AI User` (or `Foundry User`) on the Foundry resource. Hermes uses `ManagedIdentityCredential` from inside the hosted agent; role assignment belongs on the agent identity, not just the parent project or your user.
+**Foundry Agent Service 托管代理：**
+- 创建托管代理，并在 Foundry 资源上为该代理的标识授予 `Azure AI User`（或 `Foundry User`）。Hermes 在托管代理内部使用 `ManagedIdentityCredential`；角色分配属于代理标识，而不仅仅是父项目或你的用户。
 
-**AKS Workload Identity (replaces AAD Pod Identity):**
-- Annotate the pod's service account with the workload identity client ID.
-- The pod's federated token file is auto-detected via `AZURE_FEDERATED_TOKEN_FILE`.
-- `model.auth_mode: entra_id` works without further config changes.
+**AKS 工作负载标识（替代 AAD Pod Identity）：**
+- 为 Pod 的服务账户添加工作负载标识客户端 ID 的注解。
+- Pod 的联合令牌文件通过 `AZURE_FEDERATED_TOKEN_FILE` 自动检测。
+- `model.auth_mode: entra_id` 无需额外配置更改即可工作。
 
-**Service principal in CI:**
-- Set `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` in the runner env.
+**CI 中的服务主体：**
+- 在运行器环境中设置 `AZURE_TENANT_ID`、`AZURE_CLIENT_ID`、`AZURE_CLIENT_SECRET`。
 
-#### Sovereign clouds (Government, China)
+#### 主权云（政府、中国）
 
-Export `AZURE_AUTHORITY_HOST` (e.g. `https://login.microsoftonline.us` for Azure Government, `https://login.partner.microsoftonline.cn` for Azure China). `azure-identity` reads it directly.
+导出 `AZURE_AUTHORITY_HOST`（例如 `https://login.microsoftonline.us` 用于 Azure Government，`https://login.partner.microsoftonline.cn` 用于 Azure China）。`azure-identity` 会直接读取它。
 
-### Health checks
+### 健康检查
 
-`hermes doctor` runs a 10 s probe against `DefaultAzureCredential` when `model.auth_mode: entra_id`, reporting which inner credential won (env vars present, managed identity endpoint reachable, etc.).
+当 `model.auth_mode: entra_id` 时，`hermes doctor` 会对 `DefaultAzureCredential` 进行一次 10 秒探测，报告哪个内部凭据成功（存在的环境变量、可访问的托管标识端点等）。
 
-`hermes auth` shows a structured status block:
+`hermes auth` 显示结构化的状态块：
 
 ```
 azure-foundry (Microsoft Entra ID):
@@ -195,34 +188,34 @@ azure-foundry (Microsoft Entra ID):
   Status: configured; live token probe is skipped here
 ```
 
-### Limitations
+### 限制
 
-- **Anthropic-style endpoints use an httpx event hook.** The Anthropic Python SDK does not accept a callable `auth_token` natively (≤ 0.86.0). Hermes installs a request event hook on a custom `httpx.Client` that mints a fresh JWT per outbound request and rewrites `Authorization: Bearer <jwt>`. This is functionally equivalent to the OpenAI SDK's native `Callable[[], str]` contract but adds one indirection layer. If the Anthropic SDK adds first-class callable-auth support in a future release, Hermes will switch to it transparently.
-- **Batch jobs and `multiprocessing.Pool`.** The Entra token provider is a closure that cannot be pickled across process boundaries. `batch_runner.py` automatically drops the callable from the worker config and lets each worker process rebuild its own provider from `config.yaml` — no user action required, but each worker pays one chain walk at startup.
-- **No bearer JWT persistence in `auth.json`.** Hermes does not duplicate `azure-identity`'s internal token cache; cold starts walk the credential chain on first inference.
+- **Anthropic 风格端点使用 httpx 事件钩子。** Anthropic Python SDK 本身不接受可调用的 `auth_token`（≤ 0.86.0）。Hermes 在自定义的 `httpx.Client` 上安装一个请求事件钩子，该钩子为每个出站请求生成一个新的 JWT 并重写 `Authorization: Bearer <jwt>`。这在功能上等同于 OpenAI SDK 的原生 `Callable[[], str]` 契约，但增加了一个间接层。如果未来版本的 Anthropic SDK 添加了一流可调用认证支持，Hermes 将透明地切换到它。
+- **批处理作业和 `multiprocessing.Pool`。** Entra 令牌提供程序是一个闭包，无法跨进程边界进行序列化。`batch_runner.py` 会自动从工作器配置中删除该可调用对象，并让每个工作器进程从 `config.yaml` 重建自己的提供程序——无需用户操作，但每个工作器会在启动时进行一次链遍历。
+- **不在 `auth.json` 中持久化载体 JWT。** Hermes 不会复制 `azure-identity` 的内部令牌缓存；冷启动时会在首次推理时遍历凭据链。
 
-## Configuration (written to `config.yaml`)
+## 配置（写入 `config.yaml`）
 
-After running the wizard you'll see something like this:
+运行向导后，你将看到类似以下内容：
 
 ```yaml
 model:
   provider: azure-foundry
   base_url: https://my-resource.openai.azure.com/openai/v1
-  api_mode: chat_completions         # or "anthropic_messages"
-  default: gpt-5.4-mini              # your deployment / model name
-  context_length: 400000             # auto-detected
+  api_mode: chat_completions         # 或 "anthropic_messages"
+  default: gpt-5.4-mini              # 你的部署/模型名称
+  context_length: 400000             # 自动检测
 ```
 
-And in `~/.hermes/.env`:
+以及在 `~/.hermes/.env` 中：
 
 ```
 AZURE_FOUNDRY_API_KEY=<your-azure-key>
 ```
 
-## OpenAI-style endpoints (GPT, Llama, etc.)
+## OpenAI 风格端点（GPT、Llama 等）
 
-Azure OpenAI's v1 GA endpoint accepts the standard `openai` Python client with minimal changes:
+Azure OpenAI 的 v1 GA 端点接受标准的 `openai` Python 客户端，只需少量更改：
 
 ```yaml
 model:
@@ -232,15 +225,15 @@ model:
   default: gpt-5.4
 ```
 
-Important behaviour:
+重要行为：
 
-- **GPT-5.x, codex, and o-series auto-route to the Responses API.** Microsoft Foundry deploys GPT-5 / codex / o1 / o3 / o4 models as Responses-API-only — calling `/chat/completions` against them returns `400 "The requested operation is unsupported."`. Hermes detects these model families by name and upgrades `api_mode` to `codex_responses` transparently, even when `config.yaml` still reads `api_mode: chat_completions`. GPT-4, GPT-4o, Llama, Mistral, and other deployments stay on `/chat/completions`.
-- **`max_completion_tokens` is used automatically.** Azure OpenAI (like direct OpenAI) requires `max_completion_tokens` for gpt-4o, o-series, and gpt-5.x models. Hermes sends the right parameter based on the endpoint.
-- **Pre-v1 endpoints that require `api-version`.** If you have a legacy base URL like `https://<resource>.openai.azure.com/openai?api-version=2025-04-01-preview`, Hermes extracts the query string and forwards it via `default_query` on every request (the OpenAI SDK otherwise drops it when joining paths).
+- **GPT-5.x、codex 和 o 系列自动路由到 Responses API。** Microsoft Foundry 将 GPT-5 / codex / o1 / o3 / o4 模型部署为仅支持 Responses API——对这些模型调用 `/chat/completions` 会返回 `400 "The requested operation is unsupported."`。Hermes 会根据名称检测这些模型系列，并透明地将 `api_mode` 升级为 `codex_responses`，即使 `config.yaml` 中仍写着 `api_mode: chat_completions`。GPT-4、GPT-4o、Llama、Mistral 和其他部署仍使用 `/chat/completions`。
+- **自动使用 `max_completion_tokens`。** Azure OpenAI（与直接 OpenAI 一样）对于 gpt-4o、o 系列和 gpt-5.x 模型要求使用 `max_completion_tokens`。Hermes 会根据端点发送正确的参数。
+- **需要 `api-version` 的 v1 前端点。** 如果你有一个类似 `https://<resource>.openai.azure.com/openai?api-version=2025-04-01-preview` 的旧版基础 URL，Hermes 会提取查询字符串并通过 `default_query` 在每次请求中转发（否则 OpenAI SDK 在拼接路径时会丢弃它）。
 
-## Anthropic-style endpoints (Claude via Microsoft Foundry)
+## Anthropic 风格端点（通过 Microsoft Foundry 的 Claude）
 
-For Claude deployments, use the Anthropic-style route:
+对于 Claude 部署，请使用 Anthropic 风格路由：
 
 ```yaml
 model:
@@ -250,17 +243,17 @@ model:
   default: claude-sonnet-4-6
 ```
 
-Important behaviour:
+重要行为：
 
-- **`/v1` is stripped from the base URL.** The Anthropic SDK appends `/v1/messages` to every request URL — Hermes removes any trailing `/v1` before handing the URL to the SDK to avoid double-`/v1` paths.
-- **`api-version` is sent via `default_query`, not appended to the URL.** Azure Anthropic requires an `api-version` query string. Baking it into the base URL produces malformed paths like `/anthropic?api-version=.../v1/messages` and returns 404. Hermes passes `api-version=2025-04-15` via the Anthropic SDK's `default_query` instead.
-- **Bearer auth is used instead of `x-api-key`.** Azure's Anthropic-compatible route requires `Authorization: Bearer <key>` rather than Anthropic's native `x-api-key` header. Hermes detects `azure.com` in the base URL and routes the API key through the SDK's `auth_token` field so the right header reaches the upstream.
-- **1M context window beta header is kept.** Azure still gates the 1M-token Claude context (Opus 4.6/4.7, Sonnet 4.6) behind the `anthropic-beta: context-1m-2025-08-07` header. Hermes keeps that beta header on Azure paths (it's stripped from native Anthropic OAuth requests because some subscriptions reject it, but Azure requires it).
-- **OAuth token refresh is disabled.** Azure deployments use static API keys. The `~/.claude/.credentials.json` OAuth token refresh loop that applies to Anthropic Console is explicitly skipped for Azure endpoints to prevent the Claude Code OAuth token from overwriting your Azure key mid-session.
+- **从基础 URL 中移除 `/v1`。** Anthropic SDK 会向每个请求 URL 追加 `/v1/messages`——Hermes 在将 URL 交给 SDK 之前会移除任何尾部的 `/v1`，以避免出现双 `/v1` 路径。
+- **通过 `default_query` 发送 `api-version`，而不是追加到 URL 中。** Azure Anthropic 要求一个 `api-version` 查询字符串。将其嵌入基础 URL 会产生如 `/anthropic?api-version=.../v1/messages` 的错误路径并返回 404。Hermes 转而通过 Anthropic SDK 的 `default_query` 传递 `api-version=2025-04-15`。
+- **使用 Bearer 认证而不是 `x-api-key`。** Azure 的 Anthropic 兼容路由要求使用 `Authorization: Bearer <key>`，而不是 Anthropic 原生的 `x-api-key` 头部。Hermes 检测到基础 URL 中包含 `azure.com`，并通过 SDK 的 `auth_token` 字段路由 API 密钥，以便正确的头部到达上游。
+- **保留 1M 上下文窗口测试头部。** Azure 仍然将 1M 令牌的 Claude 上下文（Opus 4.6/4.7、Sonnet 4.6）限制在 `anthropic-beta: context-1m-2025-08-07` 头部之后。Hermes 在 Azure 路径上保留该测试头部（在原生 Anthropic OAuth 请求中会去掉，因为某些订阅会拒绝它，但 Azure 要求它）。
+- **禁用 OAuth 令牌刷新。** Azure 部署使用静态 API 密钥。应用于 Anthropic Console 的 `~/.claude/.credentials.json` OAuth 令牌刷新循环会被显式跳过，以防止 Claude Code OAuth 令牌在会话中间覆盖你的 Azure 密钥。
 
-## Alternative: `provider: anthropic` + Azure base URL
+## 替代方案：`provider: anthropic` + Azure 基础 URL
 
-If you already have `provider: anthropic` configured and just want to point it at Microsoft Foundry for Claude, you can skip the `azure-foundry` provider entirely:
+如果你已经配置了 `provider: anthropic`，并且只想将其指向 Microsoft Foundry 以用于 Claude，你可以完全跳过 `azure-foundry` 提供商：
 
 ```yaml
 model:
@@ -270,74 +263,74 @@ model:
   default: claude-sonnet-4-6
 ```
 
-With `AZURE_ANTHROPIC_KEY` set in `~/.hermes/.env`. Hermes detects `azure.com` in the base URL and short-circuits around the Claude Code OAuth token chain so the Azure key is used directly with `x-api-key` auth.
+并在 `~/.hermes/.env` 中设置 `AZURE_ANTHROPIC_KEY`。Hermes 检测到基础 URL 中包含 `azure.com`，并绕过 Claude Code OAuth 令牌链，以便直接使用 Azure 密钥进行 `x-api-key` 认证。
 
-`key_env` is the canonical snake_case field name; `api_key_env` (and the camelCase `keyEnv` / `apiKeyEnv`) are accepted as aliases. If both `key_env` and `AZURE_ANTHROPIC_KEY`/`ANTHROPIC_API_KEY` are set, the `key_env`-named env var wins.
+`key_env` 是规范的蛇形命名 (snake_case) 字段名；`api_key_env`（以及驼峰命名 `keyEnv` / `apiKeyEnv`）作为别名也被接受。如果同时设置了 `key_env` 和 `AZURE_ANTHROPIC_KEY`/`ANTHROPIC_API_KEY`，则 `key_env` 命名的环境变量优先。
 
-## Model discovery
+## 模型发现
 
-Azure does **not** expose a pure-API-key endpoint to list your *deployed* model deployments. Deployment enumeration requires Azure Resource Manager authentication (`az cognitiveservices account deployment list`) with an Azure AD principal, not the inference API key.
+Azure **不** 提供纯 API 密钥端点来列出你的 *已部署* 模型部署。枚举部署需要 Azure Resource Manager 认证（`az cognitiveservices account deployment list`）以及 Azure AD 主体，而非推理 API 密钥。
 
-What Hermes can do:
+Hermes 能够做的事情：
 
-- Azure OpenAI v1 endpoints (`<resource>.openai.azure.com/openai/v1`) expose `GET /models` with the resource's **available** model catalog. Hermes uses this list to prefill the model picker.
-- Microsoft Foundry `/anthropic` routes: detected via URL path, model name entered manually.
-- Private / firewalled endpoints: manual entry with a friendly "couldn't probe" message.
+- Azure OpenAI v1 端点（`<resource>.openai.azure.com/openai/v1`）暴露 `GET /models`，其中包含资源的 **可用** 模型目录。Hermes 使用此列表来预填模型选择器。
+- Microsoft Foundry `/anthropic` 路由：通过 URL 路径检测，模型名称手动输入。
+- 私有/防火墙端点：手动输入，并显示友好的“无法探测”消息。
 
-You can always type a deployment name directly — Hermes does not validate against the returned list.
+你可以直接输入任意部署名称——Hermes 不会针对返回的列表进行验证。
 
-## Environment variables
+## 环境变量
 
-| Variable | Purpose |
+| 变量 | 用途 |
 |----------|---------|
-| `AZURE_FOUNDRY_API_KEY` | Primary API key for Microsoft Foundry / Azure OpenAI (api_key mode) |
-| `AZURE_FOUNDRY_BASE_URL` | Endpoint URL (set via `hermes model`; env var is used as a fallback) |
-| `AZURE_ANTHROPIC_KEY` | Used by `provider: anthropic` + Azure base URL (alternative to `ANTHROPIC_API_KEY`) |
-| `AZURE_TENANT_ID` | Entra ID tenant for service-principal flows |
-| `AZURE_CLIENT_ID` | Entra ID client ID (service principal, workload identity, or user-assigned managed identity) |
-| `AZURE_CLIENT_SECRET` | Service principal secret |
-| `AZURE_CLIENT_CERTIFICATE_PATH` | Service principal cert (alternative to secret) |
-| `AZURE_FEDERATED_TOKEN_FILE` | Workload Identity federated token path (AKS) |
-| `AZURE_AUTHORITY_HOST` | Sovereign cloud authority host override |
-| `IDENTITY_ENDPOINT` / `MSI_ENDPOINT` | Managed Identity endpoint for App Service, Functions, and Container Apps; VMs usually use IMDS instead |
+| `AZURE_FOUNDRY_API_KEY` | Microsoft Foundry / Azure OpenAI 的主 API 密钥（api_key 模式） |
+| `AZURE_FOUNDRY_BASE_URL` | 端点 URL（通过 `hermes model` 设置；环境变量作为回退） |
+| `AZURE_ANTHROPIC_KEY` | 由 `provider: anthropic` + Azure 基础 URL 使用（`ANTHROPIC_API_KEY` 的替代） |
+| `AZURE_TENANT_ID` | 服务主体流程的 Entra ID 租户 |
+| `AZURE_CLIENT_ID` | Entra ID 客户端 ID（服务主体、工作负载标识或用户分配的托管标识） |
+| `AZURE_CLIENT_SECRET` | 服务主体密钥 |
+| `AZURE_CLIENT_CERTIFICATE_PATH` | 服务主体证书（密钥的替代） |
+| `AZURE_FEDERATED_TOKEN_FILE` | 工作负载标识联合令牌路径（AKS） |
+| `AZURE_AUTHORITY_HOST` | 主权云颁发机构主机覆盖 |
+| `IDENTITY_ENDPOINT` / `MSI_ENDPOINT` | App Service、Functions 和 Container Apps 的托管标识端点；虚拟机通常使用 IMDS |
 
-The Azure SDK reads the `AZURE_*` env vars directly. Hermes never inspects them other than to report which sources are present in `hermes doctor` output.
+Azure SDK 直接读取 `AZURE_*` 环境变量。Hermes 从不检查它们，除非在 `hermes doctor` 输出中报告哪些来源存在。
 
-## Troubleshooting
+## 故障排除
 
-**401 Unauthorized on gpt-5.x deployments.**
-Azure serves gpt-5.x on `/chat/completions`, not `/responses`. Hermes handles this automatically when the URL contains `openai.azure.com`, but if you see a 401 with an `Invalid API key` body, check that `api_mode` in your `config.yaml` is `chat_completions`.
+**在 gpt-5.x 部署上出现 401 Unauthorized。**
+Azure 在 `/chat/completions` 上提供 gpt-5.x，而不是 `/responses`。当 URL 包含 `openai.azure.com` 时，Hermes 会自动处理此问题，但如果你看到带有 `Invalid API key` 正文的 401，请检查 `config.yaml` 中的 `api_mode` 是否为 `chat_completions`。
 
-**404 on `/v1/messages?api-version=.../v1/messages`.**
-This is the malformed-URL bug from pre-fix Azure Anthropic setups. Upgrade Hermes — the `api-version` parameter is now passed via `default_query` rather than baked into the base URL, so the SDK can't corrupt it during URL joining.
+**在 `/v1/messages?api-version=.../v1/messages` 上出现 404。**
+这是修复前 Azure Anthropic 设置中的错误 URL 问题。升级 Hermes——`api-version` 参数现在通过 `default_query` 传递，而不是嵌入基础 URL，因此 SDK 无法在 URL 拼接期间损坏它。
 
-**Wizard says "Auto-detection incomplete."**
-The endpoint rejected both the `/models` probe and the Anthropic Messages probe. This is normal for private endpoints behind a firewall or with an IP allow-list. Fall back to manual API mode selection and type your deployment name — everything still works, Hermes just can't prefill the picker.
+**向导显示“自动检测不完整”。**
+端点拒绝了 `/models` 探测和 Anthropic Messages 探测。对于防火墙后面或具有 IP 允许列表的私有端点，这是正常现象。回退到手动 API 模式选择并输入你的部署名称——一切仍可正常工作，只是 Hermes 无法预填选择器。
 
-**Wrong transport picked.**
-Run `hermes model` again and the wizard will re-probe. If the probe still picks the wrong mode, you can edit `config.yaml` directly:
+**选择了错误的传输方式。**
+再次运行 `hermes model`，向导将重新探测。如果探测仍然选择错误的模式，你可以直接编辑 `config.yaml`：
 
 ```yaml
 model:
   provider: azure-foundry
-  api_mode: anthropic_messages   # or chat_completions
+  api_mode: anthropic_messages   # 或 chat_completions
 ```
 
-**Entra ID: "credential chain exhausted" or 401 Unauthorized after switching to `auth_mode: entra_id`.**
-- Run `az login` to refresh your developer session (the cached token may have expired).
-- Verify the `Azure AI User` (or `Foundry User`) role assignment took effect: `az role assignment list --assignee <user-or-identity-id>` should list it on your Foundry resource. Role propagation can take up to 5 minutes.
-- For user-assigned managed identities, double-check `AZURE_CLIENT_ID` matches the identity attached to the compute resource.
-- Run `hermes doctor` — the Azure Entra probe reports whether token acquisition succeeded and includes a remediation hint.
+**Entra ID：切换到 `auth_mode: entra_id` 后出现“credential chain exhausted”或 401 Unauthorized。**
+- 运行 `az login` 以刷新你的开发人员会话（缓存的令牌可能已过期）。
+- 验证 `Azure AI User`（或 `Foundry User`）角色分配是否已生效：`az role assignment list --assignee <user-or-identity-id>` 应能在你的 Foundry 资源上列出它。角色传播可能需要最多 5 分钟。
+- 对于用户分配的托管标识，请仔细检查 `AZURE_CLIENT_ID` 是否与附加到计算资源的标识匹配。
+- 运行 `hermes doctor`——Azure Entra 探测会报告令牌获取是否成功，并包含修复提示。
 
-**Entra ID: wizard preflight hangs or times out.**
-The 10 s preflight is a soft check. Choose "Save anyway and validate later" and run `hermes doctor` after deploying to the target environment. Common causes include an unreachable token service or stale local login state — prefer workload identity in CI, set `AZURE_TENANT_ID`+`AZURE_CLIENT_ID`+`AZURE_CLIENT_SECRET` when using a service principal, or run `az login` for local development.
+**Entra ID：向导预检挂起或超时。**
+10 秒预检是软检查。选择“仍然保存并稍后验证”，在部署到目标环境后运行 `hermes doctor`。常见原因包括令牌服务不可达或本地登录状态过期——在 CI 中优先使用工作负载标识，使用服务主体时设置 `AZURE_TENANT_ID`+`AZURE_CLIENT_ID`+`AZURE_CLIENT_SECRET`，或在本地开发时运行 `az login`。
 
-**401 on Anthropic-style endpoint with Entra ID.**
-Verify the same `Azure AI User` (or `Foundry User`) role is assigned on the Foundry resource (it covers both `/openai/v1` and `/anthropic` paths). If the OpenAI-style probe works during the wizard but `claude-*` requests fail at runtime, the most common cause is a stale `model.entra.scope` left over from an earlier wizard run — delete the `entra.scope` line from `config.yaml` so the runtime falls back to the default `https://ai.azure.com/.default` scope.
+**在使用 Entra ID 的 Anthropic 风格端点上出现 401。**
+验证是否在 Foundry 资源上分配了相同的 `Azure AI User`（或 `Foundry User`）角色（该角色同时覆盖 `/openai/v1` 和 `/anthropic` 路径）。如果向导期间 OpenAI 风格探测正常工作但 `claude-*` 请求在运行时失败，最常见的原因是早期向导运行遗留的过时 `model.entra.scope`——从 `config.yaml` 中删除 `entra.scope` 行，以便运行时回退到默认范围 `https://ai.azure.com/.default`。
 
-## Related
+## 相关
 
-- [Environment variables](/reference/environment-variables)
-- [Configuration](/user-guide/configuration)
-- [AWS Bedrock](/guides/aws-bedrock) — the other major cloud provider integration
-- [Microsoft: Configure Entra ID for Foundry](https://learn.microsoft.com/azure/ai-foundry/foundry-models/how-to/configure-entra-id) — upstream documentation for the keyless path
+- [环境变量](/reference/environment-variables)
+- [配置](/user-guide/configuration)
+- [AWS Bedrock](/guides/aws-bedrock) — 另一个主要的云提供商集成
+- [Microsoft：为 Foundry 配置 Entra ID](https://learn.microsoft.com/azure/ai-foundry/foundry-models/how-to/configure-entra-id) — 无密钥路径的上级文档

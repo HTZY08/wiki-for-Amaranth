@@ -1,166 +1,51 @@
 ---
-title: 安装指南
-description: Hermes Agent 官方文档汉化版
----
+## 非 Sudo / 系统服务用户安装
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`getting-started/installation.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/getting-started/installation.md)
-> 本版本为自用学习用途，非官方翻译。
+支持将 Hermes 作为专用非特权用户（例如 `hermes` systemd 服务账户，或任何没有 `sudo` 权限的用户）运行。在安装路径中，唯一真正需要 root 权限的是 Playwright 的 `--with-deps` 步骤，该步骤会通过 `apt` 安装 Chromium 所需的共享库（`libnss3`、`libxkbcommon` 等）。安装程序会检测 sudo 是否可用，并在不可用时优雅降级——它会在服务用户自己的 Playwright 缓存中安装 Chromium 二进制文件，并打印出管理员需要单独运行的确切命令。
 
----
-sidebar_position: 2
-title: "Installation"
-description: "Install Hermes Agent on Linux, macOS, WSL2, native Windows, or Android via Termux"
----
+**推荐的分步安装（Debian/Ubuntu）：**
 
-# Installation
-
-Get Hermes Agent up and running in under two minutes!
-
-## Quick Install
-### With the Hermes Desktop installer on macOS or Windows (recommended)
-To easily install the command-line and desktop applications, [download the Hermes Desktop installer](https://hermes-agent.nousresearch.com/) from our website and run it.
-
-### Without Hermes Desktop:
-For a command-line only install without Hermes Desktop, run:
-
-#### Linux / macOS / WSL2 / Android (Termux)
-```bash
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
-```
-
-#### Windows (native)
-
-Run in powershell:
-```powershell
-iex (irm https://hermes-agent.nousresearch.com/install.ps1) 
-```
-
-If you want to install & run Hermes Desktop after a command-line only install, simply run
-```bash
-hermes desktop
-```
-
-### What the Installer Does
-
-The installer handles everything automatically — all dependencies (Python, Node.js, ripgrep, ffmpeg), the repo clone, virtual environment, global `hermes` command setup, and LLM provider configuration. By the end, you're ready to chat.
-
-#### Install Layout
-
-Where the installer puts things depends on whether you're installing as a normal user or as root:
-
-| Installer | Code lives at | `hermes` binary | Data directory |
-|---|---|---|---|
-| pip install | Python site-packages | `~/.local/bin/hermes` (console_scripts) | `~/.hermes/` |
-| Per-user (git installer) | `~/.hermes/hermes-agent/` | `~/.local/bin/hermes` (symlink) | `~/.hermes/` |
-| Root-mode (`sudo curl … \| sudo bash`) | `/usr/local/lib/hermes-agent/` | `/usr/local/bin/hermes` | `/root/.hermes/` (or `$HERMES_HOME`) |
-
-The root-mode **FHS layout** (`/usr/local/lib/…`, `/usr/local/bin/hermes`) matches where other system-wide developer tools land on Linux. It's useful for shared-machine deployments where one system install should serve every user. Per-user config (auth, skills, sessions) still lives under each user's `~/.hermes/` or explicit `HERMES_HOME`.
-
-### After Installation
-
-Reload your shell and start chatting:
-
-```bash
-source ~/.bashrc   # or: source ~/.zshrc
-hermes             # Start chatting!
-```
-
-To reconfigure individual settings later, use the dedicated commands:
-
-```bash
-hermes model          # Choose your LLM provider and model
-hermes tools          # Configure which tools are enabled
-hermes gateway setup  # Set up messaging platforms
-hermes config set     # Set individual config values
-hermes setup          # Or run the full setup wizard to configure everything at once
-```
-
-:::tip Fastest path: Nous Portal
-One subscription covers 300+ models plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, cloud browser). Skip the per-tool key juggling:
-
-```bash
-hermes setup --portal
-```
-
-That logs you in, sets Nous as your provider, and turns on the Tool Gateway in one command.
-:::
-
----
-
-## Prerequisites
-
-**Installer:** On non-Windows platforms, the only prerequisite is **Git**. On Linux, also make sure `curl` and `xz-utils` are available (the installer downloads Node.js as a `.tar.xz` archive). The desktop app additionally requires `g++` (or `build-essential` on Debian/Ubuntu) to compile native modules. The installer automatically handles everything else:
-
-- **uv** (fast Python package manager)
-- **Python 3.11** (via uv, no sudo needed)
-- **Node.js v22** (for browser automation and WhatsApp bridge)
-- **ripgrep** (fast file search)
-- **ffmpeg** (audio format conversion for TTS)
-
-:::info
-You do **not** need to install Python, Node.js, ripgrep, or ffmpeg manually. The installer detects what's missing and installs it for you. Just make sure `git` is available (`git --version`). On Linux, ensure `curl` and `xz-utils` are installed (`sudo apt install curl xz-utils` on Debian/Ubuntu). For the desktop app, also install `build-essential` (`sudo apt install build-essential`).
-:::
-
-:::tip Nix users
-If you use Nix (on NixOS, macOS, or Linux), there's a dedicated setup path with a Nix flake, declarative NixOS module, and optional container mode. See the **[Nix & NixOS Setup](./nix-setup.md)** guide.
-:::
-
----
-
-## Manual / Developer Installation
-
-If you want to clone the repo and install from source — for contributing, running from a specific branch, or having full control over the virtual environment — see the [Development Setup](../developer-guide/contributing.md#development-setup) section in the Contributing guide.
-
----
-
-## Non-Sudo / System Service User Installs
-
-Running Hermes as a dedicated unprivileged user (e.g. a `hermes` systemd service account, or any user without `sudo` access) is supported. The only thing on the install path that genuinely needs root is Playwright's `--with-deps` step, which `apt`-installs shared libraries (`libnss3`, `libxkbcommon`, etc.) used by Chromium. The installer detects whether sudo is available and gracefully degrades when it isn't — it will install the Chromium binary into the service user's own Playwright cache and print the exact command an administrator needs to run separately.
-
-**Recommended split (Debian/Ubuntu):**
-
-1. **One time, as an admin user with sudo**, install the system libraries Chromium needs:
+1. **一次性，由拥有 sudo 权限的管理员用户**安装 Chromium 所需的系统库：
    ```bash
    sudo npx playwright install-deps chromium
    ```
-   (You can run this from anywhere — `npx` will fetch Playwright on the fly.)
+   （可以从任何位置运行此命令 — `npx` 会即时获取 Playwright。）
 
-2. **As the unprivileged service user**, run the regular installer. It will detect the missing sudo, skip `--with-deps`, and install Chromium into the user's local Playwright cache:
+2. **作为非特权服务用户**，运行常规安装程序。它会检测到缺少 sudo，跳过 `--with-deps`，并将 Chromium 安装到用户的本地 Playwright 缓存中：
    ```bash
    curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
    ```
 
-   If you want to skip the Playwright step entirely — for example because you're running headless and don't need browser automation — pass `--skip-browser`:
+   如果您想完全跳过 Playwright 步骤——例如因为您运行在无头模式下且不需要浏览器自动化——请传入 `--skip-browser`：
    ```bash
    curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash -s -- --skip-browser
    ```
 
-3. **Make `hermes` available to the service user's shells.** The installer writes the launcher to `~/.local/bin/hermes`. System service accounts often have a minimal PATH that doesn't include `~/.local/bin`. Either add it to the user's environment, or symlink the launcher into a system location:
+3. **将 `hermes` 添加到服务用户的 shell 环境变量中**。安装程序会将启动器写入 `~/.local/bin/hermes`。系统服务账户通常具有最小的 PATH，不包含 `~/.local/bin`。可以将其添加到用户的环境中，或者将启动器符号链接到系统位置：
    ```bash
-   # Option A — add to the service user's profile
+   # 选项 A — 添加到服务用户的 profile 中
    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
-   # Option B — symlink system-wide (run as an admin)
+   # 选项 B — 系统级符号链接（由管理员运行）
    sudo ln -s /home/hermes/.hermes/hermes-agent/venv/bin/hermes /usr/local/bin/hermes
    ```
 
-4. **Verify:** `hermes doctor` should now run cleanly. If you get `ModuleNotFoundError: No module named 'dotenv'`, you're invoking the repo source `hermes` file (`~/.hermes/hermes-agent/hermes`) with system Python instead of the venv launcher (`~/.hermes/hermes-agent/venv/bin/hermes`) — fix step 3.
+4. **验证：** 此时运行 `hermes doctor` 应该会输出正常。如果出现 `ModuleNotFoundError: No module named 'dotenv'`，说明您是用系统 Python 调用了仓库源文件 `hermes`（`~/.hermes/hermes-agent/hermes`），而不是使用 venv 启动器（`~/.hermes/hermes-agent/venv/bin/hermes`）—— 请修正步骤 3。
 
-The same pattern works on Arch (the installer uses pacman with the same sudo-detection logic), Fedora/RHEL, and openSUSE — those distros don't support `--with-deps` at all, so an administrator always installs the system libraries separately. The relevant `dnf`/`zypper` commands are printed by the installer.
+同样的模式在 Arch 上也能使用（安装程序使用 pacman，并采用相同的 sudo 检测逻辑）、Fedora/RHEL 和 openSUSE 上也是如此——这些发行版根本不支持 `--with-deps`，因此管理员需要单独安装系统库。相应的 `dnf`/`zypper` 命令会由安装程序打印出来。
 
 ---
 
-## Troubleshooting
+## 故障排除
 
-| Problem | Solution |
-|---------|----------|
-| `hermes: command not found` | Reload your shell (`source ~/.bashrc`) or check PATH |
-| `API key not set` | Run `hermes model` to configure your provider, or `hermes config set OPENROUTER_API_KEY your_key` |
-| Missing config after update | Run `hermes config check` then `hermes config migrate` |
+| 问题 | 解决方法 |
+|------|----------|
+| `hermes: command not found` | 重新加载 shell（`source ~/.bashrc`）或检查 PATH |
+| `API key not set` | 运行 `hermes model` 配置您的提供商，或运行 `hermes config set OPENROUTER_API_KEY your_key` |
+| 更新后配置缺失 | 先运行 `hermes config check`，然后运行 `hermes config migrate` |
 
-For more diagnostics, run `hermes doctor` — it will tell you exactly what's missing and how to fix it.
+如需更多诊断信息，请运行 `hermes doctor` —— 它会准确告知您缺少什么以及如何修复。
 
-## Install method auto-detection
+## 安装方法自动检测
 
-Hermes auto-detects whether it was installed via `pip`, the git installer, Homebrew, or NixOS, and `hermes update` prints the matching update command for that path. There's no env var to set — the detection is based on the install layout (Python site-packages, `~/.hermes/hermes-agent/`, Homebrew prefix, or Nix store path). `hermes doctor` also surfaces the detected method under its environment summary.
+Hermes 会自动检测是通过 `pip`、git 安装器、Homebrew 还是 NixOS 安装的，并且 `hermes update` 会打印出对应路径的更新命令。无需设置环境变量——检测基于安装布局（Python site-packages、`~/.hermes/hermes-agent/`、Homebrew 前缀或 Nix 存储路径）。`hermes doctor` 也会在其环境摘要中显示检测到的方法。

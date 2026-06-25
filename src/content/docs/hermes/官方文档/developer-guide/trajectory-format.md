@@ -1,40 +1,35 @@
+--- frontmatter ---
 ---
 title: 轨迹格式
 description: Hermes Agent 官方文档汉化版
 ---
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`developer-guide/trajectory-format.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/trajectory-format.md)
-> 本版本为自用学习用途，非官方翻译。
+--- body ---
 
-# Trajectory Format
+# 轨迹格式（Trajectory Format）
 
-Hermes Agent saves conversation trajectories in ShareGPT-compatible JSONL format
-for use as training data, debugging artifacts, and reinforcement learning datasets.
+Hermes Agent（代理）将对话轨迹以 ShareGPT 兼容的 JSONL 格式保存，用于训练数据、调试工件和强化学习数据集。
 
-Source files: `agent/trajectory.py`, `run_agent.py` (search for `_save_trajectory`), `batch_runner.py`
+源文件：`agent/trajectory.py`、`run_agent.py`（搜索 `_save_trajectory`）、`batch_runner.py`
 
+## 文件命名约定（File Naming Convention）
 
-## File Naming Convention
+轨迹文件写入当前工作目录：
 
-Trajectories are written to files in the current working directory:
-
-| File | When |
+| 文件 | 条件 |
 |------|------|
-| `trajectory_samples.jsonl` | Conversations that completed successfully (`completed=True`) |
-| `failed_trajectories.jsonl` | Conversations that failed or were interrupted (`completed=False`) |
+| `trajectory_samples.jsonl` | 成功完成的对话（`completed=True`） |
+| `failed_trajectories.jsonl` | 失败或中断的对话（`completed=False`） |
 
-The batch runner (`batch_runner.py`) writes to a custom output file per batch
-(e.g., `batch_001_output.jsonl`) with additional metadata fields.
+批量运行器（`batch_runner.py`）会将每个批次的自定义输出文件（例如 `batch_001_output.jsonl`）写入，并附加额外的元数据字段。
 
-You can override the filename via the `filename` parameter in `save_trajectory()`.
+您可以通过 `save_trajectory()` 中的 `filename` 参数覆盖文件名。
 
+## JSONL 条目格式（JSONL Entry Format）
 
-## JSONL Entry Format
+文件中的每一行都是一个自包含的 JSON 对象。有两种变体：
 
-Each line in the file is a self-contained JSON object. There are two variants:
-
-### CLI/Interactive Format (from `_save_trajectory`)
+### CLI/交互式格式（来自 `_save_trajectory`）
 
 ```json
 {
@@ -45,7 +40,7 @@ Each line in the file is a self-contained JSON object. There are two variants:
 }
 ```
 
-### Batch Runner Format (from `batch_runner.py`)
+### 批量运行器格式（来自 `batch_runner.py`）
 
 ```json
 {
@@ -69,23 +64,20 @@ Each line in the file is a self-contained JSON object. There are two variants:
 }
 ```
 
-The `tool_stats` and `tool_error_counts` dictionaries are normalized to include
-ALL possible tools (from `model_tools.TOOL_TO_TOOLSET_MAP`) with zero defaults,
-ensuring consistent schema across entries for HuggingFace dataset loading.
+`tool_stats` 和 `tool_error_counts` 字典已规范化，包含所有可能的工具（来自 `model_tools.TOOL_TO_TOOLSET_MAP`），默认值为零，确保条目在 HuggingFace 数据集加载时具有一致的 schema（模式）。
 
+## 对话数组（Conversations Array）（ShareGPT 格式）
 
-## Conversations Array (ShareGPT Format)
+`conversations` 数组使用 ShareGPT 角色约定：
 
-The `conversations` array uses ShareGPT role conventions:
-
-| API Role | ShareGPT `from` |
+| API 角色 | ShareGPT `from` |
 |----------|-----------------|
-| system | `"system"` |
-| user | `"human"` |
-| assistant | `"gpt"` |
-| tool | `"tool"` |
+| system   | `"system"`      |
+| user     | `"human"`       |
+| assistant| `"gpt"`         |
+| tool     | `"tool"`        |
 
-### Complete Example
+### 完整示例（Complete Example）
 
 ```json
 {
@@ -117,30 +109,21 @@ The `conversations` array uses ShareGPT role conventions:
 }
 ```
 
+## 规范化规则（Normalization Rules）
 
-## Normalization Rules
+### 推理内容标记（Reasoning Content Markup）
 
-### Reasoning Content Markup
+轨迹转换器会将所有推理内容规范化为 `<think>` 标签，无论模型最初是如何生成的：
 
-The trajectory converter normalizes ALL reasoning into `<think>` tags, regardless
-of how the model originally produced it:
+1. **原生思维令牌（Native thinking tokens）**（来自提供者如 Anthropic、OpenAI o-series 的 `msg["reasoning"]` 字段）：包装为 `<think>\n{reasoning}\n</think>\n` 并前置到内容之前。
 
-1. **Native thinking tokens** (`msg["reasoning"]` field from providers like
-   Anthropic, OpenAI o-series): Wrapped as `<think>\n{reasoning}\n</think>\n`
-   and prepended before the content.
+2. **REASONING_SCRATCHPAD XML**（当原生思维被禁用且模型通过系统提示指示的 XML 推理时）：通过 `convert_scratchpad_to_think()` 将 `<REASONING_SCRATCHPAD>` 标签转换为 `<think>`。
 
-2. **REASONING_SCRATCHPAD XML** (when native thinking is disabled and the model
-   reasons via system-prompt-instructed XML): `<REASONING_SCRATCHPAD>` tags are
-   converted to `<think>` via `convert_scratchpad_to_think()`.
+3. **空思维块（Empty think blocks）**：每个 `gpt` 轮次都保证有一个 `<think>` 块。如果没有产生推理，则插入一个空块：`<think>\n</think>\n`——这确保了训练数据格式的一致性。
 
-3. **Empty think blocks**: Every `gpt` turn is guaranteed to have a `<think>`
-   block. If no reasoning was produced, an empty block is inserted:
-   `<think>\n</think>\n` — this ensures consistent format for training data.
+### 工具调用规范化（Tool Call Normalization）
 
-### Tool Call Normalization
-
-Tool calls from the API format (with `tool_call_id`, function name, arguments as
-JSON string) are converted to XML-wrapped JSON:
+来自 API 格式的工具调用（包含 `tool_call_id`、函数名、参数字符串）被转换为 XML 包装的 JSON：
 
 ```
 <tool_call>
@@ -148,16 +131,13 @@ JSON string) are converted to XML-wrapped JSON:
 </tool_call>
 ```
 
-- Arguments are parsed from JSON strings back to objects (not double-encoded)
-- If JSON parsing fails (shouldn't happen — validated during conversation),
-  an empty `{}` is used with a warning logged
-- Multiple tool calls in one assistant turn produce multiple `<tool_call>` blocks
-  in a single `gpt` message
+- 参数从 JSON 字符串解析回对象（不进行双重编码）
+- 如果 JSON 解析失败（不应发生——在对话期间已验证），则使用空 `{}` 并记录警告
+- 一次助手轮次中的多个工具调用会在单个 `gpt` 消息中生成多个 `<tool_call>` 块
 
-### Tool Response Normalization
+### 工具响应规范化（Tool Response Normalization）
 
-All tool results following an assistant message are grouped into a single `tool`
-turn with XML-wrapped JSON responses:
+助手消息之后的所有工具结果会被组合成单个 `tool` 轮次，使用 XML 包装的 JSON 响应：
 
 ```
 <tool_response>
@@ -165,29 +145,24 @@ turn with XML-wrapped JSON responses:
 </tool_response>
 ```
 
-- If tool content looks like JSON (starts with `{` or `[`), it's parsed so the
-  content field contains a JSON object/array rather than a string
-- Multiple tool results are joined with newlines in one message
-- The tool name is matched by position against the parent assistant's `tool_calls`
-  array
+- 如果工具内容看起来像 JSON（以 `{` 或 `[` 开头），则会解析该内容，使得 `content` 字段包含 JSON 对象/数组而非字符串
+- 多个工具结果通过换行符连接在一条消息中
+- 工具名称通过位置与父级助手的 `tool_calls` 数组匹配
 
-### System Message
+### 系统消息（System Message）
 
-The system message is generated at save time (not taken from the conversation).
-It follows the Hermes function-calling prompt template with:
+系统消息在保存时生成（并非取自对话）。它遵循 Hermes 函数调用提示模板，包含：
 
-- Preamble explaining the function-calling protocol
-- `<tools>` XML block containing the JSON tool definitions
-- Schema reference for `FunctionCall` objects
-- `<tool_call>` example
+- 解释函数调用协议的前言
+- 包含 JSON 工具定义的 `<tools>` XML 块
+- `FunctionCall` 对象的 schema（模式）引用
+- `<tool_call>` 示例
 
-Tool definitions include `name`, `description`, `parameters`, and `required`
-(set to `null` to match the canonical format).
+工具定义包含 `name`、`description`、`parameters` 和 `required`（设置为 `null` 以匹配规范格式）。
 
+## 加载轨迹（Loading Trajectories）
 
-## Loading Trajectories
-
-Trajectories are standard JSONL — load with any JSON-lines reader:
+轨迹是标准的 JSONL 格式——可使用任何 JSON 行读取器加载：
 
 ```python
 import json
@@ -210,7 +185,7 @@ successful = [e for e in load_trajectories("trajectory_samples.jsonl")
 training_data = [e["conversations"] for e in successful]
 ```
 
-### Loading for HuggingFace Datasets
+### 为 HuggingFace 数据集加载（Loading for HuggingFace Datasets）
 
 ```python
 from datasets import load_dataset
@@ -218,25 +193,20 @@ from datasets import load_dataset
 ds = load_dataset("json", data_files="trajectory_samples.jsonl")
 ```
 
-The normalized `tool_stats` schema ensures all entries have the same columns,
-preventing Arrow schema mismatch errors during dataset loading.
+规范化的 `tool_stats` 模式确保所有条目具有相同的列，防止在数据集加载期间出现 Arrow schema（模式）不匹配错误。
 
+## 控制轨迹保存（Controlling Trajectory Saving）
 
-## Controlling Trajectory Saving
-
-In the CLI, trajectory saving is controlled by:
+在 CLI 中，轨迹保存由以下方式控制：
 
 ```yaml
 # config.yaml
 agent:
-  save_trajectories: true  # default: false
+  save_trajectories: true  # 默认值：false
 ```
 
-Or via the `--save-trajectories` flag. When the agent initializes with
-`save_trajectories=True`, the `_save_trajectory()` method is called at the end
-of each conversation turn.
+或通过 `--save-trajectories` 标志。当代理以 `save_trajectories=True` 初始化时，会在每个对话轮次结束时调用 `_save_trajectory()` 方法。
 
-The batch runner always saves trajectories (that's its primary purpose).
+批量运行器始终保存轨迹（这是其主要目的）。
 
-Samples with zero reasoning across all turns are automatically discarded by the
-batch runner to avoid polluting training data with non-reasoning examples.
+所有轮次中推理为零的样本会被批量运行器自动丢弃，以避免非推理样本污染训练数据。

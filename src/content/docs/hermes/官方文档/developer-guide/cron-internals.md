@@ -1,54 +1,45 @@
 ---
-title: Cron 内部机制
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`developer-guide/cron-internals.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/cron-internals.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 11
-title: "Cron Internals"
-description: "How Hermes stores, schedules, edits, pauses, skill-loads, and delivers cron jobs"
+title: "Cron 内部机制"
+description: "Hermes 如何存储、调度、编辑、暂停、加载技能（Skill）并投递 cron 任务"
 ---
 
-# Cron Internals
+# Cron 内部机制
 
-The cron subsystem provides scheduled task execution — from simple one-shot delays to recurring cron-expression jobs with skill injection and cross-platform delivery.
+Cron 子系统提供计划任务执行——从简单的单次延迟到带有技能注入和跨平台投递的重复 cron 表达式任务。
 
-## Key Files
+## 关键文件
 
-| File | Purpose |
-|------|---------|
-| `cron/jobs.py` | Job model, storage, atomic read/write to `jobs.json` |
-| `cron/scheduler.py` | Scheduler loop — due-job detection, execution, repeat tracking |
-| `tools/cronjob_tools.py` | Model-facing `cronjob` tool registration and handler |
-| `gateway/run.py` | Gateway integration — cron ticking in the long-running loop |
-| `hermes_cli/cron.py` | CLI `hermes cron` subcommands |
+| 文件 | 用途 |
+|------|------|
+| `cron/jobs.py` | 任务模型、存储、对 `jobs.json` 的原子读写 |
+| `cron/scheduler.py` | 调度器循环——到期任务检测、执行、重复跟踪 |
+| `tools/cronjob_tools.py` | 面向模型的 `cronjob` 工具注册与处理器 |
+| `gateway/run.py` | 网关集成——长期运行循环中的 cron 滴答 |
+| `hermes_cli/cron.py` | CLI `hermes cron` 子命令 |
 
-## Scheduling Model
+## 调度模型
 
-Four schedule formats are supported:
+支持四种调度格式：
 
-| Format | Example | Behavior |
-|--------|---------|----------|
-| **Relative delay** | `30m`, `2h`, `1d` | One-shot, fires after the specified duration |
-| **Interval** | `every 2h`, `every 30m` | Recurring, fires at regular intervals |
-| **Cron expression** | `0 9 * * *` | Standard 5-field cron syntax (minute, hour, day, month, weekday) |
-| **ISO timestamp** | `2025-01-15T09:00:00` | One-shot, fires at the exact time |
+| 格式 | 示例 | 行为 |
+|------|------|------|
+| **相对延迟** | `30m`, `2h`, `1d` | 单次触发，在指定时长后执行 |
+| **间隔** | `every 2h`, `every 30m` | 重复触发，按固定间隔执行 |
+| **Cron 表达式** | `0 9 * * *` | 标准 5 字段 cron 语法（分钟、小时、日、月、星期） |
+| **ISO 时间戳** | `2025-01-15T09:00:00` | 单次触发，在精确时间执行 |
 
-The model-facing surface is a single `cronjob` tool with action-style operations: `create`, `list`, `update`, `pause`, `resume`, `run`, `remove`.
+面向模型的接口是一个单一的 `cronjob` 工具，支持动作式操作：`create`、`list`、`update`、`pause`、`resume`、`run`、`remove`。
 
-## Job Storage
+## 任务存储
 
-Jobs are stored in `~/.hermes/cron/jobs.json` with atomic write semantics (write to temp file, then rename). Each job record contains:
+任务存储在 `~/.hermes/cron/jobs.json` 中，采用原子写入语义（先写入临时文件，再重命名）。每个任务记录包含：
 
 ```json
 {
   "id": "a1b2c3d4e5f6",
-  "name": "Daily briefing",
-  "prompt": "Summarize today's AI news and funding rounds",
+  "name": "每日简报",
+  "prompt": "总结今日 AI 新闻与融资轮次",
   "schedule": {
     "kind": "cron",
     "expr": "0 9 * * *",
@@ -72,231 +63,202 @@ Jobs are stored in `~/.hermes/cron/jobs.json` with atomic write semantics (write
 }
 ```
 
-### Job Lifecycle States
+### 任务生命周期状态
 
-| State | Meaning |
-|-------|---------|
-| `scheduled` | Active, will fire at next scheduled time |
-| `paused` | Suspended — won't fire until resumed |
-| `completed` | Repeat count exhausted or one-shot that has fired |
-| `running` | Currently executing (transient state) |
+| 状态 | 含义 |
+|------|------|
+| `scheduled` | 激活状态，将在下次计划时间触发 |
+| `paused` | 暂停状态——恢复前不会触发 |
+| `completed` | 重复次数耗尽，或单次任务已触发 |
+| `running` | 正在执行（瞬态状态） |
 
-### Backward Compatibility
+### 向后兼容性
 
-Older jobs may have a single `skill` field instead of the `skills` array. The scheduler normalizes this at load time — single `skill` is promoted to `skills: [skill]`.
+旧任务可能有一个单独的 `skill` 字段而非 `skills` 数组。调度器在加载时会规范化——将单个 `skill` 提升为 `skills: [skill]`。
 
-## Scheduler Runtime
+## 调度器运行时
 
-### Tick Cycle
+### 滴答周期
 
-The scheduler runs on a periodic tick (default: every 60 seconds):
+调度器按周期性滴答运行（默认：每 60 秒）：
 
 ```text
 tick()
-  1. Acquire scheduler lock (prevents overlapping ticks)
-  2. Load all jobs from jobs.json
-  3. Filter to due jobs (next_run <= now AND state == "scheduled")
-  4. For each due job:
-     a. Set state to "running"
-     b. Create fresh AIAgent session (no conversation history)
-     c. Load attached skills in order (injected as user messages)
-     d. Run the job prompt through the agent
-     e. Deliver the response to the configured target
-     f. Update run_count, compute next_run
-     g. If repeat count exhausted → state = "completed"
-     h. Otherwise → state = "scheduled"
-  5. Write updated jobs back to jobs.json
-  6. Release scheduler lock
+  1. 获取调度器锁（防止重叠滴答）
+  2. 从 jobs.json 加载所有任务
+  3. 筛选到期任务（next_run <= 当前时间 且 state == "scheduled"）
+  4. 对每个到期任务：
+     a. 设置状态为 "running"
+     b. 创建全新的 AIAgent 会话（无对话历史）
+     c. 按顺序加载附加的技能（作为用户消息注入）
+     d. 通过代理运行任务提示词
+     e. 将响应投递到配置的目标
+     f. 更新 run_count，计算下次执行时间
+     g. 如果重复次数耗尽 → state = "completed"
+     h. 否则 → state = "scheduled"
+  5. 将更新后的任务写回 jobs.json
+  6. 释放调度器锁
 ```
 
-### Gateway Integration
+### 网关集成
 
-In gateway mode, the cron **trigger** (the part that decides *when* a due job
-fires — "Axis B") is selected through a pluggable `CronScheduler` provider. The
-gateway calls `resolve_cron_scheduler()` (`cron/scheduler_provider.py`) and runs
-the resolved provider's `start()` in a dedicated background thread, alongside a
-separate gateway-housekeeping thread.
+在网关模式下，cron **触发器**（决定何时触发到期任务的部分——"轴 B"）通过可插拔的 `CronScheduler` 提供者选择。网关调用 `resolve_cron_scheduler()`（`cron/scheduler_provider.py`），并在专用后台线程中运行已解析提供者的 `start()`，同时还有一个独立的网关维护线程。
 
-The active provider is chosen by the `cron.provider` config key:
+活动提供者由 `cron.provider` 配置键选择：
 
-- **empty (default)** → the built-in `InProcessCronScheduler`, which runs the
-  historical in-process loop calling `scheduler.tick()` every 60 seconds. This
-  is byte-identical to the pre-provider behavior.
-- **a named provider** (e.g. `chronos`, a managed-cron provider for
-  scale-to-zero deployments) → discovered from `plugins/cron/<name>/` or
-  `$HERMES_HOME/plugins/<name>/`.
+- **空（默认）** → 内置的 `InProcessCronScheduler`，运行传统进程内循环，每 60 秒调用 `scheduler.tick()`。这与提供者出现前的行为完全一致。
+- **命名提供者**（例如 `chronos`，一种用于缩容至零部署的管理型 cron 提供者）→ 从 `plugins/cron/<name>/` 或 `$HERMES_HOME/plugins/<name>/` 发现。
 
-If a named provider is missing, fails to load, or reports `is_available() ==
-False`, the resolver falls back to the built-in with a warning — **cron is
-never left without a trigger.** The built-in provider lives in core
-(`cron/scheduler_provider.py`), not in `plugins/`, so the fallback can't be
-accidentally removed.
+如果命名提供者缺失、加载失败或报告 `is_available() == False`，解析器会回退到内置提供者并发出警告——**cron 绝不缺少触发器。**内置提供者位于核心代码（`cron/scheduler_provider.py`），而非 `plugins/` 中，因此无法被意外移除。
 
-What "firing" *means* (job execution + delivery) is unchanged and shared by all
-providers — it stays in `scheduler.run_job()` / `scheduler._deliver_result()`.
-A provider only controls the trigger, never execution.
+"触发"的含义（任务执行 + 投递）保持不变，且由所有提供者共享——它保留在 `scheduler.run_job()` / `scheduler._deliver_result()` 中。提供者仅控制触发器，不控制执行过程。
 
-In CLI mode, cron jobs only fire when `hermes cron` commands are run or during active CLI sessions.
+在 CLI 模式下，cron 任务仅在运行 `hermes cron` 命令或活跃的 CLI 会话期间触发。
 
-### Managed cron (Chronos) for scale-to-zero
+### 用于缩容至零的管理型 cron (Chronos)
 
-Hosted gateways can run the **Chronos** provider (`cron.provider: chronos`)
-instead of the built-in ticker. Chronos lets an idle gateway **scale to zero**
-and still fire cron jobs: rather than a 60-second in-process loop (which would
-keep the process awake), it asks Nous infrastructure to arm exactly **one
-managed one-shot per job at that job's real next-fire time**. At fire time Nous
-calls the gateway back over an authenticated webhook (`POST /api/cron/fire`);
-the gateway runs the job through the same `run_one_job` path as the built-in,
-then re-arms the next one-shot. Between fires the process can be fully stopped —
-it wakes only on a genuine fire, never on a periodic timer.
+托管网关可以运行 **Chronos** 提供者（`cron.provider: chronos`）替代内置滴答器。Chronos 允许空闲网关**缩容至零**，同时仍然触发 cron 任务：它不会使用 60 秒进程内循环（这会保持进程唤醒），而是要求 Nous 基础设施为该任务的真实下次触发时间精确地布置**一个托管的一次性触发**。触发时，Nous 通过经过身份验证的 webhook（`POST /api/cron/fire`）回调网关；网关通过相同的 `run_one_job` 路径运行任务（与内置提供者相同），然后重新布置下一次一次性触发。在触发间隔期间，进程可以完全停止——仅在真正触发时唤醒，不会周期性定时唤醒。
 
-The flow (the managed scheduler is provided by Nous; the agent holds no
-scheduler credentials):
+流程（托管调度器由 Nous 提供；代理不持有调度器凭据）：
 
 ```
-create/update a cron job
-  → Chronos asks Nous to arm a one-shot at the job's next_run_at
-      (authenticated with the agent's existing Nous token)
-  → at fire time Nous calls the gateway: POST {callback_url}/api/cron/fire
-      (authenticated with a short-lived, purpose-scoped Nous-minted JWT)
-  → the gateway verifies the token, claims the job (store compare-and-set so
-    multi-replica deployments fire at-most-once), runs it, and re-arms the next
-    one-shot
+创建/更新 cron 任务
+  → Chronos 要求 Nous 在任务的 next_run_at 布置一次性触发
+      （使用代理现有的 Nous 令牌进行身份验证）
+  → 触发时，Nous 调用网关：POST {callback_url}/api/cron/fire
+      （使用 Nous 颁发的短期、特定用途的 JWT 进行身份验证）
+  → 网关验证令牌，认领任务（使用存储的 compare-and-set 实现多副本部署的至多一次触发），运行任务，并重新布置下一次一次性触发
 ```
 
-Config (all non-secret; on hosted agents Nous sets these at provision time):
+配置（全部非秘密；在托管代理上，Nous 在配置时设置这些）：
 
-| key | meaning |
+| 键 | 含义 |
 |---|---|
-| `cron.provider` | `chronos` to activate (empty = built-in ticker) |
-| `cron.chronos.portal_url` | Nous base URL (arming + the fire-token issuer) |
-| `cron.chronos.callback_url` | the gateway's own public base URL for inbound fires |
-| `cron.chronos.expected_audience` | this agent's fire-token audience |
-| `cron.chronos.nas_jwks_url` | key set for verifying the inbound fire token |
+| `cron.provider` | 设置为 `chronos` 以激活（空值 = 内置滴答器） |
+| `cron.chronos.portal_url` | Nous 基础 URL（布置 + 触发令牌签发者） |
+| `cron.chronos.callback_url` | 网关自身的公共基础 URL，用于接收传入触发 |
+| `cron.chronos.expected_audience` | 此代理的触发令牌受众 |
+| `cron.chronos.nas_jwks_url` | 用于验证传入触发令牌的密钥集 |
 
-If Chronos is misconfigured or the agent isn't logged into Nous,
-`resolve_cron_scheduler()` falls back to the built-in ticker (logged warning) —
-cron never loses its trigger. Recurring jobs re-arm after each fire; `repeat`-N
-jobs stop cleanly when the count is exhausted (no orphaned one-shot). The full
-agent↔Nous wire contract lives in `docs/chronos-managed-cron-contract.md`.
+如果 Chronos 配置错误或代理未登录 Nous，`resolve_cron_scheduler()` 会回退到内置滴答器（记录警告）——cron 绝不丢失其触发器。重复任务在每次触发后重新布置；`repeat`-N 任务在次数耗尽时干净停止（不会遗留未触发的一次性任务）。完整的代理↔Nous 连线协议见 `docs/chronos-managed-cron-contract.md`。
 
-### Fresh Session Isolation
+### 全新会话隔离
 
-Each cron job runs in a completely fresh agent session:
+每个 cron 任务在完全全新的代理会话中运行：
 
-- No conversation history from previous runs
-- No memory of previous cron executions (unless persisted to memory/files)
-- The prompt must be self-contained — cron jobs cannot ask clarifying questions
-- The `cronjob` toolset is disabled (recursion guard)
+- 无先前运行的对话历史
+- 无先前 cron 执行的记忆（除非持久化到内存/文件）
+- 提示词必须自包含——cron 任务不能提出澄清问题
+- `cronjob` 工具集被禁用（递归防护）
 
-## Skill-Backed Jobs
+## 技能支持的任务
 
-A cron job can attach one or more skills via the `skills` field. At execution time:
+cron 任务可以通过 `skills` 字段附加一个或多个技能。执行时：
 
-1. Skills are loaded in the specified order
-2. Each skill's SKILL.md content is injected as context
-3. The job's prompt is appended as the task instruction
-4. The agent processes the combined skill context + prompt
+1. 按指定顺序加载技能
+2. 每个技能的 SKILL.md 内容作为上下文注入
+3. 任务的提示词作为任务指令附加
+4. 代理处理组合的技能上下文 + 提示词
 
-This enables reusable, tested workflows without pasting full instructions into cron prompts. For example:
+这允许重用经过测试的工作流，而无需将完整指令粘贴到 cron 提示词中。例如：
 
 ```
-Create a daily funding report → attach "ai-funding-daily-report" skill
+创建每日资金报告 → 附加 "ai-funding-daily-report" 技能
 ```
 
-### Script-Backed Jobs
+### 脚本支持的任务
 
-Jobs can also attach a Python script via the `script` field. The script runs *before* each agent turn, and its stdout is injected into the prompt as context. This enables data collection and change detection patterns:
+任务还可以通过 `script` 字段附加一个 Python 脚本。脚本在代理每次轮次*之前*运行，其标准输出作为上下文注入到提示词中。这支持数据收集和变更检测模式：
 
 ```python
 # ~/.hermes/scripts/check_competitors.py
 import requests, json
-# Fetch competitor release notes, diff against last run
-# Print summary to stdout — agent analyzes and reports
+# 获取竞争对手发布说明，与上次运行进行比较
+# 将摘要打印到标准输出——代理分析并报告
 ```
 
-The script timeout defaults to 120 seconds. `_get_script_timeout()` resolves the limit through a three-layer chain:
+脚本超时默认 120 秒。`_get_script_timeout()` 通过三层链解析限制：
 
-1. **Module-level override** — `_SCRIPT_TIMEOUT` (for tests/monkeypatching). Only used when it differs from the default.
-2. **Environment variable** — `HERMES_CRON_SCRIPT_TIMEOUT`
-3. **Config** — `cron.script_timeout_seconds` in `config.yaml` (read via `load_config()`)
-4. **Default** — 120 seconds
+1. **模块级覆盖**——`_SCRIPT_TIMEOUT`（用于测试/猴子补丁）。仅在不同于默认值时使用。
+2. **环境变量**——`HERMES_CRON_SCRIPT_TIMEOUT`
+3. **配置**——`cron.script_timeout_seconds` 在 `config.yaml` 中（通过 `load_config()` 读取）
+4. **默认值**——120 秒
 
-### Provider Recovery
+### 提供者恢复
 
-`run_job()` passes the user's configured fallback providers and credential pool into the `AIAgent` instance:
+`run_job()` 将用户配置的回退提供者和凭据池传递给 `AIAgent` 实例：
 
-- **Fallback providers** — reads `fallback_providers` (list) or `fallback_model` (legacy dict) from `config.yaml`, matching the gateway's `_load_fallback_model()` pattern. Passed as `fallback_model=` to `AIAgent.__init__`, which normalizes both formats into a fallback chain.
-- **Credential pool** — loads via `load_pool(provider)` from `agent.credential_pool` using the resolved runtime provider name. Only passed when the pool has credentials (`pool.has_credentials()`). Enables same-provider key rotation on 429/rate-limit errors.
+- **回退提供者**——从 `config.yaml` 读取 `fallback_providers`（列表）或 `fallback_model`（旧版字典），匹配网关的 `_load_fallback_model()` 模式。作为 `fallback_model=` 传递给 `AIAgent.__init__`，后者将两种格式规范化为回退链。
+- **凭据池**——通过 `load_pool(provider)` 从 `agent.credential_pool` 加载，使用解析的运行时提供者名称。仅在池中有凭据时传递（`pool.has_credentials()`）。在 429/限速错误时启用同一提供者的密钥轮换。
 
-This mirrors the gateway's behavior — without it, cron agents would fail on rate limits without attempting recovery.
+这模仿了网关的行为——没有它，cron 代理会在遇到限速时而不尝试恢复就失败。
 
-## Delivery Model
+## 投递模型
 
-Cron job results can be delivered to any supported platform:
+Cron 任务结果可以投递到任何支持的平台：
 
-| Target | Syntax | Example |
-|--------|--------|---------|
-| Origin chat | `origin` | Deliver to the chat where the job was created |
-| Local file | `local` | Save to `~/.hermes/cron/output/` |
-| Telegram | `telegram` or `telegram:<chat_id>` | `telegram:-1001234567890` |
-| Discord | `discord` or `discord:#channel` | `discord:#engineering` |
-| Slack | `slack` | Deliver to Slack home channel |
-| WhatsApp | `whatsapp` | Deliver to WhatsApp home |
-| Signal | `signal` | Deliver to Signal |
-| Matrix | `matrix` | Deliver to Matrix home room |
-| Mattermost | `mattermost` | Deliver to Mattermost home |
-| Email | `email` | Deliver via email |
-| SMS | `sms` | Deliver via SMS |
-| Home Assistant | `homeassistant` | Deliver to HA conversation |
-| DingTalk | `dingtalk` | Deliver to DingTalk |
-| Feishu | `feishu` | Deliver to Feishu |
-| WeCom | `wecom` | Deliver to WeCom |
-| Weixin | `weixin` | Deliver to Weixin (WeChat) |
-| BlueBubbles | `bluebubbles` | Deliver to iMessage via BlueBubbles |
-| QQ Bot | `qqbot` | Deliver to QQ (Tencent) via Official API v2 |
+| 目标 | 语法 | 示例 |
+|------|------|------|
+| 原始聊天 | `origin` | 投递到创建该任务的聊天 |
+| 本地文件 | `local` | 保存到 `~/.hermes/cron/output/` |
+| Telegram | `telegram` 或 `telegram:<chat_id>` | `telegram:-1001234567890` |
+| Discord | `discord` 或 `discord:#channel` | `discord:#engineering` |
+| Slack | `slack` | 投递到 Slack 首页频道 |
+| WhatsApp | `whatsapp` | 投递到 WhatsApp 首页 |
+| Signal | `signal` | 投递到 Signal |
+| Matrix | `matrix` | 投递到 Matrix 首页房间 |
+| Mattermost | `mattermost` | 投递到 Mattermost 首页 |
+| Email | `email` | 通过邮件投递 |
+| SMS | `sms` | 通过短信投递 |
+| Home Assistant | `homeassistant` | 投递到 HA 对话 |
+| DingTalk | `dingtalk` | 投递到钉钉 |
+| Feishu | `feishu` | 投递到飞书 |
+| WeCom | `wecom` | 投递到企业微信 |
+| Weixin | `weixin` | 投递到微信 |
+| BlueBubbles | `bluebubbles` | 通过 BlueBubbles 投递到 iMessage |
+| QQ Bot | `qqbot` | 通过官方 API v2 投递到 QQ |
 
-For Telegram topics, use the format `telegram:<chat_id>:<thread_id>` (e.g., `telegram:-1001234567890:17585`).
+对于 Telegram 话题，使用格式 `telegram:<chat_id>:<thread_id>`（例如，`telegram:-1001234567890:17585`）。
 
-### Response Wrapping
+### 响应包装
 
-By default (`cron.wrap_response: true`), cron deliveries are wrapped with:
-- A header identifying the cron job name and task
-- A footer noting the agent cannot see the delivered message in conversation
+默认情况下（`cron.wrap_response: true`），cron 投递会被包装为：
+- 头部标识 cron 任务名称和任务描述
+- 尾部提示代理无法在对话中看到已投递的消息
 
-The `[SILENT]` prefix in a cron response suppresses delivery entirely — useful for jobs that only need to write to files or perform side effects.
+cron 响应中的 `[SILENT]` 前缀会完全抑制投递——对于仅需要写入文件或执行副作用的任务很有用。
 
-### Session Isolation
+### 会话隔离
 
-Cron deliveries are NOT mirrored into gateway session conversation history. They exist only in the cron job's own session. This prevents message alternation violations in the target chat's conversation.
+cron 投递**不会**镜像到网关会话的对话历史中。它们仅存在于 cron 任务自身的会话中。这防止了目标聊天对话中的消息交替违规。
 
-## Recursion Guard
+## 递归防护
 
-Cron-run sessions have the `cronjob` toolset disabled. This prevents:
-- A scheduled job from creating new cron jobs
-- Recursive scheduling that could explode token usage
-- Accidental mutation of the job schedule from within a job
+Cron 运行的会话禁用了 `cronjob` 工具集。这防止了：
+- 计划任务创建新的 cron 任务
+- 可能导致令牌使用量暴增的递归调度
+- 从任务内部意外修改任务调度
 
-## Locking
+## 锁定
 
-The scheduler uses cross-process file-based locking (`fcntl.flock` on Unix, `msvcrt.locking` on Windows) to prevent overlapping ticks from executing the same due-job batch twice — even between the gateway's in-process ticker and a standalone `hermes cron` / manual `tick()` call. If the lock cannot be acquired, `tick()` returns 0 immediately.
+调度器使用跨进程的基于文件的锁定（Unix 上为 `fcntl.flock`，Windows 上为 `msvcrt.locking`）以防止重叠滴答重复执行同一批到期任务——即使在网关的进程内滴答器和独立的 `hermes cron` / 手动 `tick()` 调用之间也是如此。如果无法获取锁，`tick()` 会立即返回 0。
 
-## CLI Interface
+## CLI 接口
 
-The `hermes cron` CLI provides direct job management:
+`hermes cron` CLI 提供直接的任务管理：
 
 ```bash
-hermes cron list                    # Show all jobs
-hermes cron create                  # Interactive job creation (alias: add)
-hermes cron edit <job_id>           # Edit job configuration
-hermes cron pause <job_id>          # Pause a running job
-hermes cron resume <job_id>         # Resume a paused job
-hermes cron run <job_id>            # Trigger immediate execution
-hermes cron remove <job_id>         # Delete a job
+hermes cron list                    # 显示所有任务
+hermes cron create                  # 交互式创建任务（别名：add）
+hermes cron edit <job_id>           # 编辑任务配置
+hermes cron pause <job_id>          # 暂停运行中的任务
+hermes cron resume <job_id>         # 恢复暂停的任务
+hermes cron run <job_id>            # 立即触发执行
+hermes cron remove <job_id>         # 删除任务
 ```
 
-## Related Docs
+## 相关文档
 
-- [Cron Feature Guide](/user-guide/features/cron)
-- [Gateway Internals](./gateway-internals.md)
-- [Agent Loop Internals](./agent-loop.md)
+- [Cron 功能指南](/user-guide/features/cron)
+- [网关内部机制](./gateway-internals.md)
+- [代理循环内部机制](./agent-loop.md)

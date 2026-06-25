@@ -1,84 +1,77 @@
----
-title: Git Worktrees
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/git-worktrees.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/git-worktrees.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 3
-sidebar_label: "Git Worktrees"
-title: "Git Worktrees"
-description: "Run multiple Hermes agents safely on the same repository using git worktrees and isolated checkouts"
+sidebar_label: "Git 工作树"
+title: "Git 工作树"
+description: "使用 Git 工作树和隔离检出，在同一仓库中安全运行多个 Hermes 代理"
 ---
 
-# Git Worktrees
+--- body ---
+# Git 工作树
 
-Hermes Agent is often used on large, long‑lived repositories. When you want to:
+Hermes 代理常用于大型、长期存在的仓库。当你想要：
 
-- Run **multiple agents in parallel** on the same project, or
-- Keep experimental refactors isolated from your main branch,
+- 在同一个项目上**并行运行多个代理**，或者
+- 将实验性重构与主分支隔离，
 
-Git **worktrees** are the safest way to give each agent its own checkout without duplicating the entire repository.
+Git **工作树（worktrees）** 是为每个代理提供独立检出而不复制整个仓库的最安全方式。
 
-This page shows how to combine worktrees with Hermes so each session has a clean, isolated working directory.
+本页介绍如何将工作树与 Hermes 结合使用，使每个会话拥有干净、隔离的工作目录。
 
-## Why Use Worktrees with Hermes?
+## 为何要在 Hermes 中使用工作树？
 
-Hermes treats the **current working directory** as the project root:
+Hermes 将**当前工作目录**视为项目根目录：
 
-- CLI: the directory where you run `hermes` or `hermes chat`
-- Messaging gateways: the directory set by `terminal.cwd` in `~/.hermes/config.yaml`
+- CLI：运行 `hermes` 或 `hermes chat` 的目录
+- 消息网关：由 `~/.hermes/config.yaml` 中 `terminal.cwd` 设置的目录
 
-If you run multiple agents in the **same checkout**, their changes can interfere with each other:
+如果你在**同一个检出**中运行多个代理，它们的更改可能会相互干扰：
 
-- One agent may delete or rewrite files the other is using.
-- It becomes harder to understand which changes belong to which experiment.
+- 一个代理可能删除或重写另一个代理正在使用的文件。
+- 更难理解哪些更改属于哪个实验。
 
-With worktrees, each agent gets:
+使用工作树后，每个代理获得：
 
-- Its **own branch and working directory**
-- Its **own Checkpoint Manager history** for `/rollback`
+- 它**自己的分支和工作目录**
+- 它**自己的检查点管理器历史记录**，用于 `/rollback`
 
-See also: [Checkpoints and /rollback](./checkpoints-and-rollback.md).
+另请参阅：[检查点与 /rollback](./checkpoints-and-rollback.md)。
 
-## Quick Start: Creating a Worktree
+## 快速开始：创建工作树
 
-From your main repository (containing `.git/`), create a new worktree for a feature branch:
+从主仓库（包含 `.git/`）中，为功能分支创建一个新工作树：
 
 ```bash
-# From the main repo root
+# 在主仓库根目录下
 cd /path/to/your/repo
 
-# Create a new branch and worktree in ../repo-feature
+# 创建新分支和工作树，位于 ../repo-feature
 git worktree add ../repo-feature feature/hermes-experiment
 ```
 
-This creates:
+这将创建：
 
-- A new directory: `../repo-feature`
-- A new branch: `feature/hermes-experiment` checked out in that directory
+- 一个新目录：`../repo-feature`
+- 一个在该目录中签出的新分支：`feature/hermes-experiment`
 
-Now you can `cd` into the new worktree and run Hermes there:
+现在你可以 `cd` 进入新的工作树并在此运行 Hermes：
 
 ```bash
 cd ../repo-feature
 
-# Start Hermes in the worktree
+# 在工作树中启动 Hermes
 hermes
 ```
 
-Hermes will:
+Hermes 将：
 
-- See `../repo-feature` as the project root.
-- Use that directory for context files, code edits, and tools.
-- Use a **separate checkpoint history** for `/rollback` scoped to this worktree.
+- 将 `../repo-feature` 视为项目根目录。
+- 使用该目录作为上下文文件、代码编辑和工具的工作目录。
+- 使用**独立的检查点历史记录**，并限定在此工作树范围内，用于 `/rollback`。
 
-## Running Multiple Agents in Parallel
+## 并行运行多个代理
 
-You can create multiple worktrees, each with its own branch:
+你可以创建多个工作树，每个都有独立的分支：
 
 ```bash
 cd /path/to/your/repo
@@ -87,96 +80,96 @@ git worktree add ../repo-experiment-a feature/hermes-a
 git worktree add ../repo-experiment-b feature/hermes-b
 ```
 
-In separate terminals:
+在独立的终端中：
 
 ```bash
-# Terminal 1
+# 终端 1
 cd ../repo-experiment-a
 hermes
 
-# Terminal 2
+# 终端 2
 cd ../repo-experiment-b
 hermes
 ```
 
-Each Hermes process:
+每个 Hermes 进程：
 
-- Works on its own branch (`feature/hermes-a` vs `feature/hermes-b`).
-- Writes checkpoints under a different shadow repo hash (derived from the worktree path).
-- Can use `/rollback` independently without affecting the other.
+- 在其自己的分支上工作（`feature/hermes-a` vs `feature/hermes-b`）。
+- 在（由工作树路径派生的）不同影子仓库哈希下写入检查点。
+- 可以独立使用 `/rollback`，不影响另一个。
 
-This is especially useful when:
+这在以下场景中特别有用：
 
-- Running batch refactors.
-- Trying different approaches to the same task.
-- Pairing CLI + gateway sessions against the same upstream repo.
+- 运行批量重构。
+- 对同一任务尝试不同方法。
+- 针对同一个上游仓库，同时使用 CLI 和网关会话。
 
-## Cleaning Up Worktrees Safely
+## 安全清理工作树
 
-When you are done with an experiment:
+当某个实验完成后：
 
-1. Decide whether to keep or discard the work.
-2. If you want to keep it:
-   - Merge the branch into your main branch as usual.
-3. Remove the worktree:
+1. 决定是保留还是丢弃工作。
+2. 如果要保留：
+   - 像往常一样将分支合并到主分支。
+3. 移除工作树：
 
 ```bash
 cd /path/to/your/repo
 
-# Remove the worktree directory and its reference
+# 移除工作树目录及其引用
 git worktree remove ../repo-feature
 ```
 
-Notes:
+注意：
 
-- `git worktree remove` will refuse to remove a worktree with uncommitted changes unless you force it.
-- Removing a worktree does **not** automatically delete the branch; you can delete or keep the branch using normal `git branch` commands.
-- Hermes checkpoint data under `~/.hermes/checkpoints/` is not automatically pruned when you remove a worktree, but it is usually very small.
+- 除非强制，否则 `git worktree remove` 将拒绝移除含有未提交更改的工作树。
+- 移除工作树**不会**自动删除分支；你可以使用常规 `git branch` 命令删除或保留分支。
+- 移除工作树时，`~/.hermes/checkpoints/` 下的 Hermes 检查点数据不会自动清理，但通常数据量很小。
 
-## Best Practices
+## 最佳实践
 
-- **One worktree per Hermes experiment**
-  - Create a dedicated branch/worktree for each substantial change.
-  - This keeps diffs focused and PRs small and reviewable.
-- **Name branches after the experiment**
-  - e.g. `feature/hermes-checkpoints-docs`, `feature/hermes-refactor-tests`.
-- **Commit frequently**
-  - Use git commits for high‑level milestones.
-  - Use [checkpoints and /rollback](./checkpoints-and-rollback.md) as a safety net for tool‑driven edits in between.
-- **Avoid running Hermes from the bare repo root when using worktrees**
-  - Prefer the worktree directories instead, so each agent has a clear scope.
+- **每个 Hermes 实验一个工作树**
+  - 为每个实质性更改创建独立的分支/工作树。
+  - 这能保持差异集中，PR 小而可审阅。
+- **根据实验命名分支**
+  - 例如 `feature/hermes-checkpoints-docs`、`feature/hermes-refactor-tests`。
+- **频繁提交**
+  - 使用 git 提交记录高级里程碑。
+  - 使用[检查点与 /rollback](./checkpoints-and-rollback.md) 作为工具驱动编辑的保险网。
+- **使用工作树时，避免从裸仓库根目录运行 Hermes**
+  - 优先使用工作树目录，这样每个代理都有清晰的范围。
 
-## Using `hermes -w` (Automatic Worktree Mode)
+## 使用 `hermes -w`（自动工作树模式）
 
-Hermes has a built‑in `-w` flag that **automatically creates a disposable git worktree** with its own branch. You don't need to set up worktrees manually — just `cd` into your repo and run:
+Hermes 有一个内置的 `-w` 标志，可以**自动创建一个带有独立分支的一次性 git 工作树**。你无需手动设置工作树——只需 `cd` 进入仓库并运行：
 
 ```bash
 cd /path/to/your/repo
 hermes -w
 ```
 
-Hermes will:
+Hermes 将：
 
-- Create a temporary worktree under `.worktrees/` inside your repo.
-- Check out an isolated branch (e.g. `hermes/hermes-<hash>`).
-- Run the full CLI session inside that worktree.
+- 在你的仓库内的 `.worktrees/` 下创建一个临时工作树。
+- 签出一个隔离的分支（例如 `hermes/hermes-<hash>`）。
+- 在该工作树内运行完整的 CLI 会话。
 
-This is the easiest way to get worktree isolation. You can also combine it with a single query:
+这是获得工作树隔离的最简单方式。你也可以将其与单个查询结合使用：
 
 ```bash
-hermes -w -z "Fix issue #123"
+hermes -w -z "修复问题 #123"
 ```
 
-For parallel agents, open multiple terminals and run `hermes -w` in each — every invocation gets its own worktree and branch automatically.
+对于并行代理，打开多个终端并在每个终端中运行 `hermes -w`——每次调用都会自动获得自己的工作树和分支。
 
-## Putting It All Together
+## 汇总
 
-- Use **git worktrees** to give each Hermes session its own clean checkout.
-- Use **branches** to capture the high‑level history of your experiments.
-- Use **checkpoints + `/rollback`** to recover from mistakes inside each worktree.
+- 使用 **git 工作树**为每个 Hermes 会话提供自己干净的检出。
+- 使用**分支**捕获实验的高级历史。
+- 在每个工作树内部使用**检查点 + `/rollback`** 从错误中恢复。
 
-This combination gives you:
+这种组合带来：
 
-- Strong guarantees that different agents and experiments do not step on each other.
-- Fast iteration cycles with easy recovery from bad edits.
-- Clean, reviewable pull requests.
+- 强保证：不同代理和实验不会相互干扰。
+- 快速迭代周期，易于从错误编辑中恢复。
+- 干净、可审阅的拉取请求。

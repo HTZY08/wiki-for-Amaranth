@@ -1,33 +1,26 @@
----
-title: 模型目录
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`reference/model-catalog.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/model-catalog.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 11
-title: Model Catalog
-description: Remotely-hosted manifest driving curated model picker lists for OpenRouter and Nous Portal.
+title: 模型目录
+description: 通过远程托管的清单驱动 OpenRouter 和 Nous Portal 的精选模型选择列表。
 ---
 
-# Model Catalog
+--- body ---
+# 模型目录
 
-Hermes fetches curated model lists for **OpenRouter** and **Nous Portal** from a JSON manifest hosted alongside the docs site. This lets maintainers update picker lists without shipping a new `hermes-agent` release.
+Hermes 从托管在文档站点旁的 JSON 清单中获取 **OpenRouter** 和 **Nous Portal** 的精选模型列表。这使得维护者无需发布新的 `hermes-agent` 版本即可更新选择列表。
 
-When the manifest is unreachable (offline, network blocked, hosting failure), Hermes silently falls back to the in-repo snapshot that ships with the CLI. The manifest never breaks the picker — worst case you see whatever list was bundled with your installed version.
+当清单无法访问时（离线、网络阻塞、托管故障），Hermes 会静默回退到随 CLI 一起发布的仓库内快照。该清单绝不会破坏选择器——最坏情况下，你会看到与你安装版本捆绑的任何列表。
 
-## Live manifest URL
+## 实时清单 URL
 
 ```
 https://hermes-agent.nousresearch.com/docs/api/model-catalog.json
 ```
 
-Published on every merge to `main` via the existing `deploy-site.yml` GitHub Pages pipeline. The source of truth lives in the repo at `website/static/api/model-catalog.json`.
+每次合并到 `main` 分支时，通过现有的 `deploy-site.yml` GitHub Pages 流水线发布。事实来源位于仓库的 `website/static/api/model-catalog.json` 中。
 
-## Schema
+## 模式（Schema）
 
 ```json
 {
@@ -53,26 +46,26 @@ Published on every merge to `main` via the existing `deploy-site.yml` GitHub Pag
 }
 ```
 
-Field notes:
+字段说明：
 
-- **`version`** — integer schema version. Future schemas bump this; Hermes refuses manifests with versions it doesn't understand and falls back to the hardcoded snapshot.
-- **`metadata`** — free-form dict at the manifest, provider, and model level. Any keys. Hermes ignores unknown fields, so you can annotate entries (`"tier": "paid"`, `"tags": [...]`, etc.) without coordinating a schema change.
-- **`description`** — OpenRouter-only. Drives picker badge text (`"recommended"`, `"free"`, or empty). Nous Portal doesn't use this — free-tier gating is determined live from the Portal's pricing endpoint.
-- **Pricing and context length** are NOT in the manifest. Those come from live provider APIs (`/v1/models` endpoints, models.dev) at fetch time.
+- **`version`** — 整数模式版本号。未来模式将递增此版本；Hermes 会拒绝其不理解的版本的清单，并回退到硬编码的快照。
+- **`metadata`** — 在清单、提供者和模型级别的自由格式字典。任意键。Hermes 会忽略未知字段，因此你可以添加注释条目（如 `"tier": "paid"`、`"tags": [...]` 等），而无需协调模式变更。
+- **`description`** — 仅用于 OpenRouter。驱动选择器徽章文本（`"recommended"`、`"free"` 或为空）。Nous Portal 不使用此字段——免费层级的控制由 Portal 的定价端点实时决定。
+- **定价和上下文长度**不在清单中。这些信息来自获取时的实时提供者 API（`/v1/models` 端点、models.dev）。
 
-## Fetch behavior
+## 获取行为
 
-| When | What happens |
+| 条件 | 发生情况 |
 |---|---|
-| `/model` or `hermes model` | Fetches if disk cache is stale, else uses cache |
-| Disk cache fresh (< TTL) | No network hit |
-| Network failure with cache | Silent fallback to cache, one log line |
-| Network failure, no cache | Silent fallback to in-repo snapshot |
-| Manifest fails schema validation | Treated as unreachable |
+| `/model` 或 `hermes model` | 如果磁盘缓存过期则获取，否则使用缓存 |
+| 磁盘缓存未过期（< TTL） | 无网络请求 |
+| 网络失败但有缓存 | 静默回退到缓存，输出一行日志 |
+| 网络失败且无缓存 | 静默回退到仓库内快照 |
+| 清单模式验证失败 | 视为不可达 |
 
-Cache location: `~/.hermes/cache/model_catalog.json`.
+缓存位置：`~/.hermes/cache/model_catalog.json`。
 
-## Config
+## 配置
 
 ```yaml
 model_catalog:
@@ -82,11 +75,11 @@ model_catalog:
   providers: {}
 ```
 
-Set `enabled: false` to disable remote fetch entirely and always use the in-repo snapshot.
+设置 `enabled: false` 可完全禁用远程获取，并始终使用仓库内快照。
 
-### Per-provider override URLs
+### 按提供者覆盖 URL
 
-Third parties can self-host their own curation list using the same schema. Point a provider at a custom URL:
+第三方可以使用相同模式自行托管自己的精选列表。将提供者指向自定义 URL：
 
 ```yaml
 model_catalog:
@@ -95,18 +88,18 @@ model_catalog:
       url: https://example.com/my-openrouter-curation.json
 ```
 
-The overriding manifest only needs to populate the provider block(s) it cares about. Other providers continue to resolve against the master URL.
+覆盖清单只需填充它关心的提供者块。其他提供者将继续解析到主 URL。
 
-## Updating the manifest
+## 更新清单
 
-Maintainers:
+维护者：
 
 ```bash
-# Re-generate from the in-repo hardcoded lists (keeps manifest in sync after
-# editing OPENROUTER_MODELS or _PROVIDER_MODELS["nous"] in hermes_cli/models.py).
+# 从仓库内硬编码列表重新生成（编辑 herm_cli/models.py 中的
+# OPENROUTER_MODELS 或 _PROVIDER_MODELS["nous"] 后，保持清单同步）
 python scripts/build_model_catalog.py
 ```
 
-Then PR the resulting change to `website/static/api/model-catalog.json` to `main`. The docs site auto-deploys on merge and the new manifest is live within a few minutes.
+然后，将生成的更改 PR 到 `website/static/api/model-catalog.json` 到 `main` 分支。文档站点在合并后自动部署，新清单将在几分钟内生效。
 
-You can also hand-edit the JSON directly for fine-grained metadata changes that don't belong in the in-repo snapshot — the generator script is a convenience, not the single source of truth.
+你也可以直接手动编辑 JSON，以进行不适合仓库内快照的精细元数据更改——生成脚本只是一个便利工具，而非唯一事实来源。

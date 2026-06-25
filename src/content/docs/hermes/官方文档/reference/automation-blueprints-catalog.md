@@ -1,45 +1,27 @@
----
-title: 自动化蓝图目录
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`reference/automation-blueprints-catalog.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/automation-blueprints-catalog.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 7
-title: "Automation Blueprints Catalog"
-description: "Ready-to-run automation blueprints — set one up from the dashboard, CLI, TUI, any messenger, or the desktop app."
+title: "自动化蓝图目录（Automation Blueprints Catalog）"
+description: "即开即用的自动化蓝图（Blueprint）——通过仪表板、CLI、TUI、任意即时通讯软件或桌面应用即可设置。"
 ---
 
+--- body ---
 import AutomationBlueprintsCatalog from '@site/src/components/AutomationBlueprintsCatalog';
 
-# Automation Blueprints
+# 自动化蓝图（Automation Blueprints）
 
-Automation Blueprints are ready-to-run automations. Pick one, fill in a couple
-of fields, and Hermes schedules it as a cron job — no cron syntax required.
+自动化蓝图（Automation Blueprints）是即开即用的自动化流程。选择一个蓝图，填写几个字段，Hermes 就会将其作为 cron 任务调度——无需编写 cron 语法。
 
-Every blueprint works from **every surface**:
+每个蓝图均可在**所有界面**中使用：
 
-- **Dashboard / desktop app** — open the Cron page, switch to the **Blueprints**
-  tab, fill the form, and click *Schedule it*.
-- **CLI, TUI, and messengers** — type `/blueprint <name>` (e.g.
-  `/blueprint morning-brief`) and Hermes asks you for what it needs, one
-  question at a time, then schedules it. The name match is forgiving — a
-  prefix or near-spelling resolves. Power users can skip the questions by
-  passing values inline: `/blueprint morning-brief time=08:00`.
-- **Desktop app** — click **Send to App** on any blueprint and it opens with the
-  command pre-loaded in your composer.
+- **仪表板 / 桌面应用**——打开 Cron 页面，切换到 **Blueprints** 标签页，填写表单，然后点击 *Schedule it*。
+- **CLI、TUI 和即时通讯软件**——输入 `/blueprint <name>`（例如 `/blueprint morning-brief`），Hermes 会逐一提问所需信息，然后调度任务。名称匹配是宽松的——支持前缀或近似拼写。高级用户可以通过内联传递值来跳过提问：`/blueprint morning-brief time=08:00`。
+- **桌面应用**——在任何蓝图上点击 **Send to App**，即可在编辑器（composer）中预加载该命令打开。
 
-Blueprints never schedule anything silently — you always confirm before the job
-is created. Manage created jobs anytime with `/cron`.
+蓝图绝不会静默调度任务——在任务创建前你始终需要确认。随时通过 `/cron` 管理已创建的任务。
 
 <AutomationBlueprintsCatalog />
 
-## Writing your own
+## 编写你自己的蓝图
 
-A blueprint is just a skill with a `metadata.hermes.blueprint` block in its
-`SKILL.md` frontmatter. See
-[Creating Skills → Automation Blueprints](../developer-guide/creating-skills.md) for the
-slot schema and how to publish one.
+蓝图只是一个技能，在其 `SKILL.md` 的 frontmatter 中包含 `metadata.hermes.blueprint` 块。插槽模式（slot schema）及如何发布蓝图，请参阅[创建技能 → 自动化蓝图](../developer-guide/creating-skills.md)。

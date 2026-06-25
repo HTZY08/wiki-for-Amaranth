@@ -1,73 +1,60 @@
----
-title: 纯脚本 Cron 任务
-description: Hermes Agent 官方文档汉化版
----
+--- frontmatter ---
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`guides/cron-script-only.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/cron-script-only.md)
-> 本版本为自用学习用途，非官方翻译。
 
----
-sidebar_position: 13
-title: "Script-Only Cron Jobs (No LLM)"
-description: "Classic watchdog cron jobs that skip the LLM entirely — a script runs on schedule and its stdout gets delivered to your messaging platform. Memory alerts, disk alerts, CI pings, periodic health checks."
----
+--- body ---
+# 仅脚本定时任务（无 LLM）
 
-# Script-Only Cron Jobs
+有时你已经确切知道要发送什么消息。你不需要代理（Agent）来推理——你只需要一个脚本按定时运行，并将其输出（如果有）发送到 Telegram / Discord / Slack / Signal。
 
-Sometimes you already know exactly what message you want to send. You don't need an agent to reason about it — you just need a script to run on a timer, and its output (if any) to land in Telegram / Discord / Slack / Signal.
+Hermes 将此称为**无代理模式（no-agent mode）**。它是移除了 LLM 的定时任务系统。
 
-Hermes calls this **no-agent mode**. It's the cron system minus the LLM.
-
-<!-- ascii-guard-ignore -->
 ```
    ┌──────────────────┐          ┌──────────────────┐
-   │ scheduler tick   │  every   │ run script       │
-   │ (every N minutes)│ ──────▶ │ (bash or python) │
+   │ 调度器触发       │  每隔    │ 运行脚本          │
+   │ （每 N 分钟）    │ ──────▶ │ （bash 或 python）│
    └──────────────────┘          └──────────────────┘
                                           │
                                           │ stdout
                                           ▼
                                  ┌──────────────────┐
-                                 │ delivery router  │
+                                 │ 投递路由器       │
                                  │ (telegram/disc…) │
                                  └──────────────────┘
 ```
-<!-- ascii-guard-ignore-end -->
 
-- **No LLM call.** Zero tokens, zero agent loop, zero model spend.
-- **Script is the job.** The script decides whether to alert. Emit output → message gets sent. Emit nothing → silent tick.
-- **Bash or Python.** `.sh` / `.bash` files run under `/bin/bash`; any other extension runs under the current Python interpreter. Anything in `~/.hermes/scripts/` is accepted.
-- **Same scheduler.** Lives in `cronjob` alongside LLM jobs — pausing, resuming, listing, logs, and delivery targeting all work the same way.
+- **无 LLM 调用。** 零 Token，零代理循环，零模型消耗。
+- **脚本即任务。** 脚本决定是否告警。输出内容 → 消息发送。无输出 → 静默触发。
+- **Bash 或 Python。** `.sh` / `.bash` 文件在 `/bin/bash` 下运行；任何其他扩展名在当前 Python 解释器下运行。`~/.hermes/scripts/` 中的任何脚本都可接受。
+- **相同调度器。** 与 LLM 任务一起存在于 `cronjob` 中——暂停、恢复、列出、日志和投递目标设置都相同。
 
-## When to Use It
+## 何时使用
 
-Use no-agent mode for:
+在以下场景使用无代理模式：
 
-- **Memory / disk / GPU watchdogs.** Run every 5 minutes, alert only when a threshold is breached.
-- **CI hooks.** Deploy finished → post the commit SHA. Build failed → send the last 100 lines of the log.
-- **Periodic metrics.** "Daily Stripe revenue at 9am" as a simple API call + pretty-print.
-- **External event pollers.** Check an API, alert on state change.
-- **Heartbeats.** Ping a dashboard every N minutes to prove the host is alive.
+- **内存 / 磁盘 / GPU 看门狗。** 每 5 分钟运行一次，仅在阈值被突破时告警。
+- **CI 钩子。** 部署完成 → 发布提交 SHA。构建失败 → 发送最后 100 行日志。
+- **周期性指标。** “早上 9 点每日 Stripe 收入”作为简单的 API 调用 + 格式化输出。
+- **外部事件轮询器。** 检查 API，在状态变化时告警。
+- **心跳。** 每 N 分钟向仪表盘发送一次 ping，以证明主机存活。
 
-Use a normal (LLM-driven) cron job when you need the agent to **decide** what to say — summarize a long document, pick interesting items from a feed, draft a human-friendly message. The no-agent path is for cases where the script's stdout already IS the message.
+当你需要代理（Agent）**决定**说什么时——比如总结长文档、从信息流中挑选有趣项目、起草友好提醒——则使用正常的（LLM 驱动的）定时任务。无代理路径适用于脚本的 stdout 本身已经是消息的情况。
 
-## Create One from Chat
+## 通过对话创建
 
-The real win of no-agent mode is that the agent itself can set up the watchdog for you — no editor, no shell, no remembering CLI flags. You describe what you want, Hermes writes the script, schedules it, and tells you when it'll fire.
+无代理模式的真正优势在于，代理本身可以为你设置看门狗——无需编辑器、无需 Shell、无需记住 CLI 标志。你描述需求，Hermes 编写脚本、调度它，并告知你何时触发。
 
-### Example transcript
+### 示例对话记录
 
-> **You:** ping me on telegram if RAM is over 85% every 5 minutes
+> **你：** 每 5 分钟在 Telegram 上 ping 我，如果 RAM 超过 85%
 >
-> **Hermes:** *(writes `~/.hermes/scripts/memory-watchdog.sh`, then calls `cronjob(...)` with `no_agent=true`)*
+> **Hermes：** *（写入 `~/.hermes/scripts/memory-watchdog.sh`，然后调用 `cronjob(...)` 并设置 `no_agent=true`）*
 >
-> Set up. Runs every 5 min, alerts Telegram only when RAM is over 85%. Script: `memory-watchdog.sh`. Job ID: `abc123`.
+> 设置完成。每 5 分钟运行一次，仅在 RAM 超过 85% 时通过 Telegram 告警。脚本：`memory-watchdog.sh`。任务 ID：`abc123`。
 
-Under the hood, the agent makes two tool calls:
+在底层，代理会进行两次工具调用：
 
 ```python
-# 1. Write the check script
+# 1. 编写检查脚本
 write_file(
     path="~/.hermes/scripts/memory-watchdog.sh",
     content='''#!/usr/bin/env bash
@@ -75,11 +62,11 @@ ram_pct=$(free | awk '/^Mem:/ {printf "%d", $3 * 100 / $2}')
 if [ "$ram_pct" -ge 85 ]; then
   echo "RAM ${ram_pct}% on $(hostname)"
 fi
-# Empty stdout = silent tick; no message sent.
+# 空的 stdout = 静默触发；不发送消息。
 ''',
 )
 
-# 2. Schedule it — no_agent=True skips the LLM on every tick
+# 2. 调度它——no_agent=True 跳过每次触发时的 LLM
 cronjob(
     action="create",
     schedule="every 5m",
@@ -90,140 +77,139 @@ cronjob(
 )
 ```
 
-From that point on every tick is free: the scheduler runs the script, pipes its stdout to Telegram if non-empty, and never touches a model.
+从那一刻起，每次触发都是免费的：调度器运行脚本，如果 stdout 非空则通过管道传递给 Telegram，且从不触及模型。
 
-### What the agent decides for you
+### 代理为你决定的内容
 
-When you phrase a request like "alert me when X" or "every N minutes check Y and tell me if Z", Hermes' `cronjob` tool description tells it to reach for `no_agent=True` whenever the message content is fully determined by the script. It falls back to the normal LLM-driven path when the request needs reasoning (*"summarize the new issues"*, *"pick the most interesting headlines"*, *"draft a friendly reminder"*).
+当你提出诸如“当 X 发生时提醒我”或“每 N 分钟检查 Y 并告诉我是否 Z”之类的请求时，Hermes 的 `cronjob` 工具描述会告诉它在消息内容完全由脚本确定时使用 `no_agent=True`。当请求需要推理（“总结新问题”、“挑选最有趣的标题”、“起草友好提醒”）时，它会回退到正常的 LLM 驱动路径。
 
-You don't have to specify `--no-agent` yourself. Just describe the behavior.
+你无需自己指定 `--no-agent`。只需描述行为即可。
 
-### Managing watchdogs from chat
+### 通过对话管理看门狗
 
-The agent can pause, resume, edit, and remove jobs the same way it creates them:
+代理可以像创建任务一样暂停、恢复、编辑和删除任务：
 
-> **You:** stop the memory watchdog for tonight
+> **你：** 今晚停止内存看门狗
 >
-> **Hermes:** *(calls `cronjob(action='pause', job_id='abc123')`)*
+> **Hermes：** *（调用 `cronjob(action='pause', job_id='abc123')`）*
 >
-> Paused. Resume with "turn it back on" or via `hermes cron resume abc123`.
+> 已暂停。使用“重新打开”或通过 `hermes cron resume abc123` 恢复。
 
-> **You:** change it to every 15 minutes
+> **你：** 改为每 15 分钟
 >
-> **Hermes:** *(calls `cronjob(action='update', job_id='abc123', schedule='every 15m')`)*
+> **Hermes：** *（调用 `cronjob(action='update', job_id='abc123', schedule='every 15m')`）*
 
-The full lifecycle (create / list / update / pause / resume / run-now / remove) is available to the agent without you learning any CLI commands.
+完整的生命周期（创建 / 列出 / 更新 / 暂停 / 恢复 / 立即运行 / 删除）都可供代理使用，你无需学习任何 CLI 命令。
 
-## Create One from the CLI
+## 通过 CLI 创建
 
-Prefer the shell? The CLI path gives you the same result with three commands:
+更喜欢 Shell？CLI 路径通过三个命令也能得到相同结果：
 
 ```bash
-# 1. Write your script
+# 1. 编写脚本
 cat > ~/.hermes/scripts/memory-watchdog.sh <<'EOF'
 #!/usr/bin/env bash
-# Alert when RAM usage is over 85%. Silent otherwise.
+# 当 RAM 使用率超过 85% 时告警。否则静默。
 RAM_PCT=$(free | awk '/^Mem:/ {printf "%d", $3 * 100 / $2}')
 if [ "$RAM_PCT" -ge 85 ]; then
   echo "⚠ RAM ${RAM_PCT}% on $(hostname)"
 fi
-# Empty stdout = silent run; no message sent.
+# 空的 stdout = 静默运行；不发送消息。
 EOF
 chmod +x ~/.hermes/scripts/memory-watchdog.sh
 
-# 2. Schedule it
+# 2. 调度它
 hermes cron create "every 5m" \
   --no-agent \
   --script memory-watchdog.sh \
   --deliver telegram \
   --name "memory-watchdog"
 
-# 3. Verify
+# 3. 验证
 hermes cron list
-hermes cron run <job_id>    # fire it once to test
+hermes cron run <job_id>    # 触发一次测试
 ```
 
-That's the whole thing. No prompt, no skill, no model.
+就这样。无需提示、无需技能（Skill）、无需模型。
 
+## 脚本输出如何映射到投递
 
-## How Script Output Maps to Delivery
+| 脚本行为                          | 结果                           |
+|----------------------------------|--------------------------------|
+| 退出码 0，stdout 非空            | stdout 原样投递                |
+| 退出码 0，stdout 为空            | 静默触发——不投递               |
+| 退出码 0，stdout 最后一行包含 `{"wakeAgent": false}` | 静默触发（与 LLM 任务共享门控） |
+| 非零退出码                        | 错误告警被投递（坏掉的看门狗不会静默失败） |
+| 脚本超时                          | 错误告警被投递                 |
 
-| Script behavior | Result |
-|-----------------|--------|
-| Exit 0, non-empty stdout | stdout is delivered verbatim |
-| Exit 0, empty stdout | Silent tick — no delivery |
-| Exit 0, stdout contains `{"wakeAgent": false}` on the last line | Silent tick (shared gate with LLM jobs) |
-| Non-zero exit code | Error alert is delivered (so a broken watchdog doesn't fail silently) |
-| Script timeout | Error alert is delivered |
+“静默当空”的行为是经典看门狗模式的关键：脚本可以每分钟运行，但通道只在需要关注的事情发生时才能看到消息。
 
-The "silent when empty" behavior is the key to the classic watchdog pattern: the script is free to run every minute, but the channel only sees a message when something actually needs attention.
+## 脚本规则
 
-## Script Rules
+脚本必须位于 `~/.hermes/scripts/` 中。这在任务创建时和运行时都会强制执行——绝对路径、`~/` 展开和路径遍历模式（`../`）都会被拒绝。该目录与 LLM 任务使用的预检查脚本门控共享。
 
-Scripts must live in `~/.hermes/scripts/`. This is enforced at both job-creation time and run time — absolute paths, `~/` expansion, and path-traversal patterns (`../`) are rejected. The same directory is shared with the pre-check script gate used by LLM jobs.
+解释器的选择依据文件扩展名：
 
-Interpreter choice is by file extension:
+| 扩展名        | 解释器                     |
+|--------------|----------------------------|
+| `.sh`, `.bash` | `/bin/bash`                |
+| 其他任何扩展名  | `sys.executable`（当前 Python） |
 
-| Extension | Interpreter |
-|-----------|-------------|
-| `.sh`, `.bash` | `/bin/bash` |
-| anything else | `sys.executable` (current Python) |
+我们故意不尊重 `#!/...` shebangs——保持解释器设置明确且范围较小，可减少调度器信任的攻击面。
 
-We intentionally do NOT honour `#!/...` shebangs — keeping the interpreter set explicit and small reduces the surface the scheduler trusts.
+## 调度语法
 
-## Schedule Syntax
-
-Same as all other cron jobs:
+与所有其他定时任务相同：
 
 ```bash
-hermes cron create "every 5m"        # interval
+hermes cron create "every 5m"        # 间隔
 hermes cron create "every 2h"
-hermes cron create "0 9 * * *"       # standard cron: 9am daily
-hermes cron create "30m"             # one-shot: run once in 30 minutes
+hermes cron create "0 9 * * *"       # 标准 cron：每天上午 9 点
+hermes cron create "30m"             # 一次性：30 分钟后运行一次
 ```
 
-See the [cron feature reference](/user-guide/features/cron) for the full syntax.
+完整语法请参阅[定时任务功能参考](/user-guide/features/cron)。
 
-## Delivery Targets
+## 投递目标
 
-`--deliver` accepts everything the gateway knows about. Some common shapes:
+`--deliver` 接受网关（gateway）已知的所有目标。一些常见形式：
 
 ```bash
---deliver telegram                       # platform home channel
---deliver telegram:-1001234567890        # specific chat
---deliver telegram:-1001234567890:17585  # specific Telegram forum topic
+--deliver telegram                       # 平台主频道
+--deliver telegram:-1001234567890        # 特定聊天
+--deliver telegram:-1001234567890:17585  # 特定 Telegram 论坛话题
 --deliver discord:#ops
 --deliver slack:#engineering
 --deliver signal:+15551234567
---deliver local                          # just save to ~/.hermes/cron/output/
+--deliver local                          # 仅保存到 ~/.hermes/cron/output/
 ```
 
-No running gateway is required at script-run time for bot-token platforms (Telegram, Discord, Slack, Signal, SMS, WhatsApp) — the tool calls each platform's REST endpoint directly using the credentials already in `~/.hermes/.env` / `~/.hermes/config.yaml`.
+对于机器人令牌平台（Telegram, Discord, Slack, Signal, SMS, WhatsApp），脚本运行时无需运行网关（gateway）——工具会使用 `~/.hermes/.env` / `~/.hermes/config.yaml` 中已有的凭据直接调用每个平台的 REST 端点。
 
-## Editing and Lifecycle
+## 编辑与生命周期
 
 ```bash
-hermes cron list                                    # see all jobs
-hermes cron pause <job_id>                          # stop firing, keep definition
+hermes cron list                                    # 查看所有任务
+hermes cron pause <job_id>                          # 停止触发，保留定义
 hermes cron resume <job_id>
-hermes cron edit <job_id> --schedule "every 10m"    # adjust cadence
-hermes cron edit <job_id> --agent                   # flip to LLM mode
-hermes cron edit <job_id> --no-agent --script …     # flip back
-hermes cron remove <job_id>                         # delete it
+hermes cron edit <job_id> --schedule "every 10m"    # 调整节奏
+hermes cron edit <job_id> --agent                   # 切换到 LLM 模式
+hermes cron edit <job_id> --no-agent --script …     # 切换回来
+hermes cron remove <job_id>                         # 删除它
 ```
 
-Everything that works on LLM jobs (pause, resume, manual trigger, delivery target changes) works on no-agent jobs too.
+所有适用于 LLM 任务的操作（暂停、恢复、手动触发、更改投递目标）也适用于无代理任务。
 
-## Worked Example: Disk Space Alert
+## 完整示例：磁盘空间告警
 
 ```bash
 cat > ~/.hermes/scripts/disk-alert.sh <<'EOF'
 #!/usr/bin/env bash
-# Alert when / or /home is over 90% full.
+# 当 / 或 /home 超过 90% 时告警。
 THRESHOLD=90
 df -h / /home 2>/dev/null | awk -v t="$THRESHOLD" '
   NR > 1 && $5+0 >= t {
-    printf "⚠ Disk %s full on %s\n", $5, $6
+    printf "⚠ 磁盘 %s 在 %s 上已满\n", $5, $6
   }
 '
 EOF
@@ -236,21 +222,21 @@ hermes cron create "*/15 * * * *" \
   --name "disk-alert"
 ```
 
-Silent when both filesystems are under 90%; fires exactly one line per over-threshold filesystem when one fills up.
+当两个文件系统都低于 90% 时静默；当其中一个文件系统满时，为每个超过阈值的文件系统触发一行告警。
 
-## Comparison with Other Patterns
+## 与其他模式的比较
 
-| Approach | What runs | When to use |
-|----------|-----------|-------------|
-| `cronjob --no-agent` (this page) | Your script on Hermes' schedule | Recurring watchdogs / alerts / metrics that don't need reasoning |
-| `cronjob` (default, LLM) | Agent with optional pre-check script | When the message content requires reasoning over data |
-| OS cron + `curl` to a [webhook subscription](/user-guide/messaging/webhooks) | Your script on the OS schedule | When Hermes might be unhealthy (the thing you're monitoring) |
+| 方法                              | 运行内容                     | 何时使用                                           |
+|----------------------------------|-----------------------------|----------------------------------------------------|
+| `cronjob --no-agent`（本页）       | 你的脚本按 Hermes 调度       | 不需要推理的周期性看门狗/告警/指标                  |
+| `cronjob`（默认，LLM）            | 代理（Agent）带可选的预检查脚本 | 消息内容需要对数据进行推理时                        |
+| 操作系统 cron + `curl` 到[网络钩子订阅](/user-guide/messaging/webhooks) | 你的脚本按操作系统调度       | 当 Hermes 可能不健康时（你正在监控的东西）          |
 
-For critical system-health watchdogs that must fire *even when the gateway is down*, use OS-level cron with a plain `curl` to a Hermes webhook subscription (or any external alerting endpoint) — those run as independent OS processes and don't depend on Hermes being up. The in-gateway scheduler is the right choice when the thing being monitored is external.
+对于关键系统健康看门狗，必须在**网关（gateway）宕机时**也能触发，请使用操作系统级 cron 配合简单的 `curl` 调用 Hermes 网络钩子订阅（或任何外部告警端点）——这些作为独立的操作系统进程运行，不依赖 Hermes 是否运行。当被监控的东西是外部时，网关内调度器是正确的选择。
 
-## Related
+## 相关
 
-- [Automate Anything with Cron](/guides/automate-with-cron) — LLM-driven cron patterns.
-- [Scheduled Tasks (Cron) reference](/user-guide/features/cron) — full schedule syntax, lifecycle, delivery routing.
-- [Webhook Subscriptions](/user-guide/messaging/webhooks) — fire-and-forget HTTP entry points for external schedulers.
-- [Gateway Internals](/developer-guide/gateway-internals) — delivery-router internals.
+- [使用 Cron 自动化一切](/guides/automate-with-cron) —— LLM 驱动的定时任务模式。
+- [计划任务（Cron）参考](/user-guide/features/cron) —— 完整的调度语法、生命周期、投递路由。
+- [网络钩子订阅](/user-guide/messaging/webhooks) —— 供外部调度器使用的即发即忘型 HTTP 入口点。
+- [网关内部原理](/developer-guide/gateway-internals) —— 投递路由器内部机制。

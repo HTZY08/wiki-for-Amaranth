@@ -1,167 +1,160 @@
----
-title: 学习路径
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`getting-started/learning-path.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/getting-started/learning-path.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 3
-title: 'Learning Path'
-description: 'Choose your learning path through the Hermes Agent documentation based on your experience level and goals.'
+title: '学习路径'
+description: '根据您的经验水平和目标，选择通过 Hermes Agent 文档的学习路径。'
 ---
 
-# Learning Path
+--- body ---
 
-Hermes Agent can do a lot — CLI assistant, Telegram/Discord bot, task automation, RL training, and more. This page helps you figure out where to start and what to read based on your experience level and what you're trying to accomplish.
+# 学习路径
 
-:::tip Start Here
-If you haven't installed Hermes Agent yet, begin with the [Installation guide](/getting-started/installation) and then run through the [Quickstart](/getting-started/quickstart). Everything below assumes you have a working installation.
+Hermes Agent 功能强大——可用作 CLI 助手、Telegram/Discord 机器人、任务自动化、强化学习（RL）训练等等。本页帮助您根据经验水平和目标确定从何处开始以及阅读哪些内容。
+
+:::tip 从这里开始
+如果您尚未安装 Hermes Agent，请先阅读[安装指南](/getting-started/installation)，然后运行[快速入门](/getting-started/quickstart)。以下内容假设您已成功安装。
 :::
 
-:::tip First-time provider setup
-First-time users almost always want `hermes setup --portal` — one OAuth covers a model plus the four Tool Gateway tools (search/image/TTS/browser). See [Nous Portal](/integrations/nous-portal).
+:::tip 首次设置提供商
+首次用户几乎总是需要运行 `hermes setup --portal` ——一个 OAuth 涵盖了模型加上四个工具网关工具（搜索/图片/TTS/浏览器）。详见 [Nous Portal](/integrations/nous-portal)。
 :::
 
-## How to Use This Page
+## 如何使用本页
 
-- **Know your level?** Jump to the [experience-level table](#by-experience-level) and follow the reading order for your tier.
-- **Have a specific goal?** Skip to [By Use Case](#by-use-case) and find the scenario that matches.
-- **Just browsing?** Check the [Key Features](#key-features-at-a-glance) table for a quick overview of everything Hermes Agent can do.
+- **了解自己的水平？** 跳转到[按经验水平](#by-experience-level)表格，按照您所在级别的阅读顺序进行。
+- **有特定目标？** 直接跳到[按用例](#by-use-case)找到匹配的场景。
+- **随便看看？** 查看[关键功能概览](#key-features-at-a-glance)表格，快速了解 Hermes Agent 的所有功能。
 
-## By Experience Level
+## 按经验水平
 
-| Level | Goal | Recommended Reading | Time Estimate |
+| 经验水平 | 目标 | 推荐阅读 | 预计时间 |
 |---|---|---|---|
-| **Beginner** | Get up and running, have basic conversations, use built-in tools | [Installation](/getting-started/installation) → [Quickstart](/getting-started/quickstart) → [CLI Usage](/user-guide/cli) → [Configuration](/user-guide/configuration) | ~1 hour |
-| **Intermediate** | Set up messaging bots, use advanced features like memory, cron jobs, and skills | [Sessions](/user-guide/sessions) → [Messaging](/user-guide/messaging) → [Tools](/user-guide/features/tools) → [Skills](/user-guide/features/skills) → [Memory](/user-guide/features/memory) → [Cron](/user-guide/features/cron) | ~2–3 hours |
-| **Advanced** | Build custom tools, create skills, train models with RL, contribute to the project | [Architecture](/developer-guide/architecture) → [Adding Tools](/developer-guide/adding-tools) → [Creating Skills](/developer-guide/creating-skills) → [Contributing](/developer-guide/contributing) | ~4–6 hours |
+| **新手** | 启动并运行，进行基本对话，使用内置工具 | [安装](/getting-started/installation) → [快速入门](/getting-started/quickstart) → [CLI 使用](/user-guide/cli) → [配置](/user-guide/configuration) | 约1小时 |
+| **中级** | 设置消息机器人，使用高级功能如记忆（Memory）、定时任务（Cron）和技能（Skill） | [会话](/user-guide/sessions) → [消息](/user-guide/messaging) → [工具](/user-guide/features/tools) → [技能](/user-guide/features/skills) → [记忆](/user-guide/features/memory) → [Cron](/user-guide/features/cron) | 约2–3小时 |
+| **高级** | 构建自定义工具、创建技能、使用强化学习（RL）训练模型、为项目做贡献 | [架构](/developer-guide/architecture) → [添加工具](/developer-guide/adding-tools) → [创建技能](/developer-guide/creating-skills) → [贡献](/developer-guide/contributing) | 约4–6小时 |
 
-## By Use Case
+## 按用例
 
-Pick the scenario that matches what you want to do. Each one links you to the relevant docs in the order you should read them.
+选择与您想要做的事情相匹配的场景。每个场景都按您应阅读的顺序链接到相关文档。
 
-### "I want a CLI coding assistant"
+### "我希望有一个 CLI 编码助手"
 
-Use Hermes Agent as an interactive terminal assistant for writing, reviewing, and running code.
+使用 Hermes Agent 作为交互式终端助手，用于编写、审查和运行代码。
 
-1. [Installation](/getting-started/installation)
-2. [Quickstart](/getting-started/quickstart)
-3. [CLI Usage](/user-guide/cli)
-4. [Code Execution](/user-guide/features/code-execution)
-5. [Context Files](/user-guide/features/context-files)
-6. [Tips & Tricks](/guides/tips)
-
-:::tip
-Pass files directly into your conversation with context files. Hermes Agent can read, edit, and run code in your projects.
-:::
-
-### "I want a Telegram/Discord bot"
-
-Deploy Hermes Agent as a bot on your favorite messaging platform.
-
-1. [Installation](/getting-started/installation)
-2. [Configuration](/user-guide/configuration)
-3. [Messaging Overview](/user-guide/messaging)
-4. [Telegram Setup](/user-guide/messaging/telegram)
-5. [Discord Setup](/user-guide/messaging/discord)
-6. [Voice Mode](/user-guide/features/voice-mode)
-7. [Use Voice Mode with Hermes](/guides/use-voice-mode-with-hermes)
-8. [Security](/user-guide/security)
-
-For full project examples, see:
-- [Daily Briefing Bot](/guides/daily-briefing-bot)
-- [Team Telegram Assistant](/guides/team-telegram-assistant)
-
-### "I want to automate tasks"
-
-Schedule recurring tasks, run batch jobs, or chain agent actions together.
-
-1. [Quickstart](/getting-started/quickstart)
-2. [Cron Scheduling](/user-guide/features/cron)
-3. [Batch Processing](/user-guide/features/batch-processing)
-4. [Delegation](/user-guide/features/delegation)
-5. [Hooks](/user-guide/features/hooks)
+1. [安装](/getting-started/installation)
+2. [快速入门](/getting-started/quickstart)
+3. [CLI 使用](/user-guide/cli)
+4. [代码执行](/user-guide/features/code-execution)
+5. [上下文文件](/user-guide/features/context-files)
+6. [技巧与窍门](/guides/tips)
 
 :::tip
-Cron jobs let Hermes Agent run tasks on a schedule — daily summaries, periodic checks, automated reports — without you being present.
+使用上下文文件（Context Files）直接将文件传入对话。Hermes Agent 可以读取、编辑和运行您项目中的代码。
 :::
 
-### "I want to build custom tools/skills"
+### "我希望有一个 Telegram/Discord 机器人"
 
-Extend Hermes Agent with your own tools and reusable skill packages.
+将 Hermes Agent 部署为您喜欢的消息平台上的机器人。
 
-1. [Plugins](/user-guide/features/plugins)
-2. [Build a Hermes Plugin](/guides/build-a-hermes-plugin)
-3. [Tools Overview](/user-guide/features/tools)
-4. [Skills Overview](/user-guide/features/skills)
-5. [MCP (Model Context Protocol)](/user-guide/features/mcp)
-6. [Architecture](/developer-guide/architecture)
-7. [Adding Tools](/developer-guide/adding-tools)
-8. [Creating Skills](/developer-guide/creating-skills)
+1. [安装](/getting-started/installation)
+2. [配置](/user-guide/configuration)
+3. [消息概述](/user-guide/messaging)
+4. [Telegram 设置](/user-guide/messaging/telegram)
+5. [Discord 设置](/user-guide/messaging/discord)
+6. [语音模式](/user-guide/features/voice-mode)
+7. [将语音模式与 Hermes 结合使用](/guides/use-voice-mode-with-hermes)
+8. [安全](/user-guide/security)
+
+完整项目示例请参阅：
+- [每日简报机器人](/guides/daily-briefing-bot)
+- [团队 Telegram 助手](/guides/team-telegram-assistant)
+
+### "我希望自动化任务"
+
+安排定期重复的任务、运行批量作业或串连代理（Agent）操作。
+
+1. [快速入门](/getting-started/quickstart)
+2. [Cron 定时任务](/user-guide/features/cron)
+3. [批量处理](/user-guide/features/batch-processing)
+4. [委托](/user-guide/features/delegation)
+5. [钩子](/user-guide/features/hooks)
 
 :::tip
-For most custom tool creation, start with plugins. The [Adding Tools](/developer-guide/adding-tools)
-page is for built-in Hermes core development, not the usual user/custom-tool path.
+Cron 任务让 Hermes Agent 按计划运行任务——每日摘要、定期检查、自动报告——无需您在场。
 :::
 
-### "I want to train models"
+### "我希望构建自定义工具/技能"
 
-Use reinforcement learning to fine-tune model behavior with Hermes Agent's RL training pipeline (powered by [Atropos](https://github.com/NousResearch/atropos)).
+使用您自己的工具和可复用的技能包扩展 Hermes Agent。
 
-1. [Quickstart](/getting-started/quickstart)
-2. [Configuration](/user-guide/configuration)
-3. [Atropos RL Environments](https://github.com/NousResearch/atropos) (external)
-4. [Provider Routing](/user-guide/features/provider-routing)
-5. [Architecture](/developer-guide/architecture)
+1. [插件](/user-guide/features/plugins)
+2. [构建 Hermes 插件](/guides/build-a-hermes-plugin)
+3. [工具概述](/user-guide/features/tools)
+4. [技能概述](/user-guide/features/skills)
+5. [MCP（Model Context Protocol）](/user-guide/features/mcp)
+6. [架构](/developer-guide/architecture)
+7. [添加工具](/developer-guide/adding-tools)
+8. [创建技能](/developer-guide/creating-skills)
 
 :::tip
-RL training works best when you already understand the basics of how Hermes Agent handles conversations and tool calls. Run through the Beginner path first if you're new.
+对于大多数自定义工具创建，从插件开始。[添加工具](/developer-guide/adding-tools)页面适用于内置 Hermes 核心开发，而非通常的用户/自定义工具路径。
 :::
 
-### "I want to use it as a Python library"
+### "我希望训练模型"
 
-Integrate Hermes Agent into your own Python applications programmatically.
+使用强化学习（RL）通过 Hermes Agent 的 RL 训练管线（由 [Atropos](https://github.com/NousResearch/atropos) 驱动）来微调模型行为。
 
-1. [Installation](/getting-started/installation)
-2. [Quickstart](/getting-started/quickstart)
-3. [Python Library Guide](/guides/python-library)
-4. [Architecture](/developer-guide/architecture)
-5. [Tools](/user-guide/features/tools)
-6. [Sessions](/user-guide/sessions)
+1. [快速入门](/getting-started/quickstart)
+2. [配置](/user-guide/configuration)
+3. [Atropos RL 环境](https://github.com/NousResearch/atropos) (外部)
+4. [提供商路由](/user-guide/features/provider-routing)
+5. [架构](/developer-guide/architecture)
 
-## Key Features at a Glance
+:::tip
+当您已经了解 Hermes Agent 处理对话和工具调用的基础知识时，RL 训练效果最佳。如果您是新手，请先完成新手路径。
+:::
 
-Not sure what's available? Here's a quick directory of major features:
+### "我希望将其作为 Python 库使用"
 
-| Feature | What It Does | Link |
+以编程方式将 Hermes Agent 集成到您自己的 Python 应用程序中。
+
+1. [安装](/getting-started/installation)
+2. [快速入门](/getting-started/quickstart)
+3. [Python 库指南](/guides/python-library)
+4. [架构](/developer-guide/architecture)
+5. [工具](/user-guide/features/tools)
+6. [会话](/user-guide/sessions)
+
+## 关键功能概览
+
+不确定有哪些可用功能？以下是主要功能的快速目录：
+
+| 功能 | 作用 | 链接 |
 |---|---|---|
-| **Tools** | Built-in tools the agent can call (file I/O, search, shell, etc.) | [Tools](/user-guide/features/tools) |
-| **Skills** | Installable plugin packages that add new capabilities | [Skills](/user-guide/features/skills) |
-| **Memory** | Persistent memory across sessions | [Memory](/user-guide/features/memory) |
-| **Context Files** | Feed files and directories into conversations | [Context Files](/user-guide/features/context-files) |
-| **MCP** | Connect to external tool servers via Model Context Protocol | [MCP](/user-guide/features/mcp) |
-| **Cron** | Schedule recurring agent tasks | [Cron](/user-guide/features/cron) |
-| **Delegation** | Spawn sub-agents for parallel work | [Delegation](/user-guide/features/delegation) |
-| **Code Execution** | Run Python scripts that call Hermes tools programmatically | [Code Execution](/user-guide/features/code-execution) |
-| **Browser** | Web browsing and scraping | [Browser](/user-guide/features/browser) |
-| **Hooks** | Event-driven callbacks and middleware | [Hooks](/user-guide/features/hooks) |
-| **Batch Processing** | Process multiple inputs in bulk | [Batch Processing](/user-guide/features/batch-processing) |
-| **Provider Routing** | Route requests across multiple LLM providers | [Provider Routing](/user-guide/features/provider-routing) |
+| **工具（Tool）** | 代理（Agent）可调用的内置工具（文件 I/O、搜索、Shell 等） | [工具](/user-guide/features/tools) |
+| **技能（Skill）** | 可安装的插件包，添加新功能 | [技能](/user-guide/features/skills) |
+| **记忆（Memory）** | 跨会话的持久记忆 | [记忆](/user-guide/features/memory) |
+| **上下文文件（Context File）** | 将文件和目录输入对话 | [上下文文件](/user-guide/features/context-files) |
+| **MCP（Model Context Protocol）** | 通过 Model Context Protocol 连接到外部工具服务器 | [MCP](/user-guide/features/mcp) |
+| **Cron（定时任务）** | 安排定期代理任务 | [Cron](/user-guide/features/cron) |
+| **委托（Delegation）** | 生成子代理进行并行工作 | [委托](/user-guide/features/delegation) |
+| **代码执行（Code Execution）** | 运行通过编程调用 Hermes 工具的 Python 脚本 | [代码执行](/user-guide/features/code-execution) |
+| **浏览器（Browser）** | 网页浏览和抓取 | [浏览器](/user-guide/features/browser) |
+| **钩子（Hook）** | 事件驱动的回调和中间件 | [钩子](/user-guide/features/hooks) |
+| **批量处理（Batch Processing）** | 批量处理多个输入 | [批量处理](/user-guide/features/batch-processing) |
+| **提供商路由（Provider Routing）** | 跨多个 LLM 提供商路由请求 | [提供商路由](/user-guide/features/provider-routing) |
 
-## What to Read Next
+## 接下来阅读什么
 
-Based on where you are right now:
+根据您当前的位置：
 
-- **Just finished installing?** → Head to the [Quickstart](/getting-started/quickstart) to run your first conversation.
-- **Completed the Quickstart?** → Read [CLI Usage](/user-guide/cli) and [Configuration](/user-guide/configuration) to customize your setup.
-- **Comfortable with the basics?** → Explore [Tools](/user-guide/features/tools), [Skills](/user-guide/features/skills), and [Memory](/user-guide/features/memory) to unlock the full power of the agent.
-- **Setting up for a team?** → Read [Security](/user-guide/security) and [Sessions](/user-guide/sessions) to understand access control and conversation management.
-- **Ready to build?** → Jump into the [Developer Guide](/developer-guide/architecture) to understand the internals and start contributing.
-- **Want practical examples?** → Check out the [Guides](/guides/tips) section for real-world projects and tips.
+- **刚刚完成安装？** → 前往[快速入门](/getting-started/quickstart)运行您的第一次对话。
+- **完成了快速入门？** → 阅读 [CLI 使用](/user-guide/cli)和[配置](/user-guide/configuration)以自定义您的设置。
+- **熟悉基础知识？** → 探索[工具](/user-guide/features/tools)、[技能](/user-guide/features/skills)和[记忆](/user-guide/features/memory)以解锁代理的全部功能。
+- **为团队设置？** → 阅读[安全](/user-guide/security)和[会话](/user-guide/sessions)以了解访问控制和对话管理。
+- **准备好构建？** → 跳转到[开发者指南](/developer-guide/architecture)了解内部结构并开始贡献。
+- **想要实际示例？** → 查看[指南](/guides/tips)部分，了解实际项目和技巧。
 
 :::tip
-You don't need to read everything. Pick the path that matches your goal, follow the links in order, and you'll be productive quickly. You can always come back to this page to find your next step.
+您无需阅读所有内容。选择与您目标匹配的路径，按顺序跟随链接，您将迅速提高效率。您可以随时回到此页面找到您的下一步。
 :::

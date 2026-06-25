@@ -1,53 +1,29 @@
 ---
-title: LSP 语言服务器
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/lsp.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/lsp.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 16
-title: "LSP — Semantic Diagnostics"
-description: "Real language servers (pyright, gopls, rust-analyzer, …) wired into the post-write lint check used by write_file and patch."
+title: "LSP — 语义诊断 (Semantic Diagnostics)"
+description: "真正的语言服务器（pyright、gopls、rust-analyzer 等）接入 `write_file` 和 `patch` 使用的写入后 lint 检查。"
 ---
 
-# Language Server Protocol (LSP)
+--- body ---
+# 语言服务器协议 (Language Server Protocol, LSP)
 
-Hermes runs full language servers — pyright, gopls, rust-analyzer,
-typescript-language-server, clangd, and ~20 more — as background
-subprocesses and feeds their semantic diagnostics into the post-write
-lint check used by `write_file` and `patch`. When the agent edits a
-file, it sees exactly the errors that edit introduced — not just
-syntax errors, but **type errors, undefined names, missing imports,
-and project-wide semantic issues** the language server detects.
+Hermes 以后台子进程运行完整的语言服务器 —— pyright、gopls、rust-analyzer、typescript-language-server、clangd 以及约 20 个其他语言服务器 —— 并将其语义诊断结果提供给 `write_file` 和 `patch` 使用的写入后 lint 检查。当智能体（Agent）编辑文件时，它能看到该编辑引入的确切错误 —— 不仅是语法错误，还包括语言服务器检测到的**类型错误、未定义的名称、缺失的导入以及项目级语义问题**。
 
-This is the same architecture top-tier coding agents use. Hermes
-ships it self-contained: no editor host required, no plugins to
-install, no separate daemon to manage.
+这与顶级编码智能体使用的架构相同。Hermes 自带完整功能：无需编辑器宿主、无需安装插件、无需管理单独的守护进程。
 
-## When LSP runs
+## LSP 运行时机
 
-LSP is gated on **git workspace detection**. When the agent's working
-directory (or the file being edited) is inside a git repository, LSP
-runs against that workspace. When neither is in a git repo, LSP
-stays dormant — useful for messaging gateways where the cwd is the
-user's home directory and there's no project to diagnose.
+LSP 的运行以 **git 工作区检测**为条件。当智能体的工作目录（或正在编辑的文件）位于 git 仓库内时，LSP 会针对该工作区运行。当两者都不在 git 仓库时，LSP 保持静默 —— 这对消息网关场景很有用，例如当前工作目录是用户的主目录且没有项目需要诊断。
 
-The check is layered: in-process syntax check first (microseconds),
-then LSP diagnostics second when syntax is clean. A flaky or missing
-language server can never break a write — every LSP failure path
-falls back silently to the syntax-only result.
+检查是分层进行的：首先进行进程内语法检查（微秒级），语法通过后再进行 LSP 诊断。不稳定的或缺失的语言服务器永远不会中断写入 —— 每个 LSP 失败路径都会静默回退到仅语法检查的结果。
 
-Concretely, on every successful `write_file` or `patch`:
+具体来说，每次成功执行 `write_file` 或 `patch` 时：
 
-1. Hermes captures a baseline of current diagnostics for the file.
-2. Performs the write.
-3. Re-queries the language server, filters out diagnostics that were
-   already in the baseline, and surfaces only the new ones.
+1. Hermes 捕获当前文件诊断结果的基线。
+2. 执行写入操作。
+3. 重新查询语言服务器，过滤掉基线上已有的诊断结果，只呈现新的诊断结果。
 
-The agent sees output like:
+智能体会看到类似如下的输出：
 
 ```
 {
@@ -58,16 +34,11 @@ The agent sees output like:
 }
 ```
 
-The `lint` field carries the syntax-check result (microsecond
-in-process parse via `ast.parse`, `json.loads`, etc.); the
-`lsp_diagnostics` field carries the semantic diagnostics from the
-real language server. Two channels, independent signals — the
-agent sees a syntax-clean file with semantic problems as
-``lint: ok`` plus a populated ``lsp_diagnostics``.
+`lint` 字段携带语法检查结果（通过 `ast.parse`、`json.loads` 等进行的微秒级进程内解析）；`lsp_diagnostics` 字段携带来自真实语言服务器的语义诊断结果。两个通道，独立的信号 —— 智能体会看到一个语法正确的文件但存在语义问题，表现为 ``lint: ok`` 加上一个包含内容的 ``lsp_diagnostics``。
 
-## Supported languages
+## 支持的语言
 
-| Language | Server | Auto-install |
+| 语言 | 服务器 | 自动安装 |
 |----------|--------|--------------|
 | Python | `pyright-langserver` | npm |
 | TypeScript / JavaScript / JSX / TSX | `typescript-language-server` | npm |
@@ -75,76 +46,64 @@ agent sees a syntax-clean file with semantic problems as
 | Svelte | `svelte-language-server` | npm |
 | Astro | `@astrojs/language-server` | npm |
 | Go | `gopls` | `go install` |
-| Rust | `rust-analyzer` | manual (rustup) |
-| C / C++ | `clangd` | manual (LLVM) |
+| Rust | `rust-analyzer` | 手动 (rustup) |
+| C / C++ | `clangd` | 手动 (LLVM) |
 | Bash / Zsh | `bash-language-server` | npm |
 | YAML | `yaml-language-server` | npm |
-| Lua | `lua-language-server` | manual (GitHub releases) |
+| Lua | `lua-language-server` | 手动 (GitHub releases) |
 | PHP | `intelephense` | npm |
-| OCaml | `ocaml-lsp` | manual (opam) |
+| OCaml | `ocaml-lsp` | 手动 (opam) |
 | Dockerfile | `dockerfile-language-server-nodejs` | npm |
-| Terraform | `terraform-ls` | manual |
-| Dart | `dart language-server` | manual (dart sdk) |
-| Haskell | `haskell-language-server` | manual (ghcup) |
-| Julia | `julia` + LanguageServer.jl | manual |
-| Clojure | `clojure-lsp` | manual |
-| Nix | `nixd` | manual |
-| Zig | `zls` | manual |
-| Gleam | `gleam lsp` | manual (gleam install) |
-| Elixir | `elixir-ls` | manual |
-| Prisma | `prisma language-server` | manual |
-| Kotlin | `kotlin-language-server` | manual |
-| Java | `jdtls` | manual |
+| Terraform | `terraform-ls` | 手动 |
+| Dart | `dart language-server` | 手动 (dart sdk) |
+| Haskell | `haskell-language-server` | 手动 (ghcup) |
+| Julia | `julia` + LanguageServer.jl | 手动 |
+| Clojure | `clojure-lsp` | 手动 |
+| Nix | `nixd` | 手动 |
+| Zig | `zls` | 手动 |
+| Gleam | `gleam lsp` | 手动 (gleam install) |
+| Elixir | `elixir-ls` | 手动 |
+| Prisma | `prisma language-server` | 手动 |
+| Kotlin | `kotlin-language-server` | 手动 |
+| Java | `jdtls` | 手动 |
 
-For "manual" entries, install the server through whatever toolchain
-manager makes sense for that language (rustup, ghcup, opam, brew,
-…). Hermes auto-detects the binary on PATH or in
-`<HERMES_HOME>/lsp/bin/`.
+对于标记为“手动”的条目，请通过该语言合适的工具链管理器（rustup、ghcup、opam、brew 等）安装服务器。Hermes 会自动检测 PATH 或 `<HERMES_HOME>/lsp/bin/` 中的二进制文件。
 
-A few servers are installed alongside a peer dependency that npm
-won't auto-pull. The current case is `typescript-language-server`,
-which requires the `typescript` SDK importable from the same
-`node_modules` tree — Hermes installs both packages together when you
-run `hermes lsp install typescript` or auto-install fires on first
-use.
+少数服务器与 npm 无法自动拉取的同级依赖项一起安装。当前的情况是 `typescript-language-server`，它要求 `typescript` SDK 可以从同一个 `node_modules` 树中导入 —— 当您运行 `hermes lsp install typescript` 或首次使用时自动安装触发，Hermes 会同时安装这两个包。
 
-## CLI
+## 命令行
 
 ```
-hermes lsp status          # service state + per-server install status
-hermes lsp list            # registry, optionally --installed-only
-hermes lsp install <id>    # eagerly install one server
-hermes lsp install-all     # try every server with a known recipe
-hermes lsp restart         # tear down running clients
-hermes lsp which <id>      # print resolved binary path
+hermes lsp status          # 服务状态 + 每个服务器的安装状态
+hermes lsp list            # 注册表，可选 --installed-only
+hermes lsp install <id>    # 主动安装一个服务器
+hermes lsp install-all     # 尝试安装所有有已知安装方法的服务器
+hermes lsp restart         # 关闭正在运行的客户端
+hermes lsp which <id>      # 打印已解析的二进制文件路径
 ```
 
-`hermes lsp status` is the best starting point — it shows which
-languages will get semantic diagnostics today and which need a
-binary installed.
+`hermes lsp status` 是最好的起点 —— 它会显示哪些语言今天可以获得语义诊断，哪些需要安装二进制文件。
 
-## Configuration
+## 配置
 
-The defaults work for typical setups; nothing to set if the binaries
-are on PATH.
+默认配置适用于典型设置；如果二进制文件在 PATH 中，则无需设置任何内容。
 
 ```yaml
 # config.yaml
 lsp:
-  # Master toggle. Disabling skips the entire subsystem — no servers
-  # spawn, no background event loop runs.
+  # 总开关。禁用后将跳过整个子系统 —— 不会启动任何服务器，不会运行后台事件循环。
   enabled: true
 
-  # How long to wait for diagnostics after each write.
-  wait_mode: document      # "document" or "full"
+  # 每次写入后等待诊断结果的时间。
+  wait_mode: document      # "document" 或 "full"
   wait_timeout: 5.0
 
-  # How to handle missing server binaries.
-  #   auto    — install via npm/pip/go install into <HERMES_HOME>/lsp/bin
-  #   manual  — only use binaries already on PATH
+  # 如何处理缺失的服务器二进制文件。
+  #   auto    — 通过 npm/pip/go install 安装到 <HERMES_HOME>/lsp/bin
+  #   manual  — 只使用已经在 PATH 上的二进制文件
   install_strategy: auto
 
-  # Per-server overrides (all optional).
+  # 每个服务器的覆盖设置（全部可选）。
   servers:
     pyright:
       disabled: false
@@ -155,58 +114,35 @@ lsp:
           analysis:
             typeCheckingMode: "strict"
     typescript:
-      disabled: true       # skip TS even when its extensions match
+      disabled: true       # 即使扩展名匹配也跳过 TypeScript
 ```
 
-### Per-server keys
+### 每个服务器的键
 
-* `disabled: true` — skip this server entirely even when its
-  extensions match a file.
-* `command: [bin, ...args]` — pin a custom binary path. Bypasses
-  auto-install.
-* `env: {KEY: value}` — extra env vars passed to the spawned process.
-* `initialization_options: {...}` — merged into the LSP
-  `initializationOptions` payload sent in the `initialize`
-  handshake. Server-specific; consult the language server's docs.
+* `disabled: true` —— 即使扩展名匹配文件，也完全跳过此服务器。
+* `command: [bin, ...args]` —— 指定自定义二进制文件路径。绕过自动安装。
+* `env: {KEY: value}` —— 传递给生成进程的额外环境变量。
+* `initialization_options: {...}` —— 合并到 LSP `initialize` 握手时发送的 `initializationOptions` 负载中。服务器特定；请查阅语言服务器的文档。
 
-## Installation locations
+## 安装位置
 
-When `install_strategy: auto`, Hermes installs binaries into
-`<HERMES_HOME>/lsp/bin/`. NPM packages land in
-`<HERMES_HOME>/lsp/node_modules/` with bin symlinks one level up.
-Go binaries come from `go install` with `GOBIN` pointed at the
-staging dir.
+当 `install_strategy: auto` 时，Hermes 将二进制文件安装到 `<HERMES_HOME>/lsp/bin/`。npm 包位于 `<HERMES_HOME>/lsp/node_modules/`，bin 符号链接位于上一级目录。Go 二进制文件通过 `go install` 安装，`GOBIN` 指向暂存目录。
 
-Nothing is ever installed to `/usr/local/`, `~/.local/`, or any other
-shared location — the staging dir is fully Hermes-owned and is
-removed when you reset the profile.
+任何内容都不会安装到 `/usr/local/`、`~/.local/` 或其他共享位置 —— 暂存目录完全由 Hermes 拥有，当您重置配置文件时会被删除。
 
-## Performance characteristics
+## 性能特征
 
-LSP servers are **lazy-spawned** on first use. Editing a Python file
-in a project that's never seen `.py` traffic spawns pyright; the
-spawn takes 1-3 seconds for most servers (rust-analyzer can take 10+
-on a cold project). Subsequent edits in the same workspace re-use
-the running server.
+LSP 服务器在首次使用时被**延迟生成**。在之前没有 `.py` 流量的项目中编辑 Python 文件会生成 pyright；大多数服务器的生成需要 1-3 秒（rust-analyzer 在冷项目上可能需要 10 秒以上）。同一工作区中的后续编辑会重用正在运行的服务器。
 
-The LSP layer adds a few milliseconds to clean writes when no
-diagnostics are emitted. When diagnostics are emitted, the wait
-budget is `wait_timeout` seconds — typically the server responds in
-tens of milliseconds for pyright/tsserver and a few seconds for
-rust-analyzer mid-indexing.
+当没有发出诊断结果时，LSP 层为干净写入增加几毫秒时间。当发出诊断结果时，等待预算为 `wait_timeout` 秒 —— 通常 pyright/tsserver 在几十毫秒内响应，rust-analyzer 在索引处理中间需要几秒钟。
 
-Servers are kept alive for the life of the Hermes process. There's
-no idle-timeout reaper — the cost of restarting the server's index
-on every write would be far higher than holding the daemon.
+服务器在 Hermes 进程的生命周期内保持活动状态。没有空闲超时回收机制 —— 在每次写入时重启服务器索引的成本远高于保持守护进程。
 
-## Disabling
+## 禁用
 
-Set `lsp.enabled: false` in `config.yaml` to disable the entire
-subsystem. The post-write check falls back to the in-process syntax
-check (`ast.parse` for Python, `json.loads` for JSON, etc.) which
-ships unchanged from earlier versions.
+在 `config.yaml` 中设置 `lsp.enabled: false` 以禁用整个子系统。写入后检查会回退到进程内语法检查（Python 使用 `ast.parse`，JSON 使用 `json.loads` 等），这与早期版本保持不变。
 
-To disable a single language without disabling the whole layer:
+要禁用单个语言而不禁用整个层：
 
 ```yaml
 lsp:
@@ -215,22 +151,15 @@ lsp:
       disabled: true
 ```
 
-## Troubleshooting
+## 故障排除
 
-**`hermes lsp status` shows a server as "missing"**
+**`hermes lsp status` 显示服务器为 "missing"**
 
-The binary isn't on PATH and isn't in `<HERMES_HOME>/lsp/bin/`. Run
-`hermes lsp install <server_id>` to attempt an auto-install, or
-install the binary manually through the language's normal toolchain.
+二进制文件不在 PATH 上，也不在 `<HERMES_HOME>/lsp/bin/` 中。运行 `hermes lsp install <server_id>` 尝试自动安装，或通过该语言的正常工具链手动安装二进制文件。
 
-**`Backend warnings` section in `hermes lsp status`**
+**`hermes lsp status` 中的 `Backend warnings` 部分**
 
-Some servers ship as thin wrappers around an external CLI for actual
-diagnostics — they spawn cleanly and accept requests but never emit
-errors when the sidecar binary is missing. The most common case is
-`bash-language-server`, which delegates diagnostics to `shellcheck`.
-When `hermes lsp status` shows a `Backend warnings` section, install
-the named tool through your OS package manager:
+某些服务器作为一个薄包装器，实际诊断依赖于外部命令行工具 —— 它们正常启动并接受请求，但当 sidecar 二进制文件缺失时从不发出错误。最常见的情况是 `bash-language-server`，它将诊断委托给 `shellcheck`。当 `hermes lsp status` 显示 `Backend warnings` 部分时，通过您的操作系统包管理器安装列出的工具：
 
 ```
 apt install shellcheck      # Debian / Ubuntu
@@ -238,26 +167,16 @@ brew install shellcheck     # macOS
 scoop install shellcheck    # Windows
 ```
 
-The same warning is logged once at server spawn time in
-`~/.hermes/logs/agent.log`.
+在服务器生成时，相同的警告会记录一次到 `~/.hermes/logs/agent.log`。
 
-**Server starts but never returns diagnostics**
+**服务器启动但从不返回诊断结果**
 
-Check `~/.hermes/logs/agent.log` for `[agent.lsp.client]` entries —
-both stderr from the language server and protocol errors land
-there. Some servers (rust-analyzer especially) need to finish a
-project-wide index before they emit per-file diagnostics; the first
-edit after server start may complete with no diagnostics, with
-subsequent edits picking them up.
+检查 `~/.hermes/logs/agent.log` 中的 `[agent.lsp.client]` 条目 —— 语言服务器的标准错误输出和协议错误都会记录在那里。某些服务器（尤其是 rust-analyzer）需要在发出每个文件的诊断结果之前完成项目范围的索引；服务器启动后的第一次编辑可能没有诊断结果完成，后续编辑会接续上。
 
-**Server crashed**
+**服务器崩溃**
 
-A crashed server is added to the broken-set and won't be retried for
-the rest of the session. Run `hermes lsp restart` to clear the set;
-the next edit re-spawns.
+崩溃的服务器会被添加到故障集合中，在本次会话期间不会重试。运行 `hermes lsp restart` 以清除该集合；下一次编辑会重新生成服务器。
 
-**Editing a file outside any git repo**
+**在 git 仓库外编辑文件**
 
-By design, LSP only runs inside a git repository. If the project isn't
-yet initialized, run `git init` to enable LSP diagnostics. Otherwise the
-in-process syntax-only fallback applies.
+根据设计，LSP 仅在 git 仓库内运行。如果项目尚未初始化，运行 `git init` 以启用 LSP 诊断。否则，会应用进程内仅语法检查的回退方案。

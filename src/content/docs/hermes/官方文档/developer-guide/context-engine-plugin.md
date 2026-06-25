@@ -1,27 +1,20 @@
----
-title: 上下文引擎插件
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`developer-guide/context-engine-plugin.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/context-engine-plugin.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 9
-title: "Context Engine Plugins"
-description: "How to build a context engine plugin that replaces the built-in ContextCompressor"
+title: "上下文引擎插件"
+description: "如何构建一个替代内置 ContextCompressor 的上下文引擎插件"
 ---
 
-# Building a Context Engine Plugin
+--- body ---
+# 构建上下文引擎插件
 
-Context engine plugins replace the built-in `ContextCompressor` with an alternative strategy for managing conversation context. For example, a Lossless Context Management (LCM) engine that builds a knowledge DAG instead of lossy summarization.
+上下文引擎插件用另一种管理对话上下文的策略替换内置的 `ContextCompressor`。例如，一种无损上下文管理（Lossless Context Management, LCM）引擎，它构建知识有向无环图（DAG）而不是有损摘要。
 
-## How it works
+## 工作原理
 
-The agent's context management is built on the `ContextEngine` ABC (`agent/context_engine.py`). The built-in `ContextCompressor` is the default implementation. Plugin engines must implement the same interface.
+代理的上下文管理构建在 `ContextEngine` 抽象基类（ABC）上（`agent/context_engine.py`）。内置的 `ContextCompressor` 是默认实现。插件引擎必须实现相同的接口。
 
-Only **one** context engine can be active at a time. Selection is config-driven:
+一次只能激活**一个**上下文引擎。选择通过配置驱动：
 
 ```yaml
 # config.yaml
@@ -30,11 +23,11 @@ context:
   engine: "lcm"           # activates a plugin engine named "lcm"
 ```
 
-Plugin engines are **never auto-activated** — the user must explicitly set `context.engine` to the plugin's name.
+插件引擎**从不自动激活**——用户必须显式地将 `context.engine` 设置为插件的名称。
 
-## Directory structure
+## 目录结构
 
-Each context engine lives in `plugins/context_engine/<name>/`:
+每个上下文引擎位于 `plugins/context_engine/<name>/`：
 
 ```
 plugins/context_engine/lcm/
@@ -43,9 +36,9 @@ plugins/context_engine/lcm/
 └── ...              # any other modules your engine needs
 ```
 
-## The ContextEngine ABC
+## ContextEngine 抽象基类（ABC）
 
-Your engine must implement these **required** methods:
+你的引擎必须实现以下**必需**方法：
 
 ```python
 from agent.context_engine import ContextEngine
@@ -79,9 +72,9 @@ class LCMEngine(ContextEngine):
         """
 ```
 
-### Class attributes your engine must maintain
+### 你的引擎必须维护的类属性
 
-The agent reads these directly for display and logging:
+代理直接读取这些属性用于显示和日志记录：
 
 ```python
 last_prompt_tokens: int = 0
@@ -92,24 +85,24 @@ context_length: int = 0          # model's full context window
 compression_count: int = 0       # how many times compress() has run
 ```
 
-### Optional methods
+### 可选方法
 
-These have sensible defaults in the ABC. Override as needed:
+这些方法在抽象基类中有合理的默认值。根据需要覆盖：
 
-| Method | Default | Override when |
-|--------|---------|--------------|
-| `on_session_start(session_id, **kwargs)` | No-op | You need to load persisted state (DAG, DB) |
-| `on_session_end(session_id, messages)` | No-op | You need to flush state, close connections |
-| `on_session_reset()` | Resets token counters | You have per-session state to clear |
-| `update_model(model, context_length, ...)` | Updates context_length + threshold | You need to recalculate budgets on model switch |
-| `get_tool_schemas()` | Returns `[]` | Your engine provides agent-callable tools (e.g., `lcm_grep`) |
-| `handle_tool_call(name, args, **kwargs)` | Returns error JSON | You implement tool handlers |
-| `should_compress_preflight(messages)` | Returns `False` | You can do a cheap pre-API-call estimate |
-| `get_status()` | Standard token/threshold dict | You have custom metrics to expose |
+| 方法 | 默认值 | 何时覆盖 |
+|------|--------|----------|
+| `on_session_start(session_id, **kwargs)` | 无操作 | 你需要加载持久化状态（DAG, DB） |
+| `on_session_end(session_id, messages)` | 无操作 | 你需要刷新状态，关闭连接 |
+| `on_session_reset()` | 重置令牌计数器 | 你有需要清除的每会话状态 |
+| `update_model(model, context_length, ...)` | 更新 context_length + threshold | 你需要在模型切换时重新计算预算 |
+| `get_tool_schemas()` | 返回 `[]` | 你的引擎提供可被代理调用的工具（例如 `lcm_grep`） |
+| `handle_tool_call(name, args, **kwargs)` | 返回错误JSON | 你实现工具处理器 |
+| `should_compress_preflight(messages)` | 返回 `False` | 你可以进行低成本的预API调用估计 |
+| `get_status()` | 标准令牌/阈值字典 | 你有自定义指标要暴露 |
 
-## Engine tools
+## 引擎工具
 
-Context engines can expose tools the agent calls directly. Return schemas from `get_tool_schemas()` and handle calls in `handle_tool_call()`:
+上下文引擎可以暴露代理直接调用的工具。从 `get_tool_schemas()` 返回模式，并在 `handle_tool_call()` 中处理调用：
 
 ```python
 def get_tool_schemas(self):
@@ -132,17 +125,17 @@ def handle_tool_call(self, name, args, **kwargs):
     return json.dumps({"error": f"Unknown tool: {name}"})
 ```
 
-Engine tools are injected into the agent's tool list at startup and dispatched automatically — no registry registration needed.
+引擎工具在启动时被注入到代理的工具列表中，并自动分发——无需注册表注册。
 
-## Registration
+## 注册
 
-### Via directory (recommended)
+### 通过目录（推荐）
 
-Place your engine in `plugins/context_engine/<name>/`. The `__init__.py` must export a `ContextEngine` subclass. The discovery system finds and instantiates it automatically.
+将你的引擎放置在 `plugins/context_engine/<name>/` 下。`__init__.py` 必须导出一个 `ContextEngine` 子类。发现系统会自动查找并实例化它。
 
-### Via general plugin system
+### 通过通用插件系统
 
-A general plugin can also register a context engine:
+通用插件也可以注册上下文引擎：
 
 ```python
 def register(ctx):
@@ -150,9 +143,9 @@ def register(ctx):
     ctx.register_context_engine(engine)
 ```
 
-Only one engine can be registered. A second plugin attempting to register is rejected with a warning.
+只能注册一个引擎。第二个尝试注册的插件将被拒绝并显示警告。
 
-## Lifecycle
+## 生命周期
 
 ```
 1. Engine instantiated (plugin load or directory discovery)
@@ -163,20 +156,20 @@ Only one engine can be registered. A second plugin attempting to register is rej
 6. on_session_end() — session boundary (CLI exit, /reset, gateway expiry)
 ```
 
-`on_session_reset()` is called on `/new` or `/reset` to clear per-session state without a full shutdown.
+`on_session_reset()` 在 `/new` 或 `/reset` 时调用，用于清除每会话状态而无需完全关闭。
 
-## Configuration
+## 配置
 
-Users select your engine via `hermes plugins` → Provider Plugins → Context Engine, or by editing `config.yaml`:
+用户通过 `hermes plugins` → 提供者插件 → 上下文引擎，或编辑 `config.yaml` 来选择你的引擎：
 
 ```yaml
 context:
   engine: "lcm"   # must match your engine's name property
 ```
 
-The `compression` config block (`compression.threshold`, `compression.protect_last_n`, etc.) is specific to the built-in `ContextCompressor`. Your engine should define its own config format if needed, reading from `config.yaml` during initialization.
+`compression` 配置块（`compression.threshold`、`compression.protect_last_n` 等）是内置 `ContextCompressor` 特有的。如果需要，你的引擎应该定义自己的配置格式，在初始化期间从 `config.yaml` 读取。
 
-## Testing
+## 测试
 
 ```python
 from agent.context_engine import ContextEngine
@@ -194,10 +187,10 @@ def test_compress_returns_valid_messages():
     assert all("role" in m for m in result)
 ```
 
-See `tests/agent/test_context_engine.py` for the full ABC contract test suite.
+参见 `tests/agent/test_context_engine.py` 获取完整的抽象基类契约测试套件。
 
-## See also
+## 另请参阅
 
-- [Context Compression and Caching](/developer-guide/context-compression-and-caching) — how the built-in compressor works
-- [Memory Provider Plugins](/developer-guide/memory-provider-plugin) — analogous single-select plugin system for memory
-- [Plugins](/user-guide/features/plugins) — general plugin system overview
+- [上下文压缩与缓存](/developer-guide/context-compression-and-caching) — 内置压缩器的工作原理
+- [记忆提供者插件](/developer-guide/memory-provider-plugin) — 类似的单选项插件系统用于记忆
+- [插件](/user-guide/features/plugins) — 通用插件系统概述

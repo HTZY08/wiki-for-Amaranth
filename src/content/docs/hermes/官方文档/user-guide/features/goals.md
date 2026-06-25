@@ -1,200 +1,191 @@
 ---
-title: 目标系统
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/goals.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/goals.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 16
-title: "Persistent Goals"
-description: "Set a standing goal and let Hermes keep working across turns until it's done. Our take on the Ralph loop."
+title: "持久目标（Persistent Goals）"
+description: "设定一个固定目标，让 Hermes 持续工作直至完成。这是我们对 Ralph 循环的实现。"
 ---
 
-# Persistent Goals (`/goal`)
+# 持久目标（`/goal`）
 
-`/goal` gives Hermes a standing objective that survives across turns. After every turn a lightweight judge model checks whether the goal is satisfied by the assistant's last response. If not, Hermes automatically feeds a continuation prompt back into the same session and keeps working — until the goal is achieved, you pause or clear it, or the turn budget runs out.
+`/goal` 为 Hermes 设定一个跨轮次持久的固定目标。每一轮结束后，会有一个轻量级裁判模型检查助手最后一次回复是否满足目标。如果未满足，Hermes 会自动将延续提示（continuation prompt）重新注入同一会话并继续工作——直到目标达成、你暂停或清除它，或者轮次预算耗尽。
 
-It's our take on the **Ralph loop**, directly inspired by [Codex CLI 0.128.0's `/goal`](https://github.com/openai/codex) by Eric Traut (OpenAI). The core idea — keep a goal alive across turns and don't stop until it's achieved — is theirs. The implementation here is independent and adapted to Hermes' architecture.
+这是我们对 **Ralph 循环（Ralph loop）** 的实现，直接受 OpenAI 的 Eric Traut 在 [Codex CLI 0.128.0 的 `/goal`](https://github.com/openai/codex) 启发。其核心理念——保持一个目标跨轮次存活，不达成不停止——属于他们。此处的实现是独立的，并根据 Hermes 的架构进行了适配。
 
-## When to use it
+## 何时使用
 
-Use `/goal` for tasks where you want Hermes to iterate on its own without you re-prompting every turn:
+当你想让 Hermes 自主迭代，而无需你每轮重新提示时，使用 `/goal`：
 
-- "Fix every lint error in `src/` and verify `ruff check` passes"
-- "Port feature X from repo Y, including tests, and get CI green"
-- "Investigate why session IDs sometimes drift on mid-run compression and write up a report"
-- "Build a small CLI to rename files by their EXIF dates, then test it against the photos/ folder"
+- “修复 `src/` 中的所有 lint 错误，并验证 `ruff check` 通过”
+- “将功能 X 从仓库 Y 移植过来，包括测试，并使 CI 变绿”
+- “调查为什么会话 ID 在运行中压缩时有时会漂移，并撰写报告”
+- “构建一个小型 CLI，根据 EXIF 日期重命名文件，然后针对 photos/ 文件夹进行测试”
 
-Tasks where the agent does one turn and stops don't need `/goal`. Tasks where *you'd otherwise have to say "keep going" three times* are where this shines.
+如果代理只进行一轮就停止的任务，不需要 `/goal`。那些 *否则你得说三次“继续”* 的任务，才是此功能大显身手的地方。
 
-## Quick start
+## 快速开始
 
 ```
-/goal Fix every failing test in tests/hermes_cli/ and make sure scripts/run_tests.sh passes for that directory
+/goal 修复 tests/hermes_cli/ 中所有失败的测试，并确保 scripts/run_tests.sh 对该目录通过
 ```
 
-What you'll see:
+你会看到：
 
-1. **Goal accepted** — `⊙ Goal set (20-turn budget): <your goal>`
-2. **Turn 1 runs** — Hermes starts working as if you'd sent the goal as a normal message.
-3. **Judge runs** — after the turn, the judge model decides `done` or `continue`.
-4. **Loop fires if needed** — if `continue`, you'll see `↻ Continuing toward goal (1/20): <judge's reason>` and Hermes takes the next step automatically.
-5. **Terminates** — eventually you see either `✓ Goal achieved: <reason>` or `⏸ Goal paused — N/20 turns used`.
+1. **目标已接受** — `⊙ 目标已设定（20轮预算）：<你的目标>`
+2. **第1轮运行** — Hermes 开始工作，就像你将目标作为普通消息发送一样。
+3. **裁判运行** — 本轮结束后，裁判模型决定 `done` 或 `continue`。
+4. **必要时触发循环** — 如果返回 `continue`，你会看到 `↻ 向目标继续（1/20）：<裁判的理由>`，然后 Hermes 自动执行下一步。
+5. **终止** — 最终你会看到 `✓ 目标达成：<理由>` 或 `⏸ 目标暂停 — 已用 N/20 轮`。
 
-## Commands
+## 命令
 
-| Command | What it does |
+| 命令 | 功能 |
 |---|---|
-| `/goal <text>` | Set (or replace) the standing goal. Kicks off the first turn immediately so you don't need to send a separate message. |
-| `/goal draft <text>` | Draft a structured completion contract from a plain-language objective, then set it. See [Completion contracts](#completion-contracts). |
-| `/goal show` | Print the active goal's completion contract. |
-| `/goal` or `/goal status` | Show the current goal, its status, and turns used. |
-| `/goal pause` | Stop the auto-continuation loop without clearing the goal. |
-| `/goal resume` | Resume the loop (resets the turn counter back to zero). |
-| `/goal clear` | Drop the goal entirely. |
-| `/goal wait <pid> [reason]` | Park the loop on a background process — it stops re-poking the agent every turn while the process runs, and auto-resumes when it exits. |
-| `/goal unwait` | Drop the wait barrier and resume the loop immediately. |
+| `/goal <文本>` | 设定（或替换）固定目标。立即启动第一轮，因此你无需再发送单独消息。 |
+| `/goal draft <文本>` | 从自然语言目标草拟结构化完成契约（completion contract），然后设定它。参见[完成契约](#completion-contracts)。 |
+| `/goal show` | 打印当前目标的完成契约。 |
+| `/goal` 或 `/goal status` | 显示当前目标、状态和已用轮次。 |
+| `/goal pause` | 停止自动延续循环，但不清除目标。 |
+| `/goal resume` | 恢复循环（将轮次计数器重置为零）。 |
+| `/goal clear` | 完全丢弃目标。 |
+| `/goal wait <pid> [理由]` | 将循环挂起在后台进程上——进程运行时不再每轮重新触发代理，并在进程退出时自动恢复。 |
+| `/goal unwait` | 移除等待屏障，立即恢复循环。 |
 
-Works identically on the CLI and every gateway platform (Telegram, Discord, Slack, Matrix, Signal, WhatsApp, SMS, iMessage, Webhook, API server, and the web dashboard).
+在 CLI 和所有网关平台（Telegram、Discord、Slack、Matrix、Signal、WhatsApp、SMS、iMessage、Webhook、API 服务器及网页仪表盘）上行为相同。
 
-## Completion contracts
+## 完成契约（Completion contracts）
 
-A bare `/goal <text>` works fine, but a *vague* goal makes for vague judging — the judge can only check what you told it to want. Codex's `/goal` guidance makes the same point: a durable objective works best when it names **what done means, how to prove it, what not to break, what's in scope, and when to stop**. Hermes adapts this as an optional **completion contract** layered on top of the existing goal loop.
+简单的 `/goal <文本>` 效果不错，但一个*模糊*的目标会导致模糊的评判——裁判只能检查你告诉它想要的东西。Codex 的 `/goal` 指导也指出同样的观点：一个持久目标在明确说明**完成意味着什么、如何证明、不能破坏什么、范围是什么、何时停止**时效果最好。Hermes 将此作为一个可选的**完成契约**，叠加在现有目标循环之上。
 
-A contract has five fields, all optional:
+契约包含五个字段，均为可选：
 
-| Field | Meaning |
+| 字段 | 含义 |
 |---|---|
-| `outcome` | The single end state that must be true when done. |
-| `verification` | The specific test / command / artifact that *proves* the outcome. |
-| `constraints` | What must not change or regress. |
-| `boundaries` | Which files, dirs, tools, or systems are in scope. |
-| `stop_when` | The condition under which Hermes should stop and ask for input. |
+| `outcome` | 完成时必须为真的唯一最终状态。 |
+| `verification` | 证明该结果的特定测试/命令/产物。 |
+| `constraints` | 不得更改或退化的内容。 |
+| `boundaries` | 范围覆盖哪些文件、目录、工具或系统。 |
+| `stop_when` | Hermes 应停止并请求输入的条件。 |
 
-When a contract is set, both prompts change: the **continuation prompt** tells the agent to target the verification surface and respect the constraints, and the **judge prompt** decides `done` *only when the verification criterion is met with concrete evidence* (a command result, file excerpt, test output) — not a loose "looks done" claim. This directly tightens the most common `/goal` failure mode (premature completion or endless over-continuation on an underspecified objective).
+设定契约后，两个提示都会改变：**延续提示**告诉代理以验证面为目标并尊重约束；**裁判提示**仅在验证标准得到具体证据（命令结果、文件摘录、测试输出）满足时才判定 `done`——而非笼统的“看起来完成了”。这直接收紧了 `/goal` 最常见的失败模式（在未充分指定的目标上过早完成或无休止地继续）。
 
-### Two ways to set a contract
+### 设定契约的两种方式
 
-**1. Let Hermes draft it** (recommended — adapted from Codex's "let the agent draft the goal" tip):
-
-```
-/goal draft Migrate the auth service from session cookies to JWT
-```
-
-Hermes expands your one-liner into a full contract via the `goal_judge` auxiliary model, sets it, and shows you the result so you can review or tighten any field. If the aux model is unavailable, it falls back to a plain free-form goal — drafting never blocks setting a goal.
-
-**2. Write it inline** with `field: value` lines:
+**1. 让 Hermes 草拟**（推荐——改编自 Codex 的“让代理草拟目标”建议）：
 
 ```
-/goal Migrate auth to JWT
-verify: pytest tests/auth passes
-constraints: keep the /login response shape unchanged
-boundaries: only touch services/auth and its tests
-stop when: a DB schema migration is required
+/goal draft 将认证服务从会话 cookie 迁移到 JWT
 ```
 
-The first non-field line(s) are the goal headline; recognized field prefixes (`verify:`, `verified by:`, `constraints:`, `preserve:`, `boundaries:`, `scope:`, `stop when:`, `blocked:`, …) populate the contract. A plain goal with an incidental colon (`Fix bug: the parser drops commas`) is **not** mangled — only known field prefixes are pulled out.
+Hermes 通过 `goal_judge` 辅助模型将你的一行文字扩展为完整契约，设定它，并显示结果供你审查或收紧任何字段。如果辅助模型不可用，则回退到普通的自由格式目标——草拟永远不会阻塞目标的设定。
 
-Use `/goal show` to review the active contract. Contracts persist in `SessionDB.state_meta` alongside the goal, so they survive `/resume`. Old goals from before this feature load unchanged (no contract). Contracts and `/subgoal` criteria compose: subgoals fold into the contract as extra criteria the judge must also satisfy.
+**2. 内联编写**，使用 `字段: 值` 行：
 
-## Adding criteria mid-goal: `/subgoal`
+```
+/goal 将认证迁移到 JWT
+verify: pytest tests/auth 通过
+constraints: 保持 /login 响应形状不变
+boundaries: 只接触 services/auth 及其测试
+stop when: 需要数据库模式迁移
+```
 
-While a goal is active you can append extra acceptance criteria with `/subgoal <text>` without resetting the loop. Each call adds one numbered item to the goal's subgoal list; the **continuation prompt** the agent sees on the next turn includes the original goal plus an "Additional criteria the user added mid-loop" block, and the **judge prompt** is rewritten so the verdict must consider every subgoal — the goal isn't marked done until the original objective **and** every subgoal are met.
+第一行（非字段行）为目标标题；识别的字段前缀（`verify:`、`verified by:`、`constraints:`、`preserve:`、`boundaries:`、`scope:`、`stop when:`、`blocked:` 等）填充契约。带有偶然冒号的普通目标（如 `Fix bug: the parser drops commas`）**不会**被破坏——只有已知字段前缀才会被提取。
 
-| Command | What it does |
+使用 `/goal show` 查看当前契约。契约与目标一起持久化在 `SessionDB.state_meta` 中，因此 `/resume` 后依然存在。此功能之前的旧目标加载后不变（没有契约）。契约和 `/subgoal` 条件可以组合：子目标作为额外条件合并到契约中，裁判也必须满足它们。
+
+## 在目标进行中添加条件：`/subgoal`
+
+当目标激活时，你可以使用 `/subgoal <文本>` 追加额外的验收条件，而无需重置循环。每次调用会向目标的子目标列表添加一个编号项；代理在下一轮看到的**延续提示**包含原始目标加上一个“用户中途添加的额外条件”块；**裁判提示**会被重写，使得判决必须考虑每个子目标——直到原始目标**和**每个子目标都满足，目标才被标记为完成。
+
+| 命令 | 功能 |
 |---|---|
-| `/subgoal <text>` | Append a new criterion to the active goal. Requires an active `/goal`. |
-| `/subgoal` (no args) | Show the current numbered subgoal list. |
-| `/subgoal remove <N>` | Remove the Nth subgoal (1-based). |
-| `/subgoal clear` | Drop every subgoal but keep the original goal intact. |
+| `/subgoal <文本>` | 向当前目标追加一个新条件。需要存在一个激活的 `/goal`。 |
+| `/subgoal`（无参数） | 显示当前编号的子目标列表。 |
+| `/subgoal remove <N>` | 移除第 N 个子目标（从1开始）。 |
+| `/subgoal clear` | 丢弃所有子目标，但保留原始目标不变。 |
 
-Subgoals are persisted alongside the goal in `SessionDB.state_meta`, so they survive `/resume`. Setting a new `/goal <text>` replaces the goal and clears the subgoal list; `/goal clear` does the same.
+子目标与目标一起持久化在 `SessionDB.state_meta` 中，因此 `/resume` 后依然存在。设定新的 `/goal <文本>` 会替换目标并清除子目标列表；`/goal clear` 同理。
 
-Use this when you start a loop ("fix the failing tests") and notice partway through that you also want it to "and add a regression test for the bug you just patched" — `/subgoal add a regression test` tightens the success criteria without breaking the running loop.
+当你启动一个循环（如“修复失败的测试”）并在中途意识到你还希望它“为你刚刚修补的 bug 添加回归测试”时使用这个功能——`/subgoal add a regression test` 收紧成功条件而不破坏正在运行的循环。
 
-## Parking on a background process: automatic, with a manual override
+## 在后台进程上挂起：自动，附带手动覆盖
 
-Some goals are gated on something that takes minutes and runs on its own — CI on a pushed PR, a long build, a test matrix, a deploy, a rate-limit cooldown. Without help, the goal loop would re-poke the agent every turn into "is it done yet?" busy-work while it waits.
+有些目标依赖于需要几分钟且自行运行的东西——例如推送的 PR 上的 CI、长时间构建、测试矩阵、部署或速率限制冷却。如果不做处理，目标循环会在等待时每轮重新提示代理“完成了吗？”这种无效工作。
 
-**This is handled automatically.** Every turn, the judge is shown the agent's live background processes (the `terminal(background=true)` registry — pid, session id, command, uptime, recent output, and any `watch_patterns` / `notify_on_complete` trigger) alongside the goal and the agent's response. When the agent's progress is genuinely gated on one of them, the judge returns a **`wait`** verdict instead of `continue`, and the loop **parks**: the next turns are skipped (no judge call, no continuation, no turn consumed) until the wait is satisfied — then it resumes normally with the result in hand. The judge can also park on a **time** basis (`wait_for_seconds`) for backoff/cooldown waits. `/goal status` shows `⏳ Goal (parked …)` while parked.
+**这是自动处理的。** 每一轮，裁判会看到代理的实时后台进程（`terminal(background=true)` 注册表——pid、会话 ID、命令、运行时间、最近输出以及任何 `watch_patterns` / `notify_on_complete` 触发器）以及目标和代理的回复。当代理的进展确实被其中一个进程阻塞时，裁判返回 **`wait`** 判决而不是 `continue`，循环会**挂起**：后续轮次被跳过（无裁判调用、无延续、不消耗轮次），直到等待条件满足——然后自动恢复，并带有结果。裁判也可以基于**时间**（`wait_for_seconds`）挂起，用于回退/冷却等待。`/goal status` 在挂起时显示 `⏳ Goal (parked …)`。
 
-The judge picks the right kind of wait from the process's own signal:
+裁判根据进程自身的信号选择正确的等待类型：
 
-- **`wait_on_session <id>`** — releases when the process's *own trigger* fires: it exits, **or** (if it was started with `watch_patterns`) its pattern matches. This is the one for a long-lived watcher / server / poller that signals **mid-run** (e.g. a build process that prints `BUILD SUCCESSFUL` and keeps running, or a `notify_on_complete` watcher) and may never exit on its own.
-- **`wait_on_pid <pid>`** — releases on process exit only.
-- **`wait_for_seconds <n>`** — releases after a fixed delay.
+- **`wait_on_session <id>`** — 当进程的*自身触发器*触发时释放：进程退出，**或者**（如果它是用 `watch_patterns` 启动的）其模式匹配。适用于长时间运行的监视器/服务器/轮询器，它们会在**运行中**发出信号（例如打印 `BUILD SUCCESSFUL` 并继续运行的构建进程，或 `notify_on_complete` 监视器），并且可能永远不会自行退出。
+- **`wait_on_pid <pid>`** — 仅在进程退出时释放。
+- **`wait_for_seconds <n>`** — 固定延迟后释放。
 
-You don't type anything for this — it's the judge's decision, made from the process context the loop hands it. The manual commands exist as an override:
+你无需为此输入任何内容——这是裁判根据循环提供的进程上下文做出的决定。手动命令作为覆盖存在：
 
-| Command | What it does |
+| 命令 | 功能 |
 |---|---|
-| `/goal wait <pid> [reason]` | Manually park the loop until the process with that PID exits. |
-| `/goal unwait` | Clear any wait barrier (judge- or manually-set) and resume immediately. |
+| `/goal wait <pid> [理由]` | 手动挂起循环，直到该 PID 的进程退出。 |
+| `/goal unwait` | 清除任何等待屏障（裁判设置或手动设置）并立即恢复。 |
 
-The barrier (pid- or time-based) is persisted with the goal in `SessionDB.state_meta`, so it survives `/resume`. `/goal pause`, `/goal resume`, and `/goal clear` all drop it. If the PID is already dead when the barrier is set (or dies while parked), or the time deadline passes, the barrier clears on the next check — a stale barrier can never wedge the loop.
+屏障（基于 pid 或时间）与目标一起持久化在 `SessionDB.state_meta` 中，因此 `/resume` 后依然存在。`/goal pause`、`/goal resume` 和 `/goal clear` 都会丢弃屏障。如果设置屏障时 PID 已死亡（或挂起期间死亡），或者时间截止日期已过，屏障会在下次检查时清除——陈旧的屏障永远不会卡住循环。
 
-Typical flow: the agent pushes a PR, starts a CI watcher with `terminal(background=true, notify_on_complete=true)`, and reports "watching CI." The judge sees the watcher process still running, returns `wait` on its pid, and the loop goes quiet — then picks back up the instant CI finishes and judges the goal against the actual result.
+典型流程：代理推送 PR，用 `terminal(background=true, notify_on_complete=true)` 启动一个 CI 监视器，并报告“正在监视 CI”。裁判看到监视器进程仍在运行，返回 `wait` 等待其 pid，循环安静——然后 CI 一完成就立即恢复，并根据实际结果判断目标。
 
-## Behavior details
+## 行为细节
 
-### The judge
+### 裁判
 
-After every turn, Hermes calls an auxiliary model with:
+每轮结束后，Hermes 调用一个辅助模型，包含以下内容：
 
-- The standing goal text
-- The agent's most recent final response (last ~4 KB of text)
-- A system prompt telling the judge to reply with strict JSON: `{"done": <bool>, "reason": "<one-sentence rationale>"}`
+- 固定目标的文本
+- 代理最近的最终回复（最后约 4 KB 文本）
+- 一个系统提示，指示裁判以严格 JSON 格式回复：`{"done": <bool>, "reason": "<一句话解释>"}`
 
-The judge is deliberately conservative: it marks a goal `done` only when the response **explicitly** confirms the goal is complete, when the final deliverable is clearly produced, or when the goal is unachievable/blocked (treated as DONE with a block reason so we don't burn budget on impossible tasks).
+裁判故意保守：只有当回复**明确**确认目标完成、最终交付物已清晰生成，或者目标无法达成/被阻塞（视为 DONE，带有阻塞理由，以免在不可能的任务上消耗预算）时，才将目标标记为 `done`。
 
-### Fail-open semantics
+### 故障开放语义
 
-If the judge errors (network blip, malformed response, unavailable aux client), Hermes treats the verdict as `continue` — a broken judge never wedges progress. The **turn budget** is the real backstop.
+如果裁判出错（网络波动、格式错误的响应、辅助客户端不可用），Hermes 将判决视为 `continue`——故障裁判永远不会阻塞进展。**轮次预算**是真正的后盾。
 
-### Turn budget
+### 轮次预算
 
-Default is 20 continuation turns (`goals.max_turns` in `config.yaml`). When the budget is hit, Hermes auto-pauses and tells you exactly how to proceed:
+默认值为 20 个延续轮次（`config.yaml` 中的 `goals.max_turns`）。当预算耗尽时，Hermes 自动暂停并明确告诉你如何继续：
 
 ```
-⏸ Goal paused — 20/20 turns used. Use /goal resume to keep going, or /goal clear to stop.
+⏸ 目标暂停 — 已用 20/20 轮。使用 /goal resume 继续，或 /goal clear 停止。
 ```
 
-`/goal resume` resets the counter to zero, so you can keep going in measured chunks.
+`/goal resume` 将计数器重置为零，因此你可以按衡量块继续。
 
-### User messages always preempt
+### 用户消息始终优先
 
-Any real message you send while a goal is active takes priority over the continuation loop. On the CLI your message lands in `_pending_input` ahead of the queued continuation; on the gateway it goes through the adapter FIFO the same way. The judge runs again after your turn — so if your message happens to complete the goal, the judge will catch it and stop.
+当目标激活时，你发送的任何真实消息优先于延续循环。在 CLI 上，你的消息在排队的延续之前进入 `_pending_input`；在网关上，它通过相同的适配器 FIFO 处理。你的轮次结束后裁判会再次运行——因此如果你的消息恰好完成了目标，裁判会捕捉到并停止。
 
-### Mid-run safety (gateway)
+### 运行中安全性（网关）
 
-While an agent is already running, `/goal status`, `/goal pause`, `/goal clear`, `/goal wait`, and `/goal unwait` are safe to run — they only touch control-plane state and don't interrupt the current turn. Setting a **new** goal mid-run (`/goal <new text>`) is rejected with a message telling you to `/stop` first, so the old continuation can't race the new one.
+当代理已经在运行时，`/goal status`、`/goal pause`、`/goal clear`、`/goal wait` 和 `/goal unwait` 可以安全运行——它们只接触控制平面状态，不会中断当前轮次。在运行中**设置新目标**（`/goal <new text>`）会被拒绝，并提示你先执行 `/stop`，这样旧延续就不会与新延续竞争。
 
-### Persistence
+### 持久化
 
-Goal state lives in `SessionDB.state_meta` keyed by `goal:<session_id>`. That means `/resume` picks up right where you left off — set a goal, close your laptop, come back tomorrow, `/resume`, and the goal is still standing exactly as you left it (active, paused, or done).
+目标状态保存在 `SessionDB.state_meta` 中，键为 `goal:<session_id>`。这意味着 `/resume` 会从你上次离开的地方继续——设置一个目标，合上笔记本电脑，明天回来，`/resume`，目标仍然保持你离开时的原样（激活、暂停或完成）。
 
-### Prompt cache
+### 提示缓存
 
-The continuation prompt is a plain user-role message appended to history. It does **not** mutate the system prompt, swap toolsets, or touch the conversation in any way that invalidates Hermes' prompt cache. Running a 20-turn goal costs the same cache-wise as 20 turns of normal conversation.
+延续提示是一个普通的用户角色消息附加到历史记录中。它**不会**更改系统提示、切换工具集或以任何会使 Hermes 提示缓存失效的方式修改对话。运行 20 轮目标在缓存方面的成本与正常运行 20 轮对话相同。
 
-## Configuration
+## 配置
 
-Add to `~/.hermes/config.yaml`:
+添加到 `~/.hermes/config.yaml`：
 
 ```yaml
 goals:
-  # Max continuation turns before Hermes auto-pauses and asks you to
-  # /goal resume. Default 20. Lower this if you want tighter loops;
-  # raise it for long-running refactors.
+  # 最大延续轮次，超过后 Hermes 自动暂停并请你
+  # /goal resume。默认值 20。如果你想要更紧的循环，降低此值；
+  # 对于长时间运行的重构，提高此值。
   max_turns: 20
 ```
 
-### Choosing the judge model
+### 选择裁判模型
 
-The judge uses the `goal_judge` auxiliary task. By default it resolves to your main model (see [Auxiliary Models](/user-guide/configuration#auxiliary-models)). If you want to route the judge to a cheap fast model to keep costs down, add an override:
+裁判使用 `goal_judge` 辅助任务。默认情况下，它解析为主模型（参见[辅助模型（Auxiliary Models）](/user-guide/configuration#auxiliary-models)）。如果你希望将裁判路由到一个廉价快速的模型以降低成本，添加一个覆盖：
 
 ```yaml
 auxiliary:
@@ -203,54 +194,54 @@ auxiliary:
     model: google/gemini-3-flash-preview
 ```
 
-The judge call is small (~200 output tokens) and runs once per turn, so a cheap fast model is usually the right call.
+裁判调用很小（约 200 输出 token），每轮运行一次，因此通常选择廉价快速模型是正确的选择。
 
-## Example walkthrough
+## 示例演练
 
 ```
-You: /goal Create four files /tmp/note_{1..4}.txt, one per turn, each containing its number as text
+你: /goal 创建四个文件 /tmp/note_{1..4}.txt，每轮一个，每个文件包含其编号作为文本
 
-  ⊙ Goal set (20-turn budget): Create four files /tmp/note_{1..4}.txt, one per turn, each containing its number as text
+  ⊙ 目标已设定（20轮预算）：创建四个文件 /tmp/note_{1..4}.txt，每轮一个，每个文件包含其编号作为文本
 
-Hermes: Creating /tmp/note_1.txt now.
+Hermes: 现在创建 /tmp/note_1.txt。
   💻 echo "1" > /tmp/note_1.txt   (0.1s)
-  I've created /tmp/note_1.txt with the content "1". I'll continue with the remaining files on the next turn as you specified.
+  我已创建 /tmp/note_1.txt，内容为"1"。如你所指定，我将在下一轮继续创建其余文件。
 
-  ↻ Continuing toward goal (1/20): Only 1 of 4 files has been created; 3 files remain.
+  ↻ 向目标继续（1/20）：仅创建了4个文件中的1个；剩余3个文件。
 
-Hermes: [Continuing toward your standing goal]
+Hermes: [继续执行你的固定目标]
   💻 echo "2" > /tmp/note_2.txt   (0.1s)
-  Created /tmp/note_2.txt. Two more to go.
+  已创建 /tmp/note_2.txt。还有两个。
 
-  ↻ Continuing toward goal (2/20): 2 of 4 files created; 2 remain.
+  ↻ 向目标继续（2/20）：4个文件中已创建2个；剩余2个。
 
-Hermes: [Continuing toward your standing goal]
+Hermes: [继续执行你的固定目标]
   💻 echo "3" > /tmp/note_3.txt   (0.1s)
-  Created /tmp/note_3.txt.
+  已创建 /tmp/note_3.txt。
 
-  ↻ Continuing toward goal (3/20): 3 of 4 files created; 1 remains.
+  ↻ 向目标继续（3/20）：4个文件中已创建3个；剩余1个。
 
-Hermes: [Continuing toward your standing goal]
+Hermes: [继续执行你的固定目标]
   💻 echo "4" > /tmp/note_4.txt   (0.1s)
-  All four files have been created: /tmp/note_1.txt through /tmp/note_4.txt, each containing its number.
+  四个文件已全部创建：/tmp/note_1.txt 到 /tmp/note_4.txt，每个文件包含其编号。
 
-  ✓ Goal achieved: All four files were created with the specified content, completing the goal.
+  ✓ 目标达成：四个文件均已创建，内容符合指定，目标完成。
 
-You: _
+你: _
 ```
 
-Four turns, one `/goal` invocation, zero "keep going" prompts from you.
+四轮，一次 `/goal` 调用，你无需输入一次“继续”。
 
-## When the judge gets it wrong
+## 当裁判出错时
 
-No judge is perfect. Two failure modes to watch for:
+没有裁判是完美的。注意两种失败模式：
 
-**False negative — judge says continue when the goal is actually done.** The turn budget catches this. You'll see `⏸ Goal paused` and can `/goal clear` or just send a new message.
+**假阴性——裁判说继续，但目标实际上已完成。** 轮次预算会捕获这种情况。你会看到 `⏸ 目标暂停`，然后可以 `/goal clear` 或发送一条新消息。
 
-**False positive — judge says done when work remains.** You'll see `✓ Goal achieved` but you know better. Send a follow-up message to continue, or re-set the goal more precisely: `/goal <more specific text>`. The judge's system prompt is deliberately conservative to make false positives rarer than false negatives.
+**假阳性——裁判说完成，但仍有工作未完成。** 你会看到 `✓ 目标达成`，但你知道事实并非如此。发送一条后续消息继续，或者更精确地重新设定目标：`/goal <更具体的文本>`。裁判的系统提示故意保守，以使假阳性比假阴性更少见。
 
-If you find a judge verdict unconvincing, the reason text in the `↻ Continuing toward goal` or `✓ Goal achieved` line tells you exactly what the judge saw. That's usually enough to diagnose whether the goal text was ambiguous or the model's response was.
+如果你认为裁判判决不令人信服，`↻ 向目标继续` 或 `✓ 目标达成` 行中的理由文本会精确告诉你裁判看到了什么。这通常足以诊断是目标文本模糊还是模型回复的问题。
 
-## Attribution
+## 归属
 
-`/goal` is Hermes' take on the **Ralph loop** pattern. The user-facing design — keep a goal alive across turns, don't stop until it's achieved, with create/pause/resume/clear controls — was popularised and shipped in [Codex CLI 0.128.0](https://github.com/openai/codex) by Eric Traut on OpenAI's Codex team. Our implementation is independent (central `CommandDef` registry, `SessionDB.state_meta` persistence, auxiliary-client judge, adapter-FIFO continuation on the gateway side) but the idea is theirs. Credit where credit's due.
+`/goal` 是 Hermes 对 **Ralph 循环** 模式的实现。面向用户的设计——保持一个目标跨轮次存活，不达成不停止，带有创建/暂停/恢复/清除控制——由 OpenAI Codex 团队的 Eric Traut 在 [Codex CLI 0.128.0](https://github.com/openai/codex) 中推广并交付。我们的实现是独立的（中央 `CommandDef` 注册表、`SessionDB.state_meta` 持久化、辅助客户端裁判、网关侧的适配器 FIFO 延续），但理念属于他们。功劳归功于应得者。

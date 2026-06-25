@@ -1,105 +1,96 @@
 ---
-title: 视觉识别
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/vision.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/vision.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
-title: Vision & Image Paste
-description: Paste images from your clipboard into the Hermes CLI for multimodal vision analysis.
-sidebar_label: Vision & Image Paste
+title: 视觉与图像粘贴
+description: 将剪贴板中的图像粘贴到 Hermes CLI 中，以进行多模态视觉分析。
+sidebar_label: 视觉与图像粘贴
 sidebar_position: 7
 ---
 
-# Vision & Image Paste
+# 视觉与图像粘贴
 
-Hermes Agent supports **multimodal vision** — you can paste images from your clipboard directly into the CLI and ask the agent to analyze, describe, or work with them. Images are sent to the model as base64-encoded content blocks, so any vision-capable model can process them.
+Hermes Agent 支持**多模态视觉（multimodal vision）**——你可以将剪贴板中的图像直接粘贴到 CLI 中，让智能体分析、描述或处理这些图像。图像会以 base64 编码的内容块发送给模型，因此任何支持视觉的模型（vision-capable model）都能处理它们。
 
 :::tip
-Portal subscribers get vision-capable models (Claude, GPT-5, Gemini) in the same catalog — no extra credentials needed. See [Nous Portal](/integrations/nous-portal).
+门户订阅者可以在同一目录中获得支持视觉的模型（Claude、GPT-5、Gemini），无需额外凭证。请参阅 [Nous 门户](/integrations/nous-portal)。
 :::
 
-## How It Works
+## 工作原理
 
-1. Copy an image to your clipboard (screenshot, browser image, etc.)
-2. Attach it using one of the methods below
-3. Type your question and press Enter
-4. The image appears as a `[📎 Image #1]` badge above the input
-5. On submit, the image is sent to the model as a vision content block
+1. 将图像复制到剪贴板（截图、浏览器图片等）
+2. 使用以下方法之一附加图像
+3. 输入你的问题并按 Enter
+4. 图像会以 `[📎 图像 #1]` 标记出现在输入框上方
+5. 提交时，图像会作为视觉内容块发送给模型
 
-You can attach multiple images before sending — each gets its own badge. Press `Ctrl+C` to clear all attached images.
+你可以在发送前附加多张图像——每张图像都会获得自己的标记。按 `Ctrl+C` 清除所有已附加的图像。
 
-Images are saved to `~/.hermes/images/` as PNG files with timestamped filenames.
+图像会以 PNG 格式保存到 `~/.hermes/images/`，文件名带时间戳。
 
-## Paste Methods
+## 粘贴方法
 
-How you attach an image depends on your terminal environment. Not all methods work everywhere — here's the full breakdown:
+附加图像的方式取决于你的终端环境。并非所有方法在所有地方都有效——以下是完整说明：
 
-### `/paste` Command
+### `/paste` 命令
 
-**The most reliable explicit image-attach fallback.**
+**最可靠的显式图像附加回退方法。**
 
 ```
 /paste
 ```
 
-Type `/paste` and press Enter. Hermes checks your clipboard for an image and attaches it. This is the safest option when your terminal rewrites `Cmd+V`/`Ctrl+V`, or when you copied only an image and there is no bracketed-paste text payload to inspect.
+输入 `/paste` 并按 Enter。Hermes 会检查剪贴板中是否有图像并进行附加。当你的终端重写了 `Cmd+V`/`Ctrl+V`，或者你只复制了图像且没有可供检查的带括号粘贴文本负载时，这是最安全的选择。
 
 ### Ctrl+V / Cmd+V
 
-Hermes now treats paste as a layered flow:
-- normal text paste first
-- native clipboard / OSC52 text fallback if the terminal did not deliver text cleanly
-- image attach when the clipboard or pasted payload resolves to an image or image path
+Hermes 现在将粘贴视为分层流程：
+- 首先进行普通文本粘贴
+- 如果终端未能清晰地传递文本，则使用原生剪贴板 / OSC52 文本回退
+- 当剪贴板或粘贴负载解析为图像或图像路径时，附加图像
 
-This means pasted macOS screenshot temp paths and `file://...` image URIs can attach immediately instead of sitting in the composer as raw text.
+这意味着粘贴的 macOS 截图临时路径和 `file://...` 图像 URI 可以立即附加，而不会作为原始文本停留在编辑器中。
 
 :::warning
-If your clipboard has **only an image** (no text), terminals still cannot send binary image bytes directly. Use `/paste` as the explicit image-attach fallback.
+如果你的剪贴板中**只有图像**（没有文本），终端仍然无法直接发送二进制图像字节。请使用 `/paste` 作为显式的图像附加回退方法。
 :::
 
-### `/terminal-setup` for VS Code / Cursor / Windsurf
+### VS Code / Cursor / Windsurf 的 `/terminal-setup`
 
-If you run the TUI inside a local VS Code-family integrated terminal on macOS, Hermes can install the recommended `workbench.action.terminal.sendSequence` bindings for better multiline and undo/redo parity:
+如果你在 macOS 的本地 VS Code 系列集成终端中运行 TUI，Hermes 可以安装推荐的 `workbench.action.terminal.sendSequence` 绑定，以获得更好的多行和撤销/重做支持：
 
 ```text
 /terminal-setup
 ```
 
-This is especially useful when `Cmd+Enter`, `Cmd+Z`, or `Shift+Cmd+Z` are being intercepted by the IDE. Run it on the local machine only — not inside an SSH session.
+当 `Cmd+Enter`、`Cmd+Z` 或 `Shift+Cmd+Z` 被 IDE 拦截时，这尤其有用。仅在本地机器上运行，不要通过 SSH 会话运行。
 
-## Platform Compatibility
+## 平台兼容性
 
-| Environment | `/paste` | Cmd/Ctrl+V | `/terminal-setup` | Notes |
+| 环境 | `/paste` | Cmd/Ctrl+V | `/terminal-setup` | 备注 |
 |---|:---:|:---:|:---:|---|
-| **macOS Terminal / iTerm2** | ✅ | ✅ | n/a | Best experience — native clipboard + screenshot-path recovery |
-| **Apple Terminal** | ✅ | ✅ | n/a | If Cmd+←/→/⌫ gets rewritten, use Ctrl+A / Ctrl+E / Ctrl+U fallbacks |
-| **Linux X11 desktop** | ✅ | ✅ | n/a | Requires `xclip` (`apt install xclip`) |
-| **Linux Wayland desktop** | ✅ | ✅ | n/a | Requires `wl-paste` (`apt install wl-clipboard`) |
-| **WSL2 (Windows Terminal)** | ✅ | ✅ | n/a | Uses `powershell.exe` — no extra install needed |
-| **VS Code / Cursor / Windsurf (local)** | ✅ | ✅ | ✅ | Recommended for better Cmd+Enter / undo / redo parity |
-| **VS Code / Cursor / Windsurf (SSH)** | ❌² | ❌² | ❌³ | Run `/terminal-setup` on the local machine instead |
-| **SSH terminal (any)** | ❌² | ❌² | n/a | Remote clipboard not accessible |
+| **macOS Terminal / iTerm2** | ✅ | ✅ | 不适用 | 最佳体验——原生剪贴板 + 截图路径恢复 |
+| **Apple Terminal** | ✅ | ✅ | 不适用 | 如果 Cmd+←/→/⌫ 被重写，请使用 Ctrl+A / Ctrl+E / Ctrl+U 回退键 |
+| **Linux X11 桌面** | ✅ | ✅ | 不适用 | 需要 `xclip`（`apt install xclip`） |
+| **Linux Wayland 桌面** | ✅ | ✅ | 不适用 | 需要 `wl-paste`（`apt install wl-clipboard`） |
+| **WSL2（Windows Terminal）** | ✅ | ✅ | 不适用 | 使用 `powershell.exe`——无需额外安装 |
+| **VS Code / Cursor / Windsurf（本地）** | ✅ | ✅ | ✅ | 建议使用以获得更好的 Cmd+Enter / 撤销 / 重做支持 |
+| **VS Code / Cursor / Windsurf（SSH）** | ❌² | ❌² | ❌³ | 改为在本地机器上运行 `/terminal-setup` |
+| **SSH 终端（任何）** | ❌² | ❌² | 不适用 | 远程剪贴板无法访问 |
 
-² See [SSH & Remote Sessions](#ssh--remote-sessions) below
-³ The command writes local IDE keybindings and should not be run from the remote host
+² 请参阅下面的 [SSH 与远程会话](#ssh-与远程会话)
+³ 该命令会写入本地 IDE 键绑定，不应在远程主机上运行
 
-## Platform-Specific Setup
+## 特定平台设置
 
 ### macOS
 
-**No setup required.** Hermes uses `osascript` (built into macOS) to read the clipboard. For faster performance, optionally install `pngpaste`:
+**无需设置。** Hermes 使用 macOS 内置的 `osascript` 读取剪贴板。为获得更快的性能，可选择安装 `pngpaste`：
 
 ```bash
 brew install pngpaste
 ```
 
-### Linux (X11)
+### Linux（X11）
 
-Install `xclip`:
+安装 `xclip`：
 
 ```bash
 # Ubuntu/Debian
@@ -112,9 +103,9 @@ sudo dnf install xclip
 sudo pacman -S xclip
 ```
 
-### Linux (Wayland)
+### Linux（Wayland）
 
-Modern Linux desktops (Ubuntu 22.04+, Fedora 34+) often use Wayland by default. Install `wl-clipboard`:
+现代 Linux 桌面（Ubuntu 22.04+、Fedora 34+）通常默认使用 Wayland。安装 `wl-clipboard`：
 
 ```bash
 # Ubuntu/Debian
@@ -127,70 +118,70 @@ sudo dnf install wl-clipboard
 sudo pacman -S wl-clipboard
 ```
 
-:::tip How to check if you're on Wayland
+:::tip 如何检查你是否在使用 Wayland
 ```bash
 echo $XDG_SESSION_TYPE
-# "wayland" = Wayland, "x11" = X11, "tty" = no display server
+# "wayland" = Wayland, "x11" = X11, "tty" = 无显示服务器
 ```
 :::
 
 ### WSL2
 
-**No extra setup required.** Hermes detects WSL2 automatically (via `/proc/version`) and uses `powershell.exe` to access the Windows clipboard through .NET's `System.Windows.Forms.Clipboard`. This is built into WSL2's Windows interop — `powershell.exe` is available by default.
+**无需额外设置。** Hermes 会自动检测 WSL2（通过 `/proc/version`），并使用 `powershell.exe` 通过 .NET 的 `System.Windows.Forms.Clipboard` 访问 Windows 剪贴板。这是 WSL2 的 Windows 互操作内建功能——`powershell.exe` 默认可用。
 
-The clipboard data is transferred as base64-encoded PNG over stdout, so no file path conversion or temp files are needed.
+剪贴板数据会通过标准输出以 base64 编码的 PNG 形式传输，因此不需要文件路径转换或临时文件。
 
-:::info WSLg Note
-If you're running WSLg (WSL2 with GUI support), Hermes tries the PowerShell path first, then falls back to `wl-paste`. WSLg's clipboard bridge only supports BMP format for images — Hermes auto-converts BMP to PNG using Pillow (if installed) or ImageMagick's `convert` command.
+:::info WSLg 说明
+如果你正在运行 WSLg（带 GUI 支持的 WSL2），Hermes 会首先尝试 PowerShell 路径，然后回退到 `wl-paste`。WSLg 的剪贴板桥仅支持 BMP 格式的图像——Hermes 会使用 Pillow（如果已安装）或 ImageMagick 的 `convert` 命令自动将 BMP 转换为 PNG。
 :::
 
-#### Verify WSL2 clipboard access
+#### 验证 WSL2 剪贴板访问
 
 ```bash
-# 1. Check WSL detection
+# 1. 检查 WSL 检测
 grep -i microsoft /proc/version
 
-# 2. Check PowerShell is accessible
+# 2. 检查 PowerShell 是否可访问
 which powershell.exe
 
-# 3. Copy an image, then check
+# 3. 复制一张图像，然后检查
 powershell.exe -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::ContainsImage()"
-# Should print "True"
+# 应输出 "True"
 ```
 
-## SSH & Remote Sessions
+## SSH 与远程会话
 
-**Clipboard image paste does not fully work over SSH.** When you SSH into a remote machine, the Hermes CLI runs on the remote host. Clipboard tools (`xclip`, `wl-paste`, `powershell.exe`, `osascript`) read the clipboard of the machine they run on — which is the remote server, not your local machine. Your local clipboard image is therefore inaccessible from the remote side.
+**通过 SSH 时，剪贴板图像粘贴无法完全工作。** 当你通过 SSH 连接到远程机器时，Hermes CLI 在远程主机上运行。剪贴板工具（`xclip`、`wl-paste`、`powershell.exe`、`osascript`）会读取它们所在机器的剪贴板——即远程服务器，而不是你的本地机器。因此，本地剪贴板中的图像无法从远程端访问。
 
-Text can sometimes still bridge through terminal paste or OSC52, but image clipboard access and local screenshot temp paths remain tied to the machine running Hermes.
+文本有时仍可通过终端粘贴或 OSC52 桥接，但图像剪贴板访问和本地截图临时路径仍然只与运行 Hermes 的机器绑定。
 
-### Workarounds for SSH
+### SSH 的解决方法
 
-1. **Upload the image file** — Save the image locally, upload it to the remote server via `scp`, VSCode's file explorer (drag-and-drop), or any file transfer method. Then reference it by path. *(A `/attach <filepath>` command is planned for a future release.)*
+1. **上传图像文件**——将图像保存在本地，通过 `scp`、VSCode 的文件资源管理器（拖放）或任何文件传输方法上传到远程服务器，然后通过路径引用。（计划在未来版本中添加 `/attach <文件路径>` 命令。）
 
-2. **Use a URL** — If the image is accessible online, just paste the URL in your message. The agent can use `vision_analyze` to look at any image URL directly.
+2. **使用 URL**——如果图像可以在线访问，只需在消息中粘贴 URL。智能体可以直接使用 `vision_analyze` 查看任何图像 URL。
 
-3. **X11 forwarding** — Connect with `ssh -X` to forward X11. This lets `xclip` on the remote machine access your local X11 clipboard. Requires an X server running locally (XQuartz on macOS, built-in on Linux X11 desktops). Slow for large images.
+3. **X11 转发**——使用 `ssh -X` 连接以转发 X11。这允许远程机器上的 `xclip` 访问你的本地 X11 剪贴板。需要在本地运行 X 服务器（macOS 上为 XQuartz，Linux X11 桌面上内置）。对于大图像速度较慢。
 
-4. **Use a messaging platform** — Send images to Hermes via Telegram, Discord, Slack, or WhatsApp. These platforms handle image upload natively and are not affected by clipboard/terminal limitations.
+4. **使用消息平台**——通过 Telegram、Discord、Slack 或 WhatsApp 将图像发送给 Hermes。这些平台原生处理图像上传，不受剪贴板/终端限制的影响。
 
-## Why Terminals Can't Paste Images
+## 为什么终端无法粘贴图像
 
-This is a common source of confusion, so here's the technical explanation:
+这是一个常见的混淆点，以下是技术解释：
 
-Terminals are **text-based** interfaces. When you press Ctrl+V (or Cmd+V), the terminal emulator:
+终端是**基于文本**的界面。当你按 Ctrl+V（或 Cmd+V）时，终端模拟器：
 
-1. Reads the clipboard for **text content**
-2. Wraps it in [bracketed paste](https://en.wikipedia.org/wiki/Bracketed-paste) escape sequences
-3. Sends it to the application through the terminal's text stream
+1. 读取剪贴板中的**文本内容**
+2. 将其包裹在[带括号粘贴](https://en.wikipedia.org/wiki/Bracketed-paste)转义序列中
+3. 通过终端的文本流发送到应用程序
 
-If the clipboard contains only an image (no text), the terminal has nothing to send. There is no standard terminal escape sequence for binary image data. The terminal simply does nothing.
+如果剪贴板中只包含图像（没有文本），终端就没有任何内容可发送。没有标准的二进制图像数据终端转义序列。终端只是什么都不做。
 
-This is why Hermes uses a separate clipboard check — instead of receiving image data through the terminal paste event, it calls OS-level tools (`osascript`, `powershell.exe`, `xclip`, `wl-paste`) directly via subprocess to read the clipboard independently.
+这就是为什么 Hermes 使用单独的剪贴板检查——它不通过终端粘贴事件接收图像数据，而是直接通过子进程调用操作系统级别的工具（`osascript`、`powershell.exe`、`xclip`、`wl-paste`）来独立读取剪贴板。
 
-## Supported Models
+## 支持的模型
 
-Image paste works with any vision-capable model. The image is sent as a base64-encoded data URL in the OpenAI vision content format:
+图像粘贴适用于任何支持视觉的模型。图像会以 OpenAI 视觉内容格式的 base64 编码数据 URL 形式发送：
 
 ```json
 {
@@ -201,23 +192,23 @@ Image paste works with any vision-capable model. The image is sent as a base64-e
 }
 ```
 
-Most modern models support this format, including GPT-4 Vision, Claude (with vision), Gemini, and open-source multimodal models served through OpenRouter.
+大多数现代模型都支持这种格式，包括 GPT-4 Vision、Claude（带视觉）、Gemini 以及通过 OpenRouter 提供的开源多模态模型。
 
-## Image Routing (Vision-Capable vs Text-Only Models)
+## 图像路由（支持视觉的模型与纯文本模型）
 
-When a user attaches an image — from the CLI clipboard, the gateway (Telegram/Discord photo), or any other entry point — Hermes routes it based on whether your current model actually supports vision:
+当用户附加图像时——无论来自 CLI 剪贴板、网关（Telegram/Discord 照片）还是其他入口点——Hermes 会根据当前模型是否实际支持视觉进行路由：
 
-| Your model | What happens to the image |
+| 你的模型 | 图像的处理方式 |
 |---|---|
-| **Vision-capable** (GPT-4V, Claude with vision, Gemini, Qwen-VL, MiMo-VL, etc.) | Sent as **real pixels** using the provider's native image content format above. No text summary layer. |
-| **Text-only** (DeepSeek V3, smaller open-source models, older chat-only endpoints) | Routed through the `vision_analyze` auxiliary tool — an auxiliary vision model describes the image, and the text description is injected into the conversation. |
+| **支持视觉的模型**（GPT-4V、带视觉的 Claude、Gemini、Qwen-VL、MiMo-VL 等） | 使用上述提供者原生图像内容格式作为**真实像素**发送。无文本摘要层。 |
+| **纯文本模型**（DeepSeek V3、较小的开源模型、较旧的仅聊天端点） | 通过 `vision_analyze` 辅助工具路由——辅助视觉模型描述图像，然后将文本描述注入到对话中。 |
 
-You don't configure this — Hermes looks up your current model's capability in the provider metadata and picks the right path automatically. The practical effect: you can switch between vision and non-vision models mid-session and image handling "just works" without changing your workflow. Text-only models get coherent context about the image rather than a broken multimodal payload they'd have to reject.
+你无需配置此项——Hermes 会在提供者元数据中查找当前模型的能力，并自动选择正确的路径。实际效果是：你可以在会话中在半途切换视觉和非视觉模型，图像处理“自动适配”，无需改变你的工作流。纯文本模型会获得关于图像的连贯上下文，而不是它们必须拒绝的无效多模态负载。
 
-Which auxiliary model handles the text-description path is configurable under `auxiliary.vision` — see [Auxiliary Models](/user-guide/configuration#auxiliary-models).
+处理文本描述路径的辅助模型可在 `auxiliary.vision` 下配置——请参阅 [辅助模型](/user-guide/configuration#辅助模型)。
 
-### `vision_analyze` has the same dual behavior
+### `vision_analyze` 具有相同的双重行为
 
-The `vision_analyze` tool itself follows the same routing. When the active main model is vision-capable **and** its provider supports image content inside tool results (currently the Anthropic, OpenAI, Azure-OpenAI, and Gemini 3.x stacks), `vision_analyze` short-circuits the auxiliary describer and returns the raw image pixels as a multimodal tool-result envelope. The main model sees the image natively on its next turn — no aux call, no text-summary information loss, no extra latency.
+`vision_analyze` 工具本身遵循相同的路由。当活动主模型支持视觉**并且**其提供者支持在工具结果中包含图像内容（目前为 Anthropic、OpenAI、Azure-OpenAI 和 Gemini 3.x 堆栈）时，`vision_analyze` 会绕过辅助描述器，将原始图像像素作为多模态工具结果信封返回。主模型在下一轮推理中直接看到图像——无需调用辅助模型，没有文本摘要信息丢失，没有额外延迟。
 
-For text-only main models (or providers whose tool-result channel doesn't carry images), `vision_analyze` falls back to the legacy path: it asks the configured auxiliary vision model to describe the image and returns the description as plain text. Either way the calling tool signature is the same — the tool decides which path to take at runtime based on the active model.
+对于纯文本主模型（或其工具结果通道不支持图像的提供者），`vision_analyze` 回退到传统路径：它请求配置的辅助视觉模型描述图像，并将描述作为纯文本返回。无论哪种方式，调用的工具签名都是相同的——工具在运行时根据活动模型决定采取哪个路径。

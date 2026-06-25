@@ -1,144 +1,129 @@
 ---
-title: 记忆系统
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/memory.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/memory.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 3
-title: "Persistent Memory"
-description: "How Hermes Agent remembers across sessions — MEMORY.md, USER.md, and session search"
+title: "持久记忆（Persistent Memory）"
+description: "Hermes Agent 如何在会话之间记忆——MEMORY.md、USER.md 和会话搜索"
 ---
 
-# Persistent Memory
+# 持久记忆（Persistent Memory）
 
-Hermes Agent has bounded, curated memory that persists across sessions. This lets it remember your preferences, your projects, your environment, and things it has learned.
+Hermes Agent 拥有有限、精心管理的记忆，这些记忆会跨会话持久存在。这使得它能够记住你的偏好、项目、环境以及所学到的东西。
 
-## How It Works
+## 工作原理
 
-Two files make up the agent's memory:
+两份文件构成了代理的记忆：
 
-| File | Purpose | Char Limit |
+| 文件 | 用途 | 字符限制 |
 |------|---------|------------|
-| **MEMORY.md** | Agent's personal notes — environment facts, conventions, things learned | 2,200 chars (~800 tokens) |
-| **USER.md** | User profile — your preferences, communication style, expectations | 1,375 chars (~500 tokens) |
+| **MEMORY.md** | 代理的个人笔记——环境事实、约定、学到的东西 | 2,200 字符（约 800 tokens） |
+| **USER.md** | 用户档案——你的偏好、沟通风格、期望 | 1,375 字符（约 500 tokens） |
 
-Both are stored in `~/.hermes/memories/` and are injected into the system prompt as a frozen snapshot at session start. The agent manages its own memory via the `memory` tool — it can add, replace, or remove entries.
+两份文件都存储在 `~/.hermes/memories/` 中，并在会话开始时作为冻结快照注入到系统提示（system prompt）中。代理通过 `memory` 工具管理自己的记忆——它可以添加、替换或删除条目。
 
 :::info
-Character limits keep memory focused. Memory does **not** auto-compact: when a
-write would exceed the limit, the `memory` tool returns an error instead of
-silently dropping entries. The agent then makes room itself — consolidating or
-removing entries in the same turn before retrying (see [What Happens When Memory
-is Full](#what-happens-when-memory-is-full)). Note that `replace` is also bound
-by the limit: swapping an entry for a longer one can still overflow, so the new
-content must be shortened (or another entry removed) to fit.
+字符限制让记忆保持聚焦。记忆**不会**自动压缩：当写入会超出限制时，`memory` 工具会返回一个错误，而不是静默丢弃条目。然后代理会自行腾出空间——在同一回合中合并或删除条目，然后重试（请参阅[记忆已满时会发生什么](#what-happens-when-memory-is-full)）。请注意，`replace` 也受限于该限制：将一个条目替换为更长的条目仍可能溢出，因此新内容必须缩短（或删除另一个条目）以容纳。
 :::
 
-## How Memory Appears in the System Prompt
+## 记忆在系统提示中的呈现方式
 
-At the start of every session, memory entries are loaded from disk and rendered into the system prompt as a frozen block:
+在每个会话开始时，记忆条目从磁盘加载并作为冻结块渲染到系统提示中：
 
 ```
 ══════════════════════════════════════════════
-MEMORY (your personal notes) [67% — 1,474/2,200 chars]
+记忆（你的个人笔记）[67% — 1,474/2,200 字符]
 ══════════════════════════════════════════════
-User's project is a Rust web service at ~/code/myapi using Axum + SQLx
+用户的项目是一个位于 ~/code/myapi 的 Rust Web 服务，使用 Axum + SQLx
 §
-This machine runs Ubuntu 22.04, has Docker and Podman installed
+这台机器运行 Ubuntu 22.04，已安装 Docker 和 Podman
 §
-User prefers concise responses, dislikes verbose explanations
+用户偏好简洁的回答，不喜欢冗长的解释
 ```
 
-The format includes:
-- A header showing which store (MEMORY or USER PROFILE)
-- Usage percentage and character counts so the agent knows capacity
-- Individual entries separated by `§` (section sign) delimiters
-- Entries can be multiline
+格式包括：
+- 一个头部，显示是哪个存储（MEMORY 或 USER PROFILE）
+- 使用百分比和字符数，以便代理知道容量
+- 用 `§`（节符号）分隔的各个条目
+- 条目可以有多行
 
-**Frozen snapshot pattern:** The system prompt injection is captured once at session start and never changes mid-session. This is intentional — it preserves the LLM's prefix cache for performance. When the agent adds/removes memory entries during a session, the changes are persisted to disk immediately but won't appear in the system prompt until the next session starts. Tool responses always show the live state.
+**冻结快照模式：** 系统提示注入在会话开始时捕获一次，并且在会话期间永远不会改变。这是有意为之——它保留了 LLM 的前缀缓存（prefix cache）以提升性能。当代理在会话期间添加/删除记忆条目时，更改会立即持久化到磁盘，但直到下一个会话开始才会出现在系统提示中。工具响应始终显示实时状态。
 
-## Memory Tool Actions
+## 记忆工具操作
 
-The agent uses the `memory` tool with these actions:
+代理使用 `memory` 工具执行以下操作：
 
-- **add** — Add a new memory entry
-- **replace** — Replace an existing entry with updated content (uses substring matching via `old_text`)
-- **remove** — Remove an entry that's no longer relevant (uses substring matching via `old_text`)
+- **add** — 添加一条新的记忆条目
+- **replace** — 用更新的内容替换现有条目（使用 `old_text` 进行子串匹配）
+- **remove** — 删除不再相关的条目（使用 `old_text` 进行子串匹配）
 
-There is no `read` action — memory content is automatically injected into the system prompt at session start. The agent sees its memories as part of its conversation context.
+没有 `read` 操作——记忆内容会在会话开始时自动注入到系统提示中。代理将其记忆视为对话上下文的一部分。
 
-### Substring Matching
+### 子串匹配
 
-The `replace` and `remove` actions use short unique substring matching — you don't need the full entry text. The `old_text` parameter just needs to be a unique substring that identifies exactly one entry:
+`replace` 和 `remove` 操作使用短唯一子串匹配——你不需要完整的条目文本。`old_text` 参数只需是一个唯一子串，能识别出恰好一个条目：
 
 ```python
-# If memory contains "User prefers dark mode in all editors"
+# 如果记忆包含 "User prefers dark mode in all editors"
 memory(action="replace", target="memory",
        old_text="dark mode",
        content="User prefers light mode in VS Code, dark mode in terminal")
 ```
 
-If the substring matches multiple entries, an error is returned asking for a more specific match.
+如果该子串匹配了多个条目，则会返回一个错误，要求提供更具体的匹配。
 
-## Two Targets Explained
+## 两个目标的解释
 
-### `memory` — Agent's Personal Notes
+### `memory` — 代理的个人笔记
 
-For information the agent needs to remember about the environment, workflows, and lessons learned:
+用于代理需要记住的关于环境、工作流程和经验教训的信息：
 
-- Environment facts (OS, tools, project structure)
-- Project conventions and configuration
-- Tool quirks and workarounds discovered
-- Completed task diary entries
-- Skills and techniques that worked
+- 环境事实（操作系统、工具、项目结构）
+- 项目约定和配置
+- 发现的工具特性和变通方法
+- 已完成任务的日记条目
+- 有效的技能和技术
 
-### `user` — User Profile
+### `user` — 用户档案
 
-For information about the user's identity, preferences, and communication style:
+用于关于用户身份、偏好和沟通风格的信息：
 
-- Name, role, timezone
-- Communication preferences (concise vs detailed, format preferences)
-- Pet peeves and things to avoid
-- Workflow habits
-- Technical skill level
+- 姓名、角色、时区
+- 沟通偏好（简洁 vs 详细，格式偏好）
+- 讨厌的事情和要避免的事情
+- 工作习惯
+- 技术技能水平
 
-## What to Save vs Skip
+## 应保存什么 vs 跳过什么
 
-### Save These (Proactively)
+### 保存这些（主动保存）
 
-The agent saves automatically — you don't need to ask. It saves when it learns:
+代理会自动保存——你不需要要求。当它学到以下内容时，它就会保存：
 
-- **User preferences:** "I prefer TypeScript over JavaScript" → save to `user`
-- **Environment facts:** "This server runs Debian 12 with PostgreSQL 16" → save to `memory`
-- **Corrections:** "Don't use `sudo` for Docker commands, user is in docker group" → save to `memory`
-- **Conventions:** "Project uses tabs, 120-char line width, Google-style docstrings" → save to `memory`
-- **Completed work:** "Migrated database from MySQL to PostgreSQL on 2026-01-15" → save to `memory`
-- **Explicit requests:** "Remember that my API key rotation happens monthly" → save to `memory`
+- **用户偏好：** "我更喜欢 TypeScript 而不是 JavaScript" → 保存到 `user`
+- **环境事实：** "这个服务器运行 Debian 12 和 PostgreSQL 16" → 保存到 `memory`
+- **纠正：** "不要对 Docker 命令使用 `sudo`，用户属于 docker 组" → 保存到 `memory`
+- **约定：** "项目使用制表符，120 字符行宽，Google 风格的文档字符串" → 保存到 `memory`
+- **已完成的工作：** "于 2026-01-15 将数据库从 MySQL 迁移到 PostgreSQL" → 保存到 `memory`
+- **明确请求：** "记住我的 API 密钥按月轮换" → 保存到 `memory`
 
-### Skip These
+### 跳过这些
 
-- **Trivial/obvious info:** "User asked about Python" — too vague to be useful
-- **Easily re-discovered facts:** "Python 3.12 supports f-string nesting" — can web search this
-- **Raw data dumps:** Large code blocks, log files, data tables — too big for memory
-- **Session-specific ephemera:** Temporary file paths, one-off debugging context
-- **Information already in context files:** SOUL.md and AGENTS.md content
+- **琐碎/显而易见的信息：** "用户询问了关于 Python 的问题" — 太模糊，没有用
+- **容易重新发现的事实：** "Python 3.12 支持 f-string 嵌套" — 可以网络搜索
+- **原始数据转储：** 大型代码块、日志文件、数据表 — 对于记忆来说太大
+- **会话特定的临时信息：** 临时文件路径、一次性调试上下文
+- **上下文文件中已有的信息：** SOUL.md 和 AGENTS.md 的内容
 
-## Capacity Management
+## 容量管理
 
-Memory has strict character limits to keep system prompts bounded:
+记忆有严格的字符限制，以保持系统提示的范围可控：
 
-| Store | Limit | Typical entries |
+| 存储 | 限制 | 典型条目数 |
 |-------|-------|----------------|
-| memory | 2,200 chars | 8-15 entries |
-| user | 1,375 chars | 5-10 entries |
+| memory | 2,200 字符 | 8-15 条 |
+| user | 1,375 字符 | 5-10 条 |
 
-### What Happens When Memory is Full
+### 记忆已满时会发生什么
 
-When you try to add an entry that would exceed the limit, the tool returns an error:
+当你尝试添加一条会导致超过限制的条目时，该工具会返回一个错误：
 
 ```json
 {
@@ -149,198 +134,167 @@ When you try to add an entry that would exceed the limit, the tool returns an er
 }
 ```
 
-The agent should then:
-1. Read the current entries (shown in the error response)
-2. Identify entries that can be removed or consolidated
-3. Use `replace` to merge related entries into shorter versions
-4. Then `add` the new entry
+然后代理应该：
+1. 读取当前条目（显示在错误响应中）
+2. 识别可以删除或合并的条目
+3. 使用 `replace` 将相关条目合并为更短的版本
+4. 然后 `add` 新条目
 
-**Best practice:** When memory is above 80% capacity (visible in the system prompt header), consolidate entries before adding new ones. For example, merge three separate "project uses X" entries into one comprehensive project description entry.
+**最佳实践：** 当记忆超过 80% 容量（在系统提示头部可见）时，在添加新条目之前先合并条目。例如，将三个单独的"项目使用 X"条目合并为一个全面的项目描述条目。
 
-### Practical Examples of Good Memory Entries
+### 良好记忆条目的实际示例
 
-**Compact, information-dense entries work best:**
+**紧凑、信息密集的条目效果最佳：**
 
 ```
-# Good: Packs multiple related facts
-User runs macOS 14 Sonoma, uses Homebrew, has Docker Desktop and Podman. Shell: zsh with oh-my-zsh. Editor: VS Code with Vim keybindings.
+# 好：将多个相关事实打包在一起
+用户运行 macOS 14 Sonoma，使用 Homebrew，已安装 Docker Desktop 和 Podman。Shell：zsh 搭配 oh-my-zsh。编辑器：VS Code 带 Vim 键绑定。
 
-# Good: Specific, actionable convention
-Project ~/code/api uses Go 1.22, sqlc for DB queries, chi router. Run tests with 'make test'. CI via GitHub Actions.
+# 好：具体、可操作的约定
+项目 ~/code/api 使用 Go 1.22，sqlc 用于数据库查询，chi 路由器。运行测试使用 'make test'。CI 通过 GitHub Actions。
 
-# Good: Lesson learned with context
-The staging server (10.0.1.50) needs SSH port 2222, not 22. Key is at ~/.ssh/staging_ed25519.
+# 好：带有上下文的经验教训
+暂存服务器（10.0.1.50）需要使用 SSH 端口 2222，而不是 22。密钥位于 ~/.ssh/staging_ed25519。
 
-# Bad: Too vague
-User has a project.
+# 差：太模糊
+用户有一个项目。
 
-# Bad: Too verbose
-On January 5th, 2026, the user asked me to look at their project which is
-located at ~/code/api. I discovered it uses Go version 1.22 and...
+# 差：太冗长
+2026年1月5日，用户让我查看他们的项目，项目位于 ~/code/api。我发现它使用了 Go 版本 1.22 和...
 ```
 
-## Duplicate Prevention
+## 重复预防
 
-The memory system automatically rejects exact duplicate entries. If you try to add content that already exists, it returns success with a "no duplicate added" message.
+记忆系统会自动拒绝完全重复的条目。如果你尝试添加已经存在的内容，它会返回成功并显示"未添加重复条目"的消息。
 
-## Security Scanning
+## 安全扫描
 
-Memory entries are scanned for injection and exfiltration patterns before being accepted, since they're injected into the system prompt. Content matching threat patterns (prompt injection, credential exfiltration, SSH backdoors) or containing invisible Unicode characters is blocked.
+记忆条目在被接受之前会扫描注入和泄露模式，因为它们会被注入到系统提示中。匹配威胁模式（提示注入、凭据泄露、SSH 后门）或包含不可见 Unicode 字符的内容将被阻止。
 
-## Session Search
+## 会话搜索
 
-Beyond MEMORY.md and USER.md, the agent can search its past conversations using the `session_search` tool:
+除了 MEMORY.md 和 USER.md 之外，代理还可以使用 `session_search` 工具搜索其过去的对话：
 
-- All CLI and messaging sessions are stored in SQLite (`~/.hermes/state.db`) with FTS5 full-text search
-- Search queries return actual messages from the DB — no LLM summarization, no truncation
-- The agent can find things it discussed weeks ago, even if they're not in its active memory
-- The agent can also scroll forward/backward inside any session it finds
+- 所有 CLI 和消息会话都存储在 SQLite（`~/.hermes/state.db`）中，并启用 FTS5 全文搜索
+- 搜索查询返回来自数据库的实际消息——没有 LLM 摘要，没有截断
+- 代理可以找到几周前讨论过的事情，即使它们不在其活跃记忆中
+- 代理还可以在其找到的任何会话内向前/向后滚动
 
 ```bash
-hermes sessions list    # Browse past sessions
+hermes sessions list    # 浏览过去的会话
 ```
 
-See [Session Search Tool](/user-guide/sessions#session-search-tool) for the three calling shapes (discovery / scroll / browse) and the response format.
+请参阅[会话搜索工具](/user-guide/sessions#session-search-tool)了解三种调用形式（发现 / 滚动 / 浏览）和响应格式。
 
-### session_search vs memory
+### session_search 与 memory 对比
 
-| Feature | Persistent Memory | Session Search |
+| 特性 | 持久记忆（Persistent Memory） | 会话搜索（Session Search） |
 |---------|------------------|----------------|
-| **Capacity** | ~1,300 tokens total | Unlimited (all sessions) |
-| **Speed** | Instant (in system prompt) | ~20ms FTS5 query, ~1ms scroll |
-| **Cost** | Token cost in every prompt | Free — no LLM calls |
-| **Use case** | Key facts always available | Finding specific past conversations |
-| **Management** | Manually curated by agent | Automatic — all sessions stored |
-| **Token cost** | Fixed per session (~1,300 tokens) | On-demand (searched when needed) |
+| **容量** | 总共约 1,300 tokens | 无限制（所有会话） |
+| **速度** | 即时（在系统提示中） | 约 20ms FTS5 查询，约 1ms 滚动 |
+| **成本** | 每次提示的 token 成本 | 免费——无需 LLM 调用 |
+| **用例** | 关键事实始终可用 | 查找特定的过去对话 |
+| **管理** | 由代理手动管理 | 自动——所有会话都存储 |
+| **Token 成本** | 每个会话固定（约 1,300 tokens） | 按需（需要时搜索） |
 
-**Memory** is for critical facts that should always be in context. **Session search** is for "did we discuss X last week?" queries where the agent needs to recall specifics from past conversations.
+**记忆**用于那些应该始终在上下文中的关键事实。**会话搜索**用于"我们上周讨论过 X 吗？"的查询，代理需要从过去的对话中回忆具体细节。
 
-## Configuration
+## 配置
 
 ```yaml
-# In ~/.hermes/config.yaml
+# 在 ~/.hermes/config.yaml 中
 memory:
   memory_enabled: true
   user_profile_enabled: true
-  memory_char_limit: 2200   # ~800 tokens
-  user_char_limit: 1375     # ~500 tokens
-  write_approval: false     # false = write freely (default) | true = require approval
+  memory_char_limit: 2200   # 约 800 tokens
+  user_char_limit: 1375     # 约 500 tokens
+  write_approval: false     # false = 自由写入（默认）| true = 需要批准
 ```
 
-## Controlling memory writes (`write_approval`)
+## 控制记忆写入（`write_approval`）
 
-By default the agent saves memory freely — including from the background
-self-improvement review that runs after a turn. If you'd rather approve saves
-first, set `memory.write_approval: true`. It's a simple on/off gate applied to
-**both** foreground turns and the background review:
+默认情况下，代理自由保存记忆——包括在回合后运行的后台自我改进审查。如果你希望先批准保存，请设置 `memory.write_approval: true`。这是一个简单的开关，适用于**前台回合**和**后台审查**：
 
-| `write_approval` | Behaviour |
+| `write_approval` | 行为 |
 |------------------|-----------|
-| `false` (default) | Write freely — the gate is off (the pre-gate behaviour). |
-| `true` | Require approval before anything is saved. In the interactive CLI, foreground writes prompt you inline (entries are small enough to read in full). Everywhere else — messaging platforms, scripts, and the background self-improvement review — writes are **staged** for review with `/memory pending`. |
+| `false`（默认） | 自由写入——门是关闭的（门前的行为）。 |
+| `true` | 在保存任何内容之前需要批准。在交互式 CLI 中，前台写入会提示你内联（条目足够小，可以完整阅读）。在其他地方——消息平台、脚本和后台自我改进审查——写入会被**暂存**以供审查，使用 `/memory pending`。 |
 
-> To turn memory off entirely (not just gate it), set `memory_enabled: false`.
+> 要完全关闭记忆（不仅仅是门控），请设置 `memory_enabled: false`。
 
-Review staged writes from the CLI or any messaging platform:
+从 CLI 或任何消息平台审查暂存的写入：
 
 ```
-/memory pending             # list staged memory writes (auto ones tagged [auto])
-/memory approve <id>        # apply one (or 'all')
-/memory reject <id>         # drop one (or 'all')
-/memory approval on         # turn the gate on (or 'off') and persist it
+/memory pending             # 列出暂存的记忆写入（自动写入会被标记为 [auto]）
+/memory approve <id>        # 应用一个（或 'all'）
+/memory reject <id>         # 丢弃一个（或 'all'）
+/memory approval on         # 打开门（或 'off'）并持久化
 ```
 
-This is the answer to "the agent saved a wrong assumption about me": set
-`write_approval: true`, and every save — especially the unprompted background
-ones — waits for your yes/no before it ever enters your profile.
+这就是对"代理保存了关于我的错误假设"的答案：设置 `write_approval: true`，每次保存——尤其是那些未经提示的后台保存——都会等待你的同意/拒绝，然后才会进入你的档案。
 
-## Background review notifications (`display.memory_notifications`)
+## 后台审查通知（`display.memory_notifications`）
 
-After a turn, the background self-improvement review may quietly save a memory
-or update a skill. This is Hermes' consent-aware learning loop: repeated
-corrections and durable workflow lessons become compact memory entries or
-procedural skills, while `write_approval` can stage those writes for review
-before they affect future sessions. By default it surfaces a short
-`💾 Memory updated` line in chat so you know it happened. Control how chatty
-that is:
+在一个回合之后，后台自我改进审查可能会静默地保存一条记忆或更新一项技能。这是 Hermes 的知情学习循环：重复的纠正和持久的工作流程经验会变成紧凑的记忆条目或程序性技能，而 `write_approval` 可以暂存这些写入，以便在它们影响未来会话之前进行审查。默认情况下，它会在聊天中显式显示一条简短的 `💾 Memory updated` 行，以便你知道发生了。控制其啰嗦程度：
 
 ```yaml
 display:
-  memory_notifications: on    # off | on (default) | verbose
+  memory_notifications: on    # off | on（默认）| verbose
 ```
 
-| Value | Behaviour |
+| 值 | 行为 |
 |-------|-----------|
-| `off` | No chat notification. The review still runs and still writes — you just don't see a line for it. |
-| `on` (default) | Generic line, e.g. `💾 Memory updated`, `💾 Skill 'foo' patched`. |
-| `verbose` | Includes a compact preview of what changed, e.g. `💾 Memory ➕ User prefers terse replies` or a `"old" → "new"` skill diff snippet. |
+| `off` | 不在聊天中通知。审查仍然运行并仍然写入——只是你看不到它的行。 |
+| `on`（默认） | 通用行，例如 `💾 Memory updated`，`💾 Skill 'foo' patched`。 |
+| `verbose` | 包含一个紧凑的更改预览，例如 `💾 Memory ➕ User prefers terse replies` 或一个 `"old" → "new"` 技能差异片段。 |
 
-> This only governs the **gateway** chat notification. The review itself, and
-> writes to your memory/skill stores, are unaffected by this setting. Set it
-> per-platform via `display.platforms.<platform>.memory_notifications`.
+> 这仅控制**网关**聊天通知。审查本身以及对你记忆/技能存储的写入不受此设置影响。可以通过 `display.platforms.<platform>.memory_notifications` 按平台设置。
 
-## Running the review on a cheaper model (`auxiliary.background_review`)
+## 在更便宜的模型上运行审查（`auxiliary.background_review`）
 
-The review runs on your **main chat model** by default, replaying the
-conversation — which is already warm in the prompt cache, so it's cheap cache
-reads. On an expensive main model you can run the review on a cheaper model
-instead:
+默认情况下，审查在你的**主要聊天模型**上运行，重放对话——这在提示缓存中已经是热的，所以缓存读取很便宜。在昂贵的主要模型上，你可以改为在更便宜的模型上运行审查：
 
 ```yaml
 auxiliary:
   background_review:
     provider: openrouter
-    model: google/gemini-3-flash-preview   # auto (default) = main chat model
+    model: google/gemini-3-flash-preview   # auto（默认）= 主要聊天模型
 ```
 
-When you point it at a model **different** from your main one, the review runs
-there for substantially lower cost (~3–5× in benchmarks). Because a different
-model can't reuse your main model's prompt cache anyway, the fork automatically
-replays a compact **digest** of the conversation (recent turns verbatim + a
-summary of older ones) rather than the full transcript — minimizing what it
-writes to the new cache. Capture holds: in testing, memory capture was
-identical and skill capture near-identical to the main-model review.
+当你将其指向与主要模型**不同**的模型时，审查会在那里以更低成本运行（基准测试中约 3-5 倍）。由于不同的模型无法重用你的主要模型的提示缓存，因此分支会自动重放一个紧凑的对话**摘要**（最近的回合逐字记录 + 旧回合的摘要），而不是完整记录——最小化写入新缓存的内容。捕获保持：在测试中，记忆捕获相同，技能捕获与主要模型审查几乎相同。
 
-Leave it at `auto` (or set it to your main model) and nothing changes — the
-review keeps running on the main model with the full warm-cache replay.
+将其保留为 `auto`（或设置为你的主要模型），则没有任何变化——审查会继续在主要模型上进行，并使用完整的缓存热重放。
 
-## Controlling skill writes (`skills.write_approval`)
+## 控制技能写入（`skills.write_approval`）
 
-Skills use the same on/off gate, but the review UX differs because a
-`SKILL.md` is far too large to read in a chat bubble:
+技能使用相同的开关门，但审查用户体验不同，因为 `SKILL.md` 太大，无法在聊天气泡中阅读：
 
 ```yaml
 skills:
-  write_approval: false     # false = write freely (default) | true = require approval
+  write_approval: false     # false = 自由写入（默认）| true = 需要批准
 ```
 
-When `write_approval: true`, skill writes (create / edit / patch / write_file /
-delete) always **stage** regardless of origin. You review the one-line gist
-inline, but the full diff stays out-of-band:
+当 `write_approval: true` 时，技能写入（创建 / 编辑 / 补丁 / write_file / 删除）无论来源如何，始终**暂存**。你可以在内联中审查一行摘要，但完整差异保持在带外：
 
 ```
-/skills pending             # list staged skill writes + a one-line gist each
-/skills diff <id>           # full unified diff (best viewed in CLI or dashboard)
-/skills approve <id>        # apply it (or 'all')
-/skills reject <id>         # drop it (or 'all')
-/skills approval on         # turn the gate on (or 'off') and persist it
+/skills pending             # 列出暂存的技能写入 + 每一行的摘要
+/skills diff <id>           # 完整统一差异（最好在 CLI 或仪表板中查看）
+/skills approve <id>        # 应用它（或 'all'）
+/skills reject <id>         # 丢弃它（或 'all'）
+/skills approval on         # 打开门（或 'off'）并持久化
 ```
 
-On a messaging platform, approve a skill from its gist + metadata, or open
-`/skills diff` on the CLI / dashboard / the staged file under
-`~/.hermes/pending/skills/<id>.json` when you want to read the whole change.
-Full details in [Gating agent skill writes](/user-guide/features/skills#gating-agent-skill-writes-skillswrite_approval).
+在消息平台上，从其摘要 + 元数据批准一项技能，或者当你想阅读整个更改时，在 CLI / 仪表板 / 暂存文件 `~/.hermes/pending/skills/<id>.json` 中打开 `/skills diff`。完整详情见[门控代理技能写入](/user-guide/features/skills#gating-agent-skill-writes-skillswrite_approval)。
 
+## 外部记忆提供者
 
-## External Memory Providers
+对于超出 MEMORY.md 和 USER.md 的更深入、持久的记忆，Hermes 内置了 8 个外部记忆提供者插件——包括 Honcho、OpenViking、Mem0、Hindsight、Holographic、RetainDB、ByteRover 和 Supermemory。
 
-For deeper, persistent memory that goes beyond MEMORY.md and USER.md, Hermes ships with 8 external memory provider plugins — including Honcho, OpenViking, Mem0, Hindsight, Holographic, RetainDB, ByteRover, and Supermemory.
-
-External providers run **alongside** built-in memory (never replacing it) and add capabilities like knowledge graphs, semantic search, automatic fact extraction, and cross-session user modeling.
+外部提供者**在**内置记忆**旁边**运行（从未取代它），并增加诸如知识图谱、语义搜索、自动事实提取和跨会话用户建模等功能。
 
 ```bash
-hermes memory setup      # pick a provider and configure it
-hermes memory status     # check what's active
+hermes memory setup      # 选择一个提供者并配置它
+hermes memory status     # 检查哪个是活动的
 ```
 
-See the [Memory Providers](./memory-providers.md) guide for full details on each provider, setup instructions, and comparison.
+请参阅[记忆提供者](./memory-providers.md)指南以了解每个提供者的完整详细信息、设置说明和比较。

@@ -1,161 +1,137 @@
----
-title: Web 仪表盘
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/features/web-dashboard.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/web-dashboard.md)
-> 本版本为自用学习用途，非官方翻译。
-
+--- frontmatter ---
 ---
 sidebar_position: 15
 title: "Web Dashboard"
-description: "Browser-based administration panel for managing configuration, API keys, MCP servers, messaging pairing, webhooks, the gateway, memory, credentials, sessions, logs, analytics, cron jobs, and skills"
+description: "基于浏览器的管理面板，用于管理配置、API 密钥、MCP 服务器、消息配对、Webhooks、网关、内存、凭证、会话、日志、分析、定时任务和技能"
 ---
 
-# Web Dashboard
+--- body ---
+# Web 仪表盘 (Web Dashboard)
 
-The web dashboard is a browser-based UI for managing your Hermes Agent installation. Instead of editing YAML files or running CLI commands, you can configure settings, manage API keys, and monitor sessions from a clean web interface.
+Web 仪表盘是一个基于浏览器的 UI，用于管理您的 Hermes Agent 安装。您无需编辑 YAML 文件或运行 CLI 命令，而是可以通过一个简洁的 Web 界面来配置设置、管理 API 密钥和监控会话。
 
 :::tip
-Hosted-mode auth uses Nous Portal OAuth; if you also want the dashboard to talk to a real backend, `hermes setup --portal` wires up the model and tool gateway too. See [Nous Portal](/integrations/nous-portal).
+托管模式认证使用 Nous Portal OAuth；如果您还希望仪表盘与真实后端通信，`hermes setup --portal` 也会连接模型和工具网关。请参阅 [Nous Portal](/integrations/nous-portal)。
 :::
 
-## Quick Start
+## 快速入门
 
 ```bash
 hermes dashboard
 ```
 
-This starts a local web server and opens `http://127.0.0.1:9119` in your browser. The dashboard runs entirely on your machine — no data leaves localhost.
+这将启动一个本地 Web 服务器，并在浏览器中打开 `http://127.0.0.1:9119`。仪表盘完全运行在您的机器上——没有数据离开 localhost。
 
-### Options
+### 选项
 
-| Flag | Default | Description |
+| 标志 | 默认值 | 描述 |
 |------|---------|-------------|
-| `--port` | `9119` | Port to run the web server on |
-| `--host` | `127.0.0.1` | Bind address |
-| `--no-open` | — | Don't auto-open the browser |
-| `--insecure` | off | Allow binding to non-localhost hosts (**DANGEROUS** — exposes API keys on the network; pair with a firewall and strong auth) |
-| `--isolated` | off | When launched from a named profile (`worker dashboard`), run a dedicated per-profile server instead of routing to the machine dashboard |
+| `--port` | `9119` | Web 服务器运行的端口 |
+| `--host` | `127.0.0.1` | 绑定地址 |
+| `--no-open` | — | 不自动打开浏览器 |
+| `--insecure` | 关闭 | 允许绑定到非 localhost 主机 (**危险**——会在网络上暴露 API 密钥；请配合防火墙和强认证使用) |
+| `--isolated` | 关闭 | 当从命名配置文件（`worker dashboard`）启动时，运行专用按配置文件服务器，而不是路由到机器仪表盘 |
 
 ```bash
-# Custom port
+# 自定义端口
 hermes dashboard --port 8080
 
-# Bind to all interfaces (use with caution on shared networks)
+# 绑定到所有接口（在共享网络上请谨慎使用）
 hermes dashboard --host 0.0.0.0
 
-# Start without opening browser
+# 启动时不打开浏览器
 hermes dashboard --no-open
 ```
 
-## Managing multiple profiles
+## 管理多个配置文件
 
-The dashboard is a **machine-level** management surface: one server manages
-every [profile](../profiles.md) on the machine. A profile switcher in the
-sidebar (visible whenever more than one profile exists) decides which
-profile the management pages read and write — Config, API Keys, Skills,
-MCP, Models, and the Chat tab all follow it. While a profile other than
-the dashboard's own is selected, an amber banner names the managed profile
-so the write target is never ambiguous.
+仪表盘是一个**机器级别**的管理界面：一个服务器管理机器上的每个[配置文件](../profiles.md)。侧边栏中的配置文件切换器（当存在多个配置文件时可见）决定管理页面读写哪个配置文件——配置、API 密钥、技能、MCP、模型和聊天选项卡都遵循它。当选择了仪表盘自身配置文件以外的配置文件时，会显示一个琥珀色横幅，指明被管理的配置文件，从而确保写入目标明确。
 
-The selection lives in the URL (`?profile=<name>`), so deep links like
-`http://127.0.0.1:9119/skills?profile=worker` land with the switcher
-preselected and survive refresh.
+选择信息存在于 URL 中（`?profile=<name>`），因此像 `http://127.0.0.1:9119/skills?profile=worker` 这样的深度链接会在页面加载时预先选中切换器，并且在刷新后依然保持。
 
-Launching the dashboard from a profile alias routes to the machine
-dashboard instead of starting a second server:
+从配置文件别名启动仪表盘会路由到机器仪表盘，而不是启动第二个服务器：
 
 ```bash
 worker dashboard
-# → already running: opens the browser at ?profile=worker
-# → not running:     starts the machine dashboard with "worker" preselected
+# → 如果已运行：在浏览器中打开，URL 为 ?profile=worker
+# → 如果未运行：启动机器仪表盘，并预先选中 "worker"
 ```
 
-Pass `--isolated` to opt out and run a dedicated server scoped to that
-profile (the pre-unification behavior — useful if you deliberately expose
-different profiles' dashboards with different auth).
+传递 `--isolated` 标志可退出此行为，并运行一个仅限该配置文件的专用服务器（即统一前的行为——如果您有意通过不同认证暴露不同配置文件的仪表盘，则很有用）。
 
-The **Chat** tab follows the switcher too: a scoped chat spawns its PTY
-child with the selected profile's `HERMES_HOME`, so the conversation runs
-with that profile's model, skills, memory, and session history. Switching
-profiles starts a fresh terminal session.
+**聊天**选项卡也遵循切换器的选择：作用域内的聊天会使用所选配置文件的 `HERMES_HOME` 来生成其 PTY 子进程，因此对话将使用该配置文件的模型、技能、内存和会话历史。切换配置文件会启动一个新的终端会话。
 
-What stays per-profile and is *not* absorbed by the switcher: gateway
-processes (manage them via `hermes -p <name> gateway …`), each profile's
-session database, and cron schedulers (the Cron page already aggregates
-across profiles with its own filter).
+哪些内容是按配置文件管理且**不被**切换器吸收的：网关进程（通过 `hermes -p <name> gateway …` 管理）、每个配置文件的会话数据库以及 cron 调度器（Cron 页面已经使用自己的过滤器跨配置文件汇总）。
 
-## Prerequisites
+## 前提条件
 
-The default `hermes-agent` install does not ship the HTTP stack or PTY helper — those are optional extras. The **web dashboard** needs FastAPI and Uvicorn (`web` extra). The **Chat** tab also needs `ptyprocess` to spawn the embedded TUI behind a pseudo-terminal (`pty` extra on POSIX). Install both with:
+默认的 `hermes-agent` 安装不包含 HTTP 栈或 PTY 辅助程序——这些都是可选的额外组件。**Web 仪表盘**需要 FastAPI 和 Uvicorn（`web` 额外组件）。**聊天**选项卡还需要 `ptyprocess`，以便在伪终端后生成嵌入式 TUI（POSIX 上的 `pty` 额外组件）。同时安装两者：
 
 ```bash
 cd ~/.hermes/hermes-agent && uv pip install -e ".[web,pty]"
 ```
 
-The `web` extra pulls in FastAPI/Uvicorn; `pty` pulls in `ptyprocess` (POSIX) or `pywinpty` (native Windows — note that the embedded TUI itself still requires WSL). `cd ~/.hermes/hermes-agent && uv pip install -e ".[all]"` includes both extras and is the easiest path if you also want messaging/voice/etc.
+`web` 额外组件拉取 FastAPI/Uvicorn；`pty` 拉取 `ptyprocess`（POSIX）或 `pywinpty`（原生 Windows——注意嵌入式 TUI 本身仍然需要 WSL）。`cd ~/.hermes/hermes-agent && uv pip install -e ".[all]"` 包含这两个额外组件，如果您也需要消息/语音等功能，这是最简单的方式。
 
-When you run `hermes dashboard` without the dependencies, it will tell you what to install. If the frontend hasn't been built yet and `npm` is available, it builds automatically on first launch.
+当您在没有依赖项的情况下运行 `hermes dashboard` 时，它会告诉您需要安装什么。如果前端尚未构建且 `npm` 可用，它会在首次启动时自动构建。
 
-The Chat tab is part of every `hermes dashboard` launch — the embedded browser chat pane (running the TUI over PTY/WebSocket) is always available, with no extra flag required.
+聊天选项卡是每次 `hermes dashboard` 启动的一部分——嵌入式浏览器聊天面板（通过 PTY/WebSocket 运行 TUI）始终可用，无需额外的标志。
 
-## Pages
+## 页面
 
-### Status
+### 状态
 
-The landing page shows a live overview of your installation:
+着陆页显示您的安装情况的实时概览：
 
-- **Agent version** and release date
-- **Gateway status** — running/stopped, PID, connected platforms and their state
-- **Active sessions** — count of sessions active in the last 5 minutes
-- **Recent sessions** — list of the 20 most recent sessions with model, message count, token usage, and a preview of the conversation
+- **Agent 版本**和发布日期
+- **网关状态**——运行中/已停止，PID，连接的平台及其状态
+- **活动会话**——过去 5 分钟内活跃的会话数
+- **近期会话**——最近 20 个会话的列表，包含模型、消息数、令牌使用量以及对话的预览
 
-The status page auto-refreshes every 5 seconds.
+状态页面每 5 秒自动刷新一次。
 
-### Chat
+### 聊天
 
-The **Chat** tab embeds the full Hermes TUI (the same interface you get from `hermes --tui`) directly in the browser. Everything you can do in the terminal TUI — slash commands, model picker, tool-call cards, markdown streaming, clarify/sudo/approval prompts, skin theming — works identically here, because the dashboard is running the real TUI binary and rendering its ANSI output through [xterm.js](https://xtermjs.org/) with its WebGL renderer for pixel-perfect cell layout.
+**聊天**选项卡将完整的 Hermes TUI（与您从 `hermes --tui` 获得的界面相同）直接嵌入到浏览器中。您在终端 TUI 中可以做的所有事情——斜杠命令、模型选择器、工具调用卡片、Markdown 流式输出、clarify/sudo/approval 提示、皮肤主题——在这里都完全相同，因为仪表盘正在运行真正的 TUI 二进制文件，并通过 [xterm.js](https://xtermjs.org/) 及其 WebGL 渲染器渲染其 ANSI 输出，以实现像素完美的单元格布局。
 
-**How it works:**
+**工作原理：**
 
-- `/api/pty` opens a WebSocket authenticated with the dashboard's session token
-- The server spawns `hermes --tui` behind a POSIX pseudo-terminal
-- Keystrokes travel to the PTY; ANSI output streams back to the browser
-- xterm.js's WebGL renderer paints each cell to an integer-pixel grid; mouse tracking (SGR 1006), wide characters (Unicode 11), and box-drawing glyphs all render natively
-- Resizing the browser window resizes the TUI via the `@xterm/addon-fit` addon
+- `/api/pty` 打开一个 WebSocket，使用仪表盘的会话令牌进行认证
+- 服务器在 POSIX 伪终端后生成 `hermes --tui`
+- 按键事件发送到 PTY；ANSI 输出流式传输回浏览器
+- xterm.js 的 WebGL 渲染器将每个单元格绘制到整数像素网格上；鼠标跟踪（SGR 1006）、宽字符（Unicode 11）和制表符绘制字形都原生渲染
+- 调整浏览器窗口大小会通过 `@xterm/addon-fit` 附加组件调整 TUI 大小
 
-**Resume an existing session:** from the **Sessions** tab, click the play icon (▶) next to any session. That jumps to `/chat?resume=<id>` and launches the TUI with `--resume`, loading the full history.
+**恢复现有会话：** 从**会话**选项卡中，单击任何会话旁边的播放图标（▶）。这将跳转到 `/chat?resume=<id>`，并使用 `--resume` 启动 TUI，加载完整历史记录。
 
-**Session switcher (right rail):** the Chat tab carries its own ChatGPT-style conversation list in a thin right rail beside the terminal, so you can swap conversations without leaving the page. The rail stacks the model picker on top and the session list directly below it; the terminal takes up most of the screen. The list shows your most recent sessions for the active profile — title (falling back to a message preview), relative last-active time, message count, and the source channel for non-CLI sessions. Click any row to resume it in place (the terminal respawns with that conversation's history); the active session is highlighted. **New chat** starts a fresh session, and a refresh control re-pulls the list. The rail is read-only for switching — delete, rename, export, and bulk cleanup still live on the **Sessions** tab. On narrow screens it folds into a slide-over panel.
+**会话切换器（右侧栏）：** 聊天选项卡在终端旁边带有一个自己的 ChatGPT 风格对话列表，位于右侧的窄栏中，因此您无需离开页面即可切换对话。该栏将模型选择器放在顶部，会话列表直接放在其下方；终端占据大部分屏幕。列表显示活动配置文件的最近会话——标题（回退到消息预览）、相对上次活动时间、消息数以及非 CLI 会话的源渠道。单击任何行即可就地恢复它（终端会使用该对话的历史记录重新生成）；活动会话会高亮显示。**新建聊天**启动一个新会话，刷新控件重新拉取列表。该栏是只读的，仅用于切换——删除、重命名、导出和批量清理仍位于**会话**选项卡中。在窄屏幕上，它会折叠成一个滑出面板。
 
-**Prerequisites:**
+**前提条件：**
 
-- Node.js (same requirement as `hermes --tui`; the TUI bundle is built on first launch)
-- `ptyprocess` — installed by the `pty` extra (`cd ~/.hermes/hermes-agent && uv pip install -e ".[web,pty]"`, or `[all]` covers both)
-- POSIX kernel (Linux, macOS, or WSL2).  The `/chat` terminal pane specifically needs a POSIX PTY — native Windows Python has no equivalent, so on a native Windows install the rest of the dashboard (sessions, jobs, metrics, config editor) works but the `/chat` tab will show a banner telling you to use WSL2 for that feature.
+- Node.js（与 `hermes --tui` 相同的要求；TUI 捆绑包在首次启动时构建）
+- `ptyprocess`——由 `pty` 额外组件安装（`cd ~/.hermes/hermes-agent && uv pip install -e ".[web,pty]"`，或者 `[all]` 涵盖两者）
+- POSIX 内核（Linux、macOS 或 WSL2）。`/chat` 终端面板特别需要 POSIX PTY——原生 Windows Python 没有等效项，因此在原生 Windows 安装上，仪表盘的其余部分（会话、任务、指标、配置编辑器）可以工作，但 `/chat` 选项卡会显示一个横幅，告诉您为此功能使用 WSL2。
 
-Close the browser tab and the PTY is reaped cleanly on the server. Re-opening spawns a fresh session.
+关闭浏览器选项卡后，服务器上的 PTY 会被干净地回收。重新打开会生成一个新的会话。
 
-To point [Hermes Desktop](#connecting-hermes-desktop-to-a-remote-backend) at a dashboard running on another machine instead of its own bundled backend, see the remote-backend section below.
+要将 [Hermes Desktop](#connecting-hermes-desktop-to-a-remote-backend) 指向另一台机器上运行的仪表盘，而不是其自己的捆绑后端，请参阅下面的远程后端部分。
 
-### Connecting Hermes Desktop to a remote backend
+### 将 Hermes Desktop 连接到远程后端
 
-Hermes Desktop normally launches its own local backend, but it can also attach to a dashboard running on a remote machine (a VM, a homelab box, etc.) via **Settings → Gateway → Remote gateway**. This is the most common source of "Desktop says the backend is ready but chat never works" reports, because Desktop's readiness check verifies less than the live chat connection actually needs.
+Hermes Desktop 通常启动自己的本地后端，但它也可以通过**设置 → 网关 → 远程网关**连接到远程机器（VM、家庭实验室机器等）上运行的仪表盘。这是 "Desktop 说后端已就绪但聊天始终无法工作" 报告的最常见原因，因为 Desktop 的就绪检查验证的内容少于实时聊天连接实际需要的内容。
 
-:::info Prerequisite: a `hermes dashboard` must be running on the remote host
-The "remote backend" Desktop connects to **is** a `hermes dashboard` process running on the remote machine — the same server this page documents. It has to be up and reachable before any of the steps below matter; Desktop attaches to it, it doesn't start it for you. Keep it running under `systemd`/`tmux`/etc. so it survives logout and reboots. The **gateway** (Telegram/Discord/Slack/etc.) is a *separate* long-running process — start it independently if you rely on messaging channels; it is not the thing the desktop app connects to.
+:::info 前提条件：远程主机上必须运行 `hermes dashboard`
+Desktop 连接到的 "远程后端" **就是**在远程机器上运行的 `hermes dashboard` 进程——本文档介绍的同一个服务器。在任何后续步骤之前，它必须已启动并可访问；Desktop 会连接到它，而不是为您启动它。请将其保持在 `systemd`/`tmux` 等环境下运行，以便在注销和重启后仍然存在。**网关**（Telegram/Discord/Slack 等）是一个*独立*的长期运行进程——如果您依赖消息渠道，请独立启动它；桌面应用连接的不是它。
 :::
 
-Desktop's "remote backend is ready" probe only hits `GET /api/status`, which is a public endpoint — it answers as soon as *any* dashboard is running on the host. The live chat connection is a **separate** WebSocket to `/api/ws` (and `/api/pty`), and that socket is gated by two more checks the status probe never touches:
+Desktop 的 "远程后端已就绪" 探测仅访问 `GET /api/status`，这是一个公共端点——只要主机上运行*任何*仪表盘，它就会响应。实时聊天连接是到 `/api/ws`（和 `/api/pty`）的一个**独立** WebSocket，该套接字受到状态探测从未触及的两个额外检查的限制：
 
-1. **You must be authenticated.** When the dashboard is bound to a non-loopback address it engages its auth gate. Protect it with a username and password (the bundled [username/password provider](#usernamepassword-provider-no-oauth-idp)); Desktop signs in once and reuses the resulting session for the WebSocket via a single-use ticket. Without a configured provider, a non-loopback dashboard **fails closed at startup**.
-2. **The bind host must allow the client and match the Host header.** A loopback bind (`127.0.0.1`) only accepts loopback clients, so a remote machine is rejected at the socket layer regardless of credentials. Bind to a non-loopback address (`--host 0.0.0.0`) so the peer-IP guard lets the remote client through. The remote URL you enter in Desktop must reach the dashboard by the same host it bound to — the DNS-rebinding guard requires the Host header to match.
+1. **您必须通过身份验证。** 当仪表盘绑定到非回环地址时，它会启用其认证门。使用用户名和密码保护它（捆绑的 [用户名/密码提供程序](#usernamepassword-provider-no-oauth-idp)）；Desktop 登录一次，并通过一次性票据重用生成的会话用于 WebSocket。如果没有配置提供程序，非回环仪表盘**在启动时失败关闭**。
+2. **绑定主机必须允许客户端并匹配 Host 头。** 回环绑定（`127.0.0.1`）仅接受回环客户端，因此无论凭证如何，远程机器都会在套接字层被拒绝。绑定到非回环地址（`--host 0.0.0.0`）以便对等 IP 守卫允许远程客户端通过。您在 Desktop 中输入的远程 URL 必须通过仪表盘绑定的同一主机访问它——DNS 重新绑定守卫要求 Host 头匹配。
 
-#### Remote dashboard setup
+#### 远程仪表盘设置
 
-Set a username and password, then run the dashboard bound to a reachable address. For a `systemd` service:
+设置用户名和密码，然后运行绑定到可达地址的仪表盘。对于 `systemd` 服务：
 
 ```ini
 [Service]
@@ -164,7 +140,7 @@ ExecStart=/path/to/venv/bin/python -m hermes_cli.main dashboard \
     --host 0.0.0.0 --port 9119 --no-open
 ```
 
-with `~/.hermes/.env` containing:
+其中 `~/.hermes/.env` 包含：
 
 ```bash
 HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
@@ -172,10 +148,10 @@ HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=choose-a-strong-password
 HERMES_DASHBOARD_BASIC_AUTH_SECRET=<32+ random bytes; openssl rand -base64 32>
 ```
 
-Then in Desktop enter the **Remote URL** (e.g. `http://VM_IP:9119`) and **Sign in** with that username and password. See the [username/password provider](#usernamepassword-provider-no-oauth-idp) section for the full configuration surface.
+然后在 Desktop 中输入**远程 URL**（例如 `http://VM_IP:9119`）并使用该用户名和密码**登录**。有关完整的配置表面，请参阅 [用户名/密码提供程序](#usernamepassword-provider-no-oauth-idp) 部分。
 
-:::tip Verify the gate is on before retrying Desktop
-From any machine, check that the dashboard advertises the username/password provider:
+:::tip 在重试 Desktop 之前验证门已开启
+从任何机器上检查仪表盘是否宣告了用户名/密码提供程序：
 
 ```bash
 curl -s http://VM_IP:9119/api/status | jq '.auth_required, .auth_providers'
@@ -183,430 +159,412 @@ curl -s http://VM_IP:9119/api/status | jq '.auth_required, .auth_providers'
 # ["basic"]
 ```
 
-- `auth_required: true` and `"basic"` in the providers list → Desktop's **Sign in** flow will work.
-- `auth_required: false` → the bind is loopback, or the gate didn't engage. Bind to a non-loopback address.
-- `auth_required: true` but no `"basic"` provider → the username/password env vars aren't loaded. Fix those first.
+- `auth_required: true` 且提供程序列表中包含 `"basic"` → Desktop 的**登录**流程将正常工作。
+- `auth_required: false` → 绑定是回环，或者门未启用。请绑定到非回环地址。
+- `auth_required: true` 但没有 `"basic"` 提供程序 → 用户名/密码环境变量未加载。请先修复这些问题。
 :::
 
-If `/api/status` shows the gate is on with the `"basic"` provider and Desktop *still* fails to connect after signing in, the issue is past basic setup — grab a fresh `desktop.log` (Settings → Gateway → Open logs) plus the dashboard's logs from the same retry window and look for the `/api/ws` close code (4403 = chat WS rejected by the request guard, e.g. Host/peer mismatch; 4401 = the WS ticket didn't authenticate).
+如果 `/api/status` 显示门已开启且包含 `"basic"` 提供程序，但 Desktop *仍然*在登录后无法连接，则问题超出了基本设置——获取一个新的 `desktop.log`（设置 → 网关 → 打开日志）以及相同重试窗口内的仪表盘日志，并查找 `/api/ws` 关闭代码（4403 = 聊天 WS 被请求守卫拒绝，例如 Host/对等端不匹配；4401 = WS 票据未通过认证）。
 
-### Config
+### 配置
 
-A form-based editor for `config.yaml`. All 150+ configuration fields are auto-discovered from `DEFAULT_CONFIG` and organized into tabbed categories:
+用于编辑 `config.yaml` 的基于表单的编辑器。所有 150+ 个配置字段都从 `DEFAULT_CONFIG` 自动发现，并按标签页分类组织：
 
-![Config admin page — section filters on the left, auto-discovered fields on the right](/img/dashboard/admin-config.png)
+![配置管理页面——左侧是部分筛选器，右侧是自动发现的字段](/img/dashboard/admin-config.png)
 
 
-- **model** — default model, provider, base URL, reasoning settings
-- **terminal** — backend (local/docker/ssh/modal), timeout, shell preferences
-- **display** — skin, tool progress, resume display, spinner settings
-- **agent** — max iterations, gateway timeout, service tier
-- **delegation** — subagent limits, reasoning effort
-- **memory** — provider selection, context injection settings
-- **approvals** — dangerous command approval mode (ask/yolo/deny)
-- And more — every section of config.yaml has corresponding form fields
+- **模型** — 默认模型、提供程序、基础 URL、推理设置
+- **终端** — 后端（本地/容器/SSH/Modal）、超时、shell 偏好
+- **显示** — 皮肤、工具进度、恢复显示、微调器设置
+- **Agent** — 最大迭代次数、网关超时、服务层级
+- **委托** — 子代理限制、推理努力
+- **内存** — 提供程序选择、上下文注入设置
+- **审批** — 危险命令审批模式（ask/yolo/deny）
+- 以及更多——config.yaml 的每个部分都有对应的表单字段
 
-Fields with known valid values (terminal backend, skin, approval mode, etc.) render as dropdowns. Booleans render as toggles. Everything else is a text input.
+具有已知有效值的字段（终端后端、皮肤、审批模式等）呈现为下拉菜单。布尔值呈现为开关。其他所有内容都是文本输入。
 
-**Actions:**
+**操作：**
 
-- **Save** — writes changes to `config.yaml` immediately
-- **Reset to defaults** — reverts all fields to their default values (doesn't save until you click Save)
-- **Export** — downloads the current config as JSON
-- **Import** — uploads a JSON config file to replace the current values
+- **保存** — 立即将更改写入 `config.yaml`
+- **重置为默认值** — 将所有字段恢复为其默认值（直到单击保存才会保存）
+- **导出** — 将当前配置下载为 JSON
+- **导入** — 上传 JSON 配置文件以替换当前值
 
 :::tip
-Config changes take effect on the next agent session or gateway restart. The web dashboard edits the same `config.yaml` file that `hermes config set` and the gateway read from.
+配置更改将在下一次 Agent 会话或网关重启时生效。Web 仪表盘编辑的是同一个 `config.yaml` 文件，`hermes config set` 和网关也读取该文件。
 :::
 
-### API Keys
+### API 密钥
 
-Manage the `.env` file where API keys and credentials are stored. Keys are grouped by category:
+管理存储 API 密钥和凭证的 `.env` 文件。密钥按类别分组：
 
-- **LLM Providers** — OpenRouter, Anthropic, OpenAI, DeepSeek, etc.
-- **Tool API Keys** — Browserbase, Firecrawl, Tavily, ElevenLabs, etc.
-- **Messaging Platforms** — Telegram, Discord, Slack bot tokens, etc.
-- **Agent Settings** — non-secret env vars like `API_SERVER_ENABLED`
+- **LLM 提供程序** — OpenRouter、Anthropic、OpenAI、DeepSeek 等
+- **工具 API 密钥** — Browserbase、Firecrawl、Tavily、ElevenLabs 等
+- **消息平台** — Telegram、Discord、Slack 机器人令牌等
+- **Agent 设置** — 非秘密的环境变量，如 `API_SERVER_ENABLED`
 
-Each key shows:
-- Whether it's currently set (with a redacted preview of the value)
-- A description of what it's for
-- A link to the provider's signup/key page
-- An input field to set or update the value
-- A delete button to remove it
+每个密钥显示：
+- 是否已设置（带有值的脱敏预览）
+- 用途描述
+- 指向提供程序注册/密钥页面的链接
+- 用于设置或更新值的输入字段
+- 删除按钮以移除它
 
-Advanced/rarely-used keys are hidden by default behind a toggle.
+高级/不常用的密钥默认隐藏在切换开关后面。
 
-### Sessions
+### 会话
 
-Browse and inspect all agent sessions. Each row shows the session title, source platform icon (CLI, Telegram, Discord, Slack, cron), model name, message count, tool call count, and how long ago it was active. Live sessions are marked with a pulsing badge.
+浏览和检查所有 Agent 会话。每行显示会话标题、来源平台图标（CLI、Telegram、Discord、Slack、cron）、模型名称、消息数、工具调用数以及上次活动时间。活动会话标有脉动徽章。
 
-- **Search** — full-text search across all message content using FTS5. Results show highlighted snippets and auto-scroll to the first matching message when expanded.
-- **Stats** — a summary bar shows total sessions, how many are active in the store, archived count, total messages, and a per-source breakdown.
-- **Expand** — click a session to load its full message history. Messages are color-coded by role (user, assistant, system, tool) and rendered as Markdown with syntax highlighting.
-- **Tool calls** — assistant messages with tool calls show collapsible blocks with the function name and JSON arguments.
-- **Rename** — set or clear a session's title inline (pencil icon).
-- **Export** — download a session (metadata + full message history) as JSON (download icon).
-- **Prune** — the header "Prune old sessions" button deletes ended sessions older than N days.
-- **Delete** — remove a session and its message history with the trash icon.
+- **搜索** — 使用 FTS5 对所有消息内容进行全文搜索。结果显示高亮片段，展开时会自动滚动到第一个匹配的消息。
+- **统计** — 摘要栏显示总会话数、存储中活动的会话数、归档计数、总消息数以及按来源的细分。
+- **展开** — 单击会话以加载其完整消息历史。消息按角色（用户、助手、系统、工具）颜色编码，并渲染为带有语法高亮的 Markdown。
+- **工具调用** — 带有工具调用的助手消息显示可折叠块，其中包含函数名称和 JSON 参数。
+- **重命名** — 内联设置或清除会话标题（铅笔图标）。
+- **导出** — 将会话（元数据 + 完整消息历史）下载为 JSON（下载图标）。
+- **修剪** — 标题中的 "修剪旧会话" 按钮删除早于 N 天的已结束会话。
+- **删除** — 使用垃圾箱图标删除会话及其消息历史。
 
-![Sessions admin page — stats bar, prune, and per-row rename / export / delete](/img/dashboard/admin-sessions.png)
+![会话管理页面——统计栏、修剪以及每行的重命名/导出/删除](/img/dashboard/admin-sessions.png)
 
-### Logs
+### 日志
 
-View agent, gateway, and error log files with filtering and live tailing.
+查看 Agent、网关和错误日志文件，支持过滤和实时跟踪。
 
-- **File** — switch between `agent`, `errors`, and `gateway` log files
-- **Level** — filter by log level: ALL, DEBUG, INFO, WARNING, or ERROR
-- **Component** — filter by source component: all, gateway, agent, tools, cli, or cron
-- **Lines** — choose how many lines to display (50, 100, 200, or 500)
-- **Auto-refresh** — toggle live tailing that polls for new log lines every 5 seconds
-- **Color-coded** — log lines are colored by severity (red for errors, yellow for warnings, dim for debug)
+- **文件** — 在 `agent`、`errors` 和 `gateway` 日志文件之间切换
+- **级别** — 按日志级别过滤：ALL、DEBUG、INFO、WARNING 或 ERROR
+- **组件** — 按来源组件过滤：所有、网关、Agent、工具、CLI 或 cron
+- **行数** — 选择显示多少行（50、100、200 或 500）
+- **自动刷新** — 切换实时跟踪，每 5 秒轮询一次新的日志行
+- **颜色编码** — 日志行按严重性着色（红色表示错误，黄色表示警告，暗淡表示调试）
 
-### Analytics
+### 分析
 
-Usage and cost analytics computed from session history. Select a time period (7, 30, or 90 days) to see:
+根据会话历史计算的使用情况和成本分析。选择一个时间段（7、30 或 90 天）以查看：
 
-- **Summary cards** — total tokens (input/output), cache hit percentage, total estimated or actual cost, and total session count with daily average
-- **Daily token chart** — stacked bar chart showing input and output token usage per day, with hover tooltips showing breakdowns and cost
-- **Daily breakdown table** — date, session count, input tokens, output tokens, cache hit rate, and cost for each day
-- **Per-model breakdown** — table showing each model used, its session count, token usage, and estimated cost
+- **摘要卡片** — 总令牌（输入/输出）、缓存命中百分比、总估计或实际成本、总会话数及日均值
+- **每日令牌图表** — 堆积条形图，显示每天的输入和输出令牌使用量，带有悬停工具提示显示细分和成本
+- **每日细分表** — 日期、会话数、输入令牌、输出令牌、缓存命中率和每天的成本
+- **按模型细分** — 表格显示使用的每个模型、其会话数、令牌使用量和估计成本
 
 ### Cron
 
-Create and manage scheduled cron jobs that run agent prompts on a recurring schedule.
+创建和管理按计划重复运行 Agent 提示的定时 cron 任务。
 
-- **Create** — fill in a name (optional), prompt, cron expression (e.g. `0 9 * * *`), and delivery target (local, Telegram, Discord, Slack, or email)
-- **Job list** — each job shows its name, prompt preview, schedule expression, state badge (enabled/paused/error), delivery target, last run time, and next run time
-- **Pause / Resume** — toggle a job between active and paused states
-- **Edit** — open a pre-filled modal to change a job's prompt, schedule, name, or delivery target
-- **Trigger now** — immediately execute a job outside its normal schedule
-- **Delete** — permanently remove a cron job
+- **创建** — 填写名称（可选）、提示、cron 表达式（例如 `0 9 * * *`）和传递目标（本地、Telegram、Discord、Slack 或电子邮件）
+- **任务列表** — 每个任务显示其名称、提示预览、计划表达式、状态徽章（已启用/暂停/错误）、传递目标、上次运行时间和下次运行时间
+- **暂停/恢复** — 在活动状态和暂停状态之间切换任务
+- **编辑** — 打开预填充的模态框以更改任务的提示、计划、名称或传递目标
+- **立即触发** — 在正常计划之外立即执行任务
+- **删除** — 永久移除 cron 任务
 
-### Profiles
+### 配置文件
 
-Create and manage [profiles](../profiles.md) — isolated Hermes instances with their own config, skills, and sessions.
+创建和管理[配置文件](../profiles.md)——具有自己的配置、技能和会话的隔离 Hermes 实例。
 
-- **Profile cards** — each shows its model/provider, skill count, gateway state, description, and badges (active, default, alias)
-- **Create** — name + optional clone-from-default / clone-everything / no-bundled-skills, description, and model; the dedicated Profile Builder page (`/profiles/new`) offers the full flow (model, MCPs, skills)
-- **Manage skills & tools** — jumps to the Skills page scoped to that profile (sets the sidebar profile switcher)
-- **Set as active** — flips the sticky default that **future CLI/gateway runs** pick up (same as `hermes profile use`). This does *not* change what the dashboard manages — that's the profile switcher's job
-- **Edit model / description / SOUL** — inline editors writing into that profile
-- **Rename / Delete** — named profiles only
+- **配置文件卡片** — 每个显示其模型/提供程序、技能数量、网关状态、描述和徽章（活动、默认、别名）
+- **创建** — 名称 + 可选从默认克隆/克隆所有内容/无捆绑技能、描述和模型；专用的配置文件生成器页面（`/profiles/new`）提供完整流程（模型、MCP、技能）
+- **管理技能和工具** — 跳转到限定于该配置文件的技能页面（设置侧边栏配置文件切换器）
+- **设为活动** — 切换粘性默认值，**将来的 CLI/网关运行**会选取（与 `hermes profile use` 相同）。这*不*会更改仪表盘管理的内容——那是配置文件切换器的工作
+- **编辑模型/描述/SOUL** — 内联编辑器，写入该配置文件
+- **重命名/删除** — 仅限命名配置文件
 
-### Skills
+### 技能
 
-Browse, search, and toggle installed skills and toolsets, and install new ones from the hub. Skills are loaded from `~/.hermes/skills/` and grouped by category.
+浏览、搜索和切换已安装的技能和工具集，并从中心安装新的技能和工具集。技能从 `~/.hermes/skills/` 加载，并按类别分组。
 
-- **Search** — filter installed skills and toolsets by name, description, or category
-- **Category filter** — click category pills to narrow the list (e.g. MLOps, MCP, Red Teaming, AI)
-- **Toggle** — enable or disable individual skills with a switch. Changes take effect on the next session.
-- **Toolsets** — a separate view shows built-in toolsets (file operations, web browsing, etc.) with their active/inactive status, setup requirements, and list of included tools
-- **Browse hub** — a third view searches the skill hub across all sources (the same as `hermes skills search`), installs any result by identifier with a live install log, and offers an "Update all" button to refresh installed skills.
+- **搜索** — 按名称、描述或类别过滤已安装的技能和工具集
+- **类别筛选器** — 单击类别药丸以缩小列表（例如 MLOps、MCP、红队、AI）
+- **切换** — 使用开关启用或禁用单个技能。更改将在下一次会话时生效。
+- **工具集** — 一个单独的视图显示内置工具集（文件操作、网页浏览等），包含其活动/非活动状态、设置要求和包含的工具列表
+- **浏览中心** — 第三个视图跨所有来源搜索技能中心（与 `hermes skills search` 相同），通过标识符安装任何结果并显示实时安装日志，并提供"全部更新"按钮以刷新已安装的技能。
 
-![Skills admin page — the Browse hub view: search, install, and update](/img/dashboard/admin-skills-hub.png)
+![技能管理页面——浏览中心视图：搜索、安装和更新](/img/dashboard/admin-skills-hub.png)
 
 ### MCP
 
-Manage [MCP](/integrations/mcp) servers without the CLI. The same `mcp_servers`
-block in `config.yaml` that `hermes mcp` reads from.
+无需 CLI 即可管理 [MCP](/integrations/mcp) 服务器。与 `hermes mcp` 读取的 `mcp_servers` 块相同，位于 `config.yaml` 中。
 
-**Your MCP servers:**
+**您的 MCP 服务器：**
 
-- **Add** — register an HTTP/SSE server (URL) or a stdio server (command + args), with optional `KEY=VALUE` environment variables for stdio servers
-- **Enable / disable** — toggle a server on or off without deleting it. A disabled server stays in config so you can re-enable it later. Takes effect on the next gateway restart.
-- **Test** — connect to a server, list its tools, and disconnect — verifies the connection before the agent depends on it
-- **Remove** — delete a server from the config
-- Secret-shaped env values are redacted in the list view
+- **添加** — 注册 HTTP/SSE 服务器（URL）或 stdio 服务器（命令 + 参数），可选的 `KEY=VALUE` 环境变量用于 stdio 服务器
+- **启用/禁用** — 切换服务器开启或关闭而不删除它。禁用的服务器保留在配置中，以便稍后可以重新启用。更改在下一次网关重启时生效。
+- **测试** — 连接到服务器，列出其工具，然后断开连接——在 Agent 依赖它之前验证连接
+- **移除** — 从配置中删除服务器
+- 秘密形式的环境值在列表视图中被脱敏
 
-**Catalog:** browse the Nous-approved MCP servers (the bundled `optional-mcps/`
-catalog) and install any of them with one click. Entries that need API keys
-prompt for them inline; the values go to `.env`. This is the same catalog
-`hermes mcp catalog` / `hermes mcp install` use.
+**目录：** 浏览 Nous 批准的 MCP 服务器（捆绑的 `optional-mcps/` 目录），并一键安装其中任何一个。需要 API 密钥的条目会内联提示输入这些密钥；值会进入 `.env`。这与 `hermes mcp catalog` / `hermes mcp install` 使用的目录相同。
 
-![MCP admin page — your servers with enable/disable toggles, plus the install catalog](/img/dashboard/admin-mcp.png)
+![MCP 管理页面——您的服务器带有启用/禁用开关，以及安装目录](/img/dashboard/admin-mcp.png)
 
 ### Webhooks
 
-Manage dynamic [webhook subscriptions](/user-guide/messaging/webhooks). The
-webhook platform must be enabled in messaging settings first; the page shows a
-hint when it isn't.
+管理动态 [Webhook 订阅](/user-guide/messaging/webhooks)。必须先在消息设置中启用 Webhook 平台；如果未启用，页面会显示提示。
 
-- **Create** — name, description, event filter, delivery target, optional direct-delivery mode, and an agent prompt. On creation the page surfaces the route URL and the one-time HMAC secret to copy.
-- **Enable / disable** — toggle a subscription on or off. Disabled routes stay in the subscriptions file but the gateway rejects their incoming events (403). The gateway hot-reloads the file, so the change takes effect on the next event — no restart needed.
-- **List** — each subscription shows its URL, events, and delivery target
-- **Delete** — remove a subscription
+- **创建** — 名称、描述、事件筛选器、传递目标、可选的直接传递模式以及 Agent 提示。创建后，页面会显示路由 URL 和一次性 HMAC 密钥供您复制。
+- **启用/禁用** — 切换订阅开启或关闭。禁用的路由保留在订阅文件中，但网关会拒绝其传入事件（403）。网关会热重载该文件，因此更改会在下一个事件时生效——无需重启。
+- **列表** — 每个订阅显示其 URL、事件和传递目标
+- **删除** — 移除订阅
 
-![Webhooks admin page — subscriptions with enable/disable toggles](/img/dashboard/admin-webhooks.png)
+![Webhooks 管理页面——带有启用/禁用开关的订阅](/img/dashboard/admin-webhooks.png)
 
-### Pairing
+### 配对
 
-Approve and revoke messaging users without the CLI — how a remote admin
-onboards Telegram/Discord/etc. users to a paired gateway. Full parity with
-`hermes pairing`.
+无需 CLI 即可批准和撤销消息用户——远程管理员如何将 Telegram/Discord 等用户引入配对网关。与 `hermes pairing` 功能完全一致。
 
-- **Pending requests** — each shows platform, code, user, and age, with an Approve button
-- **Approved users** — each shows platform and user, with a Revoke button
-- **Clear pending** — drop all outstanding pairing codes
+- **待处理请求** — 每个显示平台、代码、用户和年龄，带有批准按钮
+- **已批准的用户** — 每个显示平台和用户，带有撤销按钮
+- **清除待处理** — 删除所有未完成的配对代码
 
-![Pairing admin page](/img/dashboard/admin-pairing.png)
+![配对管理页面](/img/dashboard/admin-pairing.png)
 
-### Channels
+### 渠道
 
-Connect Hermes to any messaging platform from the browser — full parity with
-`hermes setup gateway`. The page lists every supported channel (Telegram,
-Discord, Slack, Matrix, Mattermost, WhatsApp, Signal, BlueBubbles/iMessage,
-Email, SMS/Twilio, DingTalk, Feishu/Lark, WeCom, WeChat, QQ Bot, Yuanbao, plus
-the API server and webhook endpoints) with its live connection status.
+从浏览器将 Hermes 连接到任何消息平台——与 `hermes setup gateway` 功能完全一致。页面列出每个支持的渠道（Telegram、Discord、Slack、Matrix、Mattermost、WhatsApp、Signal、BlueBubbles/iMessage、电子邮件、SMS/Twilio、钉钉、飞书/Lark、企业微信、微信、QQ Bot、元宝，以及 API 服务器和 Webhook 端点），并显示其实时连接状态。
 
-- **Configure** — open a per-platform form with exactly the fields that channel needs (bot token, app token, server URL, allowlist, etc.). Secrets render as password inputs and are stored redacted; leaving a field blank keeps the existing value. Required fields are marked and validated. A "Setup guide" link points to the platform's credential docs.
-- **Enable / disable** — toggle a channel on or off. The credential stays on disk; only the active state changes.
-- **Test** — check whether the channel is configured, enabled, and reporting a live connection from the gateway.
-- **Restart gateway** — credentials are written to `~/.hermes/.env` and the enabled flag to `config.yaml`; the gateway connects each enabled channel on its next restart, which you can trigger right from the page.
+- **配置** — 打开一个按平台定制的表单，其中包含该渠道所需的精确字段（机器人令牌、应用令牌、服务器 URL、允许列表等）。秘密渲染为密码输入字段，并存储为脱敏值；将字段留空会保留现有值。必填字段会标记并验证。"设置指南" 链接指向平台的凭证文档。
+- **启用/禁用** — 切换渠道开启或关闭。凭证保留在磁盘上；只有活动状态发生变化。
+- **测试** — 检查渠道是否已配置、已启用，并且网关报告了实时连接。
+- **重启网关** — 凭证写入 `~/.hermes/.env`，启用标志写入 `config.yaml`；网关在下次重启时连接每个启用的渠道，您可以直接从页面触发重启。
 
-![Channels admin page — every messaging platform with status, enable toggles, and per-platform setup forms](/img/dashboard/admin-channels.png)
+![渠道管理页面——每个消息平台带有状态、启用开关和按平台的设置表单](/img/dashboard/admin-channels.png)
 
-### System
+### 系统
 
-A consolidated administration panel for installation-wide operations:
+用于安装范围操作的综合管理面板：
 
-- **Host** — live system stats: OS / kernel, architecture, hostname, Python and Hermes versions, CPU core count + utilization, memory, disk usage of the Hermes home, uptime, and load average. (CPU/memory/disk come from `psutil` when installed; identity fields are always shown.) The Hermes version shows an **update-status badge** (up to date / N commits behind) and a **Check for updates** button. When an update is available on a git or pip install, an **Update now** button opens a confirmation dialog — showing how many commits you'll pull — before running `hermes update` in the background. On Docker/Nix/Homebrew installs the dashboard can't apply the update in place, so it shows the correct out-of-band command instead.
-- **Nous Portal** — login status, the active inference provider, and the Tool Gateway routing table (which tools run via the Portal vs. locally), with a link to manage your subscription. Read-only mirror of `hermes portal`.
-- **Skill curator** — the background skill-maintenance status (active / paused, interval, last run) with pause/resume and a run-now button. Mirrors `hermes curator`.
-- **Gateway** — start, stop, and restart the messaging gateway, with live status (running/stopped, PID, state)
-- **Memory** — pick the external memory provider (or built-in only), and reset the built-in `MEMORY.md` / `USER.md` stores
-- **Credential pool** — add and remove the rotating API keys the agent round-robins through (per provider). Keys are redacted in the list; the raw value only ever reaches the agent.
-- **Operations** — run `doctor`, a security audit, create a backup, restore from a backup archive, update skills, show the system-prompt size breakdown, generate a support dump, or migrate config for retired settings. Each spawns a background action whose live log streams into the page.
-- **Checkpoints** — see the `/rollback` shadow store size and prune it
-- **Shell hooks** — list configured hooks with their consent + executable status, **create** a hook (event, command, matcher, timeout, with an opt-in consent grant), and remove one. Hooks run arbitrary commands, so the create form carries a security warning and the hook only fires after consent is granted.
+- **主机** — 实时系统统计信息：操作系统/内核、架构、主机名、Python 和 Hermes 版本、CPU 核心数 + 利用率、内存、Hermes 主目录的磁盘使用量、运行时间和负载平均值。（CPU/内存/磁盘在安装了 `psutil` 时显示；标识字段始终显示。）Hermes 版本显示一个**更新状态徽章**（最新 / 落后 N 个提交）和一个**检查更新**按钮。当通过 git 或 pip 安装存在可用更新时，一个**立即更新**按钮会打开一个确认对话框——显示将拉取多少个提交——然后在后台运行 `hermes update`。在 Docker/Nix/Homebrew 安装中，仪表盘无法就地应用更新，因此它会显示正确的带外命令。
+- **Nous Portal** — 登录状态、活动推理提供程序以及工具网关路由表（哪些工具通过 Portal 运行，哪些本地运行），带有一个管理您的订阅的链接。`hermes portal` 的只读镜像。
+- **技能管理者** — 后台技能维护状态（活动/暂停、间隔、上次运行），带有暂停/恢复和立即运行按钮。镜像 `hermes curator`。
+- **网关** — 启动、停止和重启消息网关，带有实时状态（运行中/已停止、PID、状态）
+- **内存** — 选择外部内存提供程序（或仅内置），并重置内置的 `MEMORY.md` / `USER.md` 存储
+- **凭证池** — 添加和删除 Agent 轮询使用的轮换 API 密钥（按提供程序）。密钥在列表中脱敏；原始值仅到达 Agent。
+- **操作** — 运行 `doctor`、安全审计、创建备份、从备份归档恢复、更新技能、显示系统提示大小明细、生成支持转储或迁移已弃用设置的配置。每个操作启动一个后台操作，其实时日志会流式传输到页面中。
+- **检查点** — 查看 `/rollback` 影子存储的大小并修剪它
+- **Shell 钩子** — 列出已配置的钩子及其同意 + 可执行状态，**创建**一个钩子（事件、命令、匹配器、超时，带有一个选择加入的同意授予），并移除一个。钩子运行任意命令，因此创建表单带有安全警告，并且只有在授予同意后钩子才会触发。
 
-![System admin page — host stats and Nous Portal status](/img/dashboard/admin-system-top.png)
+![系统管理页面——主机统计信息和 Nous Portal 状态](/img/dashboard/admin-system-top.png)
 
-![System admin page — skill curator, gateway, memory, and credential pool](/img/dashboard/admin-system-curator.png)
+![系统管理页面——技能管理者、网关、内存和凭证池](/img/dashboard/admin-system-curator.png)
 
-![System admin page — operations, checkpoints, and shell hooks](/img/dashboard/admin-system-ops.png)
+![系统管理页面——操作、检查点和 Shell 钩子](/img/dashboard/admin-system-ops.png)
 
-Creating a shell hook (note the consent checkbox and the run-arbitrary-commands warning):
+创建 Shell 钩子（注意同意复选框和运行任意命令的警告）：
 
-![New shell hook modal](/img/dashboard/admin-hook-create.png)
+![新建 Shell 钩子模态框](/img/dashboard/admin-hook-create.png)
 
-:::warning Security
-The web dashboard reads and writes your `.env` file, which contains API keys and secrets. It binds to `127.0.0.1` by default — only accessible from your local machine. If you bind to `0.0.0.0`, anyone on your network can view and modify your credentials. The dashboard has no authentication of its own.
+:::warning 安全性
+Web 仪表盘会读取和写入您的 `.env` 文件，其中包含 API 密钥和秘密。它默认绑定到 `127.0.0.1`——只能从本地机器访问。如果您绑定到 `0.0.0.0`，您网络上的任何人都可以查看和修改您的凭证。仪表盘本身没有认证机制。
 :::
 
-## `/reload` Slash Command
+## `/reload` 斜杠命令
 
-The dashboard PR also adds a `/reload` slash command to the interactive CLI. After changing API keys via the web dashboard (or by editing `.env` directly), use `/reload` in an active CLI session to pick up the changes without restarting:
+仪表盘 PR 还为交互式 CLI 添加了一个 `/reload` 斜杠命令。通过 Web 仪表盘更改 API 密钥（或直接编辑 `.env`）后，在活动 CLI 会话中使用 `/reload` 以拾取更改而无需重启：
 
 ```
 You → /reload
   Reloaded .env (3 var(s) updated)
 ```
 
-This re-reads `~/.hermes/.env` into the running process's environment. Useful when you've added a new provider key via the dashboard and want to use it immediately.
+这会重新将 `~/.hermes/.env` 读入运行进程的环境。当您通过仪表盘添加了新的提供程序密钥并希望立即使用它时，这很有用。
 
 ## REST API
 
-The web dashboard exposes a REST API that the frontend consumes. You can also call these endpoints directly for automation:
+Web 仪表盘公开了前端使用的 REST API。您也可以直接调用这些端点以实现自动化：
 
-:::tip Profile-scoped endpoints
-The management endpoint families — `/api/config`, `/api/env`, `/api/skills`,
-`/api/tools/toolsets`, `/api/mcp`, and `/api/model/{info,options,auxiliary,set}` —
-accept an optional `?profile=<name>` query parameter (or `"profile"` in the
-JSON body for writes) that scopes the read/write to that profile's
-`HERMES_HOME`. Omitted = the dashboard's own profile. Unknown profile names
-return `404`. The `/api/pty` WebSocket accepts the same parameter to spawn
-a chat under the selected profile.
+:::tip 按配置文件划分的端点
+管理端点系列——`/api/config`、`/api/env`、`/api/skills`、
+`/api/tools/toolsets`、`/api/mcp` 和 `/api/model/{info,options,auxiliary,set}`——
+接受一个可选的 `?profile=<name>` 查询参数（或写入时在 JSON 主体中的 `"profile"`），将读取/写入限定于该配置文件的 `HERMES_HOME`。省略 = 仪表盘自己的配置文件。未知的配置文件名称返回 `404`。`/api/pty` WebSocket 接受相同的参数以在所选配置文件下生成聊天。
 :::
 
 ### GET /api/status
 
-Returns agent version, gateway status, platform states, and active session count.
+返回 Agent 版本、网关状态、平台状态和活动会话数。
 
 ### GET /api/sessions
 
-Returns the 20 most recent sessions with metadata (model, token counts, timestamps, preview).
+返回最近的 20 个会话及其元数据（模型、令牌计数、时间戳、预览）。
 
 ### GET /api/config
 
-Returns the current `config.yaml` contents as JSON.
+以 JSON 格式返回当前的 `config.yaml` 内容。
 
 ### GET /api/config/defaults
 
-Returns the default configuration values.
+返回默认配置值。
 
 ### GET /api/config/schema
 
-Returns a schema describing every config field — type, description, category, and select options where applicable. The frontend uses this to render the correct input widget for each field.
+返回描述每个配置字段的模式——类型、描述、类别以及在适用情况下的选择选项。前端使用此信息为每个字段渲染正确的输入控件。
 
 ### PUT /api/config
 
-Saves a new configuration. Body: `{"config": {...}}`.
+保存新配置。主体：`{"config": {...}}`。
 
 ### GET /api/env
 
-Returns all known environment variables with their set/unset status, redacted values, descriptions, and categories.
+返回所有已知的环境变量，包含其设置/未设置状态、脱敏值、描述和类别。
 
 ### PUT /api/env
 
-Sets an environment variable. Body: `{"key": "VAR_NAME", "value": "secret"}`.
+设置一个环境变量。主体：`{"key": "VAR_NAME", "value": "secret"}`。
 
 ### DELETE /api/env
 
-Removes an environment variable. Body: `{"key": "VAR_NAME"}`.
+移除一个环境变量。主体：`{"key": "VAR_NAME"}`。
 
 ### GET /api/sessions/\{session_id\}
 
-Returns metadata for a single session.
+返回单个会话的元数据。
 
 ### GET /api/sessions/\{session_id\}/messages
 
-Returns the full message history for a session, including tool calls and timestamps.
+返回会话的完整消息历史，包括工具调用和时间戳。
 
 ### GET /api/sessions/search
 
-Full-text search across message content. Query parameter: `q`. Returns matching session IDs with highlighted snippets.
+跨消息内容进行全文搜索。查询参数：`q`。返回匹配的会话 ID 及高亮片段。
 
 ### DELETE /api/sessions/\{session_id\}
 
-Deletes a session and its message history.
+删除会话及其消息历史。
 
 ### GET /api/logs
 
-Returns log lines. Query parameters: `file` (agent/errors/gateway), `lines` (count), `level`, `component`.
+返回日志行。查询参数：`file`（agent/errors/gateway）、`lines`（计数）、`level`、`component`。
 
 ### GET /api/analytics/usage
 
-Returns token usage, cost, and session analytics. Query parameter: `days` (default 30). Response includes daily breakdowns and per-model aggregates.
+返回令牌使用量、成本和会话分析。查询参数：`days`（默认 30）。响应包含每日细分和按模型的聚合。
 
 ### GET /api/cron/jobs
 
-Returns all configured cron jobs with their state, schedule, and run history.
+返回所有已配置的 cron 任务及其状态、计划和运行历史。
 
 ### POST /api/cron/jobs
 
-Creates a new cron job. Body: `{"prompt": "...", "schedule": "0 9 * * *", "name": "...", "deliver": "local"}`.
+创建一个新的 cron 任务。主体：`{"prompt": "...", "schedule": "0 9 * * *", "name": "...", "deliver": "local"}`。
 
 ### POST /api/cron/jobs/\{job_id\}/pause
 
-Pauses a cron job.
+暂停一个 cron 任务。
 
 ### POST /api/cron/jobs/\{job_id\}/resume
 
-Resumes a paused cron job.
+恢复一个暂停的 cron 任务。
 
 ### POST /api/cron/jobs/\{job_id\}/trigger
 
-Immediately triggers a cron job outside its schedule.
+立即在计划外触发一个 cron 任务。
 
 ### DELETE /api/cron/jobs/\{job_id\}
 
-Deletes a cron job.
+删除一个 cron 任务。
 
 ### GET /api/skills
 
-Returns all skills with their name, description, category, and enabled status.
+返回所有技能，包含其名称、描述、类别和启用状态。
 
 ### PUT /api/skills/toggle
 
-Enables or disables a skill. Body: `{"name": "skill-name", "enabled": true}`.
+启用或禁用一个技能。主体：`{"name": "skill-name", "enabled": true}`。
 
 ### GET /api/tools/toolsets
 
-Returns all toolsets with their label, description, tools list, and active/configured status.
+返回所有工具集，包含其标签、描述、工具列表和活动/已配置状态。
 
-### Admin endpoints
+### 管理端点
 
-These power the MCP, Channels, Webhooks, Pairing, and System pages. All sit behind the
-same auth gate as the rest of `/api/`.
+这些为 MCP、渠道、Webhooks、配对和系统页面提供支持。它们都位于与 `/api/` 其余部分相同的认证门后面。
 
-| Method & path | Purpose |
+| 方法 & 路径 | 用途 |
 |---------------|---------|
-| `GET /api/mcp/servers` | List configured MCP servers (env values redacted) |
-| `POST /api/mcp/servers` | Add a server. Body: `{name, url?, command?, args?, env?, auth?}` |
-| `POST /api/mcp/servers/{name}/test` | Connect, list tools, disconnect |
-| `PUT /api/mcp/servers/{name}/enabled` | Enable / disable a server |
-| `DELETE /api/mcp/servers/{name}` | Remove a server |
-| `GET /api/mcp/catalog` | Browse the Nous-approved MCP catalog |
-| `POST /api/mcp/catalog/install` | Install a catalog entry (with required env) |
-| `GET /api/messaging/platforms` | List every messaging channel with status + per-platform setup fields |
-| `PUT /api/messaging/platforms/{id}` | Configure a channel. Body: `{enabled?, env?, clear_env?}` (env writes to `.env`, enabled to `config.yaml`) |
-| `POST /api/messaging/platforms/{id}/test` | Report whether a channel is configured, enabled, and connected |
-| `GET /api/pairing` | List pending + approved messaging users |
-| `POST /api/pairing/approve` | Approve a code. Body: `{platform, code}` |
-| `POST /api/pairing/revoke` | Revoke a user. Body: `{platform, user_id}` |
-| `POST /api/pairing/clear-pending` | Drop all pending codes |
-| `GET /api/webhooks` | List subscriptions + platform-enabled status |
-| `POST /api/webhooks` | Create a subscription (returns one-time secret) |
-| `DELETE /api/webhooks/{name}` | Remove a subscription |
-| `GET /api/credentials/pool` | List pooled rotation keys (redacted) |
-| `POST /api/credentials/pool` | Add a key. Body: `{provider, api_key, label?}` |
-| `DELETE /api/credentials/pool/{provider}/{index}` | Remove a key (1-based index) |
-| `GET /api/memory` | Active provider + available providers + built-in file sizes |
-| `PUT /api/memory/provider` | Select a provider (empty = built-in only) |
-| `POST /api/memory/reset` | Reset built-in memory. Body: `{target: all\|memory\|user}` |
-| `POST /api/gateway/start` · `/stop` · `/restart` | Gateway lifecycle (backgrounded) |
-| `POST /api/ops/doctor` · `/security-audit` · `/backup` · `/import` | Diagnostics & maintenance (backgrounded; tail via `/api/actions/{name}/status`) |
-| `GET /api/ops/hooks` | Configured shell hooks + allowlist status |
-| `GET /api/ops/checkpoints` · `POST .../prune` | Inspect / prune the `/rollback` store |
-| `POST /api/ops/hooks` · `DELETE /api/ops/hooks` | Create / remove a shell hook (consent-gated) |
-| `GET /api/system/stats` | Host stats — OS, CPU, memory, disk, uptime |
-| `GET /api/hermes/update/check` | Report update availability (commits behind, install method) without applying. For git/pip installs that are behind, also returns a `commits` list (`sha`, `summary`, `author`, `at`) of what's changed. `?force=1` busts the 6h cache |
-| `GET /api/curator` · `PUT .../paused` · `POST .../run` | Skill-curator status + pause/resume + run |
-| `GET /api/portal` | Nous Portal auth + Tool Gateway routing (read-only) |
-| `POST /api/ops/prompt-size` · `/dump` · `/config-migrate` | Diagnostics (backgrounded) |
-| `PUT /api/webhooks/{name}/enabled` | Enable / disable a webhook route |
-| `POST /api/skills/hub/install` · `/uninstall` · `/update` | Skills hub actions (backgrounded) |
-| `GET /api/skills/hub/search` | Search the skill hub across all sources |
-| `GET /api/sessions/stats` | Session-store statistics |
-| `PATCH /api/sessions/{id}` | Rename / archive a session |
-| `GET /api/sessions/{id}/export` | Export a session (metadata + messages) as JSON |
-| `POST /api/sessions/prune` | Delete ended sessions older than N days |
-| `PUT /api/cron/jobs/{id}` | Edit a cron job's prompt / schedule / name / deliver |
+| `GET /api/mcp/servers` | 列出已配置的 MCP 服务器（环境值脱敏） |
+| `POST /api/mcp/servers` | 添加服务器。主体：`{name, url?, command?, args?, env?, auth?}` |
+| `POST /api/mcp/servers/{name}/test` | 连接、列出工具、断开连接 |
+| `PUT /api/mcp/servers/{name}/enabled` | 启用/禁用服务器 |
+| `DELETE /api/mcp/servers/{name}` | 移除服务器 |
+| `GET /api/mcp/catalog` | 浏览 Nous 批准的 MCP 目录 |
+| `POST /api/mcp/catalog/install` | 安装目录条目（含所需环境变量） |
+| `GET /api/messaging/platforms` | 列出每个消息渠道及其状态 + 按平台的设置字段 |
+| `PUT /api/messaging/platforms/{id}` | 配置渠道。主体：`{enabled?, env?, clear_env?}`（env 写入 `.env`，enabled 写入 `config.yaml`） |
+| `POST /api/messaging/platforms/{id}/test` | 报告渠道是否已配置、已启用且已连接 |
+| `GET /api/pairing` | 列出待处理 + 已批准的消息用户 |
+| `POST /api/pairing/approve` | 批准一个代码。主体：`{platform, code}` |
+| `POST /api/pairing/revoke` | 撤销一个用户。主体：`{platform, user_id}` |
+| `POST /api/pairing/clear-pending` | 删除所有待处理代码 |
+| `GET /api/webhooks` | 列出订阅 + 平台启用状态 |
+| `POST /api/webhooks` | 创建订阅（返回一次性密钥） |
+| `DELETE /api/webhooks/{name}` | 移除订阅 |
+| `GET /api/credentials/pool` | 列出池化的轮换密钥（脱敏） |
+| `POST /api/credentials/pool` | 添加一个密钥。主体：`{provider, api_key, label?}` |
+| `DELETE /api/credentials/pool/{provider}/{index}` | 移除一个密钥（基于 1 的索引） |
+| `GET /api/memory` | 活动提供程序 + 可用提供程序 + 内置文件大小 |
+| `PUT /api/memory/provider` | 选择一个提供程序（空 = 仅内置） |
+| `POST /api/memory/reset` | 重置内置内存。主体：`{target: all\|memory\|user}` |
+| `POST /api/gateway/start` · `/stop` · `/restart` | 网关生命周期（后台运行） |
+| `POST /api/ops/doctor` · `/security-audit` · `/backup` · `/import` | 诊断和维护（后台运行；通过 `/api/actions/{name}/status` 跟踪） |
+| `GET /api/ops/hooks` | 已配置的 Shell 钩子 + 允许列表状态 |
+| `GET /api/ops/checkpoints` · `POST .../prune` | 检查/修剪 `/rollback` 存储 |
+| `POST /api/ops/hooks` · `DELETE /api/ops/hooks` | 创建/移除 Shell 钩子（需同意） |
+| `GET /api/system/stats` | 主机统计信息——操作系统、CPU、内存、磁盘、运行时间 |
+| `GET /api/hermes/update/check` | 报告更新可用性（落后提交数、安装方法），不应用更新。对于落后的 git/pip 安装，还返回 `commits` 列表（`sha`、`summary`、`author`、`at`），显示更改内容。`?force=1` 会绕过 6 小时缓存 |
+| `GET /api/curator` · `PUT .../paused` · `POST .../run` | 技能管理者状态 + 暂停/恢复 + 运行 |
+| `GET /api/portal` | Nous Portal 认证 + 工具网关路由（只读） |
+| `POST /api/ops/prompt-size` · `/dump` · `/config-migrate` | 诊断（后台运行） |
+| `PUT /api/webhooks/{name}/enabled` | 启用/禁用 webhook 路由 |
+| `POST /api/skills/hub/install` · `/uninstall` · `/update` | 技能中心操作（后台运行） |
+| `GET /api/skills/hub/search` | 跨所有来源搜索技能中心 |
+| `GET /api/sessions/stats` | 会话存储统计信息 |
+| `PATCH /api/sessions/{id}` | 重命名/归档会话 |
+| `GET /api/sessions/{id}/export` | 将会话（元数据 + 消息）导出为 JSON |
+| `POST /api/sessions/prune` | 删除早于 N 天的已结束会话 |
+| `PUT /api/cron/jobs/{id}` | 编辑 cron 任务的提示/计划/名称/传递 |
 
-## Authentication (gated mode)
+## 认证（门控模式）
 
-When the dashboard is bound to a public or non-loopback address — anything other than `127.0.0.1` / `localhost` — Hermes Agent engages an auth gate. Every request must carry a verified session cookie or it's bounced to the login page. Three providers ship in the box:
+当仪表盘绑定到公共地址或非回环地址——任何不是 `127.0.0.1` / `localhost` 的地址时，Hermes Agent 会启用一个认证门。每个请求都必须带有经过验证的会话 cookie，否则会被重定向到登录页面。系统内置了三个提供程序：
 
-- **[Username/password](#usernamepassword-provider-no-oauth-idp)** — the simplest way to put auth on a self-hosted / on-prem / homelab dashboard. No external identity provider. **Use it only on a trusted network or behind a VPN — not for public-internet exposure.**
-- **[OAuth (Nous Portal)](#default-provider-nous-research)** — for hosted deployments and any dashboard reachable over the public internet, and the recommended path for a [remote Hermes Desktop connection](#connecting-hermes-desktop-to-a-remote-backend). Every login is verified against your Nous account, so this is the provider suitable for internet-facing use.
-- **[Self-hosted OIDC](#self-hosted-oidc-provider)** — for bringing your own identity provider via standard OpenID Connect (Keycloak, Auth0, Okta, Google, GitHub via an OIDC bridge, etc.). No Nous Portal involved; suitable for public-internet exposure when fronted by a conformant OIDC server.
+- **[用户名/密码](#usernamepassword-provider-no-oauth-idp)** — 在自托管/本地/家庭实验室仪表盘上添加认证的最简单方法。无需外部身份提供程序。**仅可在受信任的网络或 VPN 后使用——不能暴露在公共互联网上。**
+- **[OAuth (Nous Portal)](#default-provider-nous-research)** — 用于托管部署和任何可通过公共互联网访问的仪表盘，也是 [远程 Hermes Desktop 连接](#connecting-hermes-desktop-to-a-remote-backend) 的推荐路径。每次登录都针对您的 Nous 账户进行验证，因此这是适用于面向互联网的提供程序。
+- **[自托管 OIDC](#self-hosted-oidc-provider)** — 用于通过标准 OpenID Connect 引入您自己的身份提供程序（Keycloak、Auth0、Okta、Google、GitHub 通过 OIDC 桥接等）。不涉及 Nous Portal；当通过符合要求的 OIDC 服务器前置时，适用于公共互联网暴露。
 
-Operator-owned dashboards bound to loopback are unaffected — no auth, no login page.
+绑定到回环的操作者拥有的仪表盘不受影响——无需认证，无登录页面。
 
-### When the gate engages
+### 门何时启用
 
-| Flags | Auth gate | Use case |
+| 标志 | 认证门 | 用例 |
 |-------|-----------|----------|
-| `hermes dashboard` (default — binds to `127.0.0.1`) | OFF | Local development |
-| `hermes dashboard --host 0.0.0.0` | **ON** | Remote / production — protect with the username/password provider or OAuth |
+| `hermes dashboard`（默认——绑定到 `127.0.0.1`） | 关闭 | 本地开发 |
+| `hermes dashboard --host 0.0.0.0` | **开启** | 远程/生产——使用用户名/密码提供程序或 OAuth 保护 |
 
-The gate is on if and only if:
+门仅在以下情况下开启：
+1. 绑定主机不是 `127.0.0.1`、`::1`、`localhost` 或 `0.0.0.0` **且**
+2. 未设置 `--insecure` 标志。
 
-1. The bind host is not `127.0.0.1`, `::1`, `localhost`, or `0.0.0.0` AND
-2. The `--insecure` flag is **not** set.
-
-:::danger `--insecure` disables auth entirely
-`--insecure` skips the gate and serves an unauthenticated dashboard that reads/writes your `.env` (API keys, secrets) and can run agent commands. **Do not use it for a remote connection.** To expose the dashboard to another machine, configure the [username/password provider](#usernamepassword-provider-no-oauth-idp) (or OAuth) and leave `--insecure` off. The flag exists only as a last-resort escape hatch on a fully trusted, firewalled single-host network.
+:::danger `--insecure` 完全禁用认证
+`--insecure` 跳过认证门，提供一个未经认证的仪表盘，可以读取和写入您的 `.env`（API 密钥、秘密）并运行 Agent 命令。**不要将其用于远程连接。** 要将仪表盘暴露给另一台机器，请配置[用户名/密码提供程序](#usernamepassword-provider-no-oauth-idp)（或 OAuth），并保持 `--insecure` 关闭。该标志仅作为完全受信任、已防火墙的单主机网络上的最后应急逃生通道存在。
 :::
 
-### Fail-closed semantics
+### 失败关闭语义
 
-If the gate would engage but **no** `DashboardAuthProvider` is registered (no Nous plugin, no custom plugin), `hermes dashboard` refuses to bind with an explicit error message. There is no "default-deny but accept everything" fallback — a misconfigured gated dashboard never starts.
+如果门会启用但**没有**注册 `DashboardAuthProvider`（没有 Nous 插件，没有自定义插件），`hermes dashboard` 会拒绝绑定并显示明确的错误消息。没有 "默认拒绝但接受所有" 的备选方案——配置错误的门控仪表盘永远不会启动。
 
-When you run `hermes dashboard --host 0.0.0.0` **interactively** (a real terminal) and no provider is configured yet, Hermes doesn't just fail — it offers to set one up on the spot: pick **username & password** (writes `dashboard.basic_auth` to `config.yaml` and you're running in seconds) or **OAuth** (points you at `hermes dashboard register`). Non-interactive callers — Docker/s6, CI, piped runs — skip the prompt and hit the fail-closed error above, so an unattended deploy still never starts without auth.
+当您**交互式**运行 `hermes dashboard --host 0.0.0.0`（在真实的终端中）且尚未配置提供程序时，Hermes 不会直接失败——它会提供现场设置一个：选择**用户名和密码**（将 `dashboard.basic_auth` 写入 `config.yaml`，几秒钟内即可运行）或 **OAuth**（将您指向 `hermes dashboard register`）。非交互式调用者——Docker/s6、CI、管道运行——会跳过提示并遇到上述失败关闭错误，因此无人值守的部署仍然不会在没有认证的情况下启动。
 
-### Default provider: Nous Research
+### 默认提供程序：Nous Research
 
-The bundled `plugins/dashboard_auth/nous` plugin is **always installed** and auto-loaded. It auto-registers a `DashboardAuthProvider` named `nous` when a client ID is configured.
+捆绑的 `plugins/dashboard_auth/nous` 插件**始终安装**并自动加载。当配置了客户端 ID 时，它会自动注册一个名为 `nous` 的 `DashboardAuthProvider`。
 
-Because every login is verified against Nous Portal and protected by your Nous account, **the Nous provider is the one suitable for exposing a dashboard to the public internet.**
+由于每次登录都针对 Nous Portal 进行验证，并由您的 Nous 账户保护，**Nous 提供程序是适合将仪表盘暴露在公共互联网上的提供程序。**
 
-#### Registering a dashboard
+#### 注册仪表盘
 
-To use the Nous provider you need an OAuth client ID (shape `agent:{id}`). There are two ways to get one:
+要使用 Nous 提供程序，您需要一个 OAuth 客户端 ID（形状为 `agent:{id}`）。有两种获取方式：
 
-- **CLI — `hermes dashboard register`.** Run it on the host where the dashboard lives. It resolves your existing Nous login (run `hermes setup` first if you're not logged in), registers a self-hosted OAuth client with the Portal, and writes `HERMES_DASHBOARD_OAUTH_CLIENT_ID` into `~/.hermes/.env` for you. Optional flags: `--name` (a human-readable label, otherwise auto-generated) and `--redirect-uri` (a public HTTPS callback URL for an internet-facing host).
+- **CLI — `hermes dashboard register`。** 在仪表盘所在的主机上运行它。它会解析您现有的 Nous 登录（如果您尚未登录，请先运行 `hermes setup`），向 Portal 注册一个自托管的 OAuth 客户端，并将 `HERMES_DASHBOARD_OAUTH_CLIENT_ID` 写入 `~/.hermes/.env`。可选标志：`--name`（人类可读的标签，否则自动生成）和 `--redirect-uri`（面向互联网的主机的公共 HTTPS 回调 URL）。
 
   ```bash
   hermes dashboard register
@@ -614,31 +572,31 @@ To use the Nous provider you need an OAuth client ID (shape `agent:{id}`). There
   # …writes HERMES_DASHBOARD_OAUTH_CLIENT_ID to ~/.hermes/.env
   ```
 
-- **GUI — the Local Dashboards page.** Open [`/local-dashboards`](https://portal.nousresearch.com/local-dashboards) in the Nous Portal to register, name, manage, and revoke self-hosted dashboards from the browser. Copy the resulting `agent:{id}` client ID into `HERMES_DASHBOARD_OAUTH_CLIENT_ID` (env) or `dashboard.oauth.client_id` (config.yaml). This is also where you revoke a dashboard registered via the CLI.
+- **GUI — 本地仪表盘页面。** 在 Nous Portal 中打开 [`/local-dashboards`](https://portal.nousresearch.com/local-dashboards)，在浏览器中注册、命名、管理和撤销自托管的仪表盘。将生成的 `agent:{id}` 客户端 ID 复制到 `HERMES_DASHBOARD_OAUTH_CLIENT_ID`（环境变量）或 `dashboard.oauth.client_id`（config.yaml）中。这也是您撤销通过 CLI 注册的仪表盘的地方。
 
-#### Configuration
+#### 配置
 
-The plugin reads from two surfaces, with the environment variable winning when set non-empty:
+该插件从两个表面读取，当环境变量非空时，环境变量获胜：
 
-**`config.yaml`** — the canonical surface:
+**`config.yaml`** — 规范表面：
 
 ```yaml
 dashboard:
   oauth:
-    client_id: agent:01HXYZ…             # required to engage the gate
+    client_id: agent:01HXYZ…             # 启用门所需
 ```
 
-**Environment variables** — operator overrides:
+**环境变量** — 操作者覆盖：
 
-| Env var | Overrides | Format | Provisioned by |
+| 环境变量 | 覆盖 | 格式 | 由...提供 |
 |---------|-----------|--------|----------------|
 | `HERMES_DASHBOARD_OAUTH_CLIENT_ID` | `dashboard.oauth.client_id` | `agent:{instance_id}` | `hermes dashboard register` |
 
-Per the Hermes Agent convention (`~/.hermes/.env` is for API keys / secrets only), **`config.yaml` is the recommended place to set these values** for local dev, on-prem, and any deployment you control directly. The environment-variable path exists so a hosting platform's secret injection can push per-deploy `client_id`s without anyone having to edit `config.yaml` inside the image — that's its primary purpose.
+根据 Hermes Agent 约定（`~/.hermes/.env` 仅用于 API 密钥/秘密），**`config.yaml` 是设置这些值的推荐位置**，适用于本地开发、本地部署和任何您直接控制的部署。环境变量路径的存在是为了让托管平台的秘密注入可以推送每次部署的 `client_id`，而无需任何人编辑镜像内的 `config.yaml`——这是其主要目的。
 
-Empty environment values are treated as unset, so a provisioned-but-not-populated platform secret can't accidentally shadow a valid `config.yaml` entry.
+空的环境值被视为未设置，因此已配置但未填充的平台秘密不会意外地遮蔽有效的 `config.yaml` 条目。
 
-If neither source provides a client_id, the plugin reports the specific reason and the dashboard's fail-closed bind error tells you exactly what to fix:
+如果两个来源都没有提供 client_id，插件会报告具体原因，仪表盘的失败关闭绑定错误会告诉您需要修复什么：
 
 ```
 Refusing to bind dashboard to 0.0.0.0 — the OAuth auth gate engages on
@@ -656,26 +614,26 @@ Or pass --insecure to skip the auth gate (NOT recommended on untrusted
 networks).
 ```
 
-#### Worked example: Nous Research
+#### 完整示例：Nous Research
 
-From a logged-in Hermes install to a Nous-gated dashboard in three steps.
+从已登录的 Hermes 安装到 Nous 门控仪表盘，仅需三步。
 
-**1. Log in and register the dashboard.** `hermes dashboard register` uses your existing Nous login to provision an OAuth client and writes `HERMES_DASHBOARD_OAUTH_CLIENT_ID` into `~/.hermes/.env` for you:
+**1. 登录并注册仪表盘。** `hermes dashboard register` 使用您现有的 Nous 登录来提供一个 OAuth 客户端，并将 `HERMES_DASHBOARD_OAUTH_CLIENT_ID` 写入 `~/.hermes/.env`：
 
 ```bash
-hermes setup            # if you're not already logged into Nous Portal
+hermes setup            # 如果您尚未登录 Nous Portal
 hermes dashboard register
 # ✓ Registered dashboard "swift_falcon"
 # …writes HERMES_DASHBOARD_OAUTH_CLIENT_ID to ~/.hermes/.env
 ```
 
-**2. Run the dashboard on a reachable address.** A non-loopback bind without `--insecure` engages the OAuth gate, and the `client_id` just written activates the `nous` provider:
+**2. 在可达地址上运行仪表盘。** 不带 `--insecure` 的非回环绑定会启用 OAuth 门，并且刚写入的 `client_id` 会激活 `nous` 提供程序：
 
 ```bash
 hermes dashboard --host 0.0.0.0 --port 9119 --no-open
 ```
 
-**3. Log in.** Open `http://<host>:9119/`, you'll be bounced to `/login`. Click **Sign in with Nous Research** → authenticate at the Portal → land back on the authenticated dashboard. Verify the gate from any machine:
+**3. 登录。** 打开 `http://<host>:9119/`，您将被重定向到 `/login`。点击 **使用 Nous Research 登录** → 在 Portal 进行认证 → 返回已认证的仪表盘。从任何机器验证门：
 
 ```bash
 curl -s http://<host>:9119/api/status | jq '.auth_required, .auth_providers'
@@ -683,61 +641,61 @@ curl -s http://<host>:9119/api/status | jq '.auth_required, .auth_providers'
 # ["nous"]
 ```
 
-`GET /api/auth/me` then returns the verified session (`provider: nous`). For an internet-facing host, register with `--redirect-uri https://hermes.example.com/auth/callback` and set `HERMES_DASHBOARD_PUBLIC_URL` so the OAuth callback resolves to your public URL (see [Public URL override](#public-url-override)).
+`GET /api/auth/me` 随后返回经过验证的会话（`provider: nous`）。对于面向互联网的主机，使用 `--redirect-uri https://hermes.example.com/auth/callback` 注册，并设置 `HERMES_DASHBOARD_PUBLIC_URL`，以便 OAuth 回调解析到您的公共 URL（请参阅 [公共 URL 覆盖](#public-url-override)）。
 
-### Username/password provider (no OAuth IDP)
+### 用户名/密码提供程序（无 OAuth IDP）
 
-If you don't want to wire up an OAuth identity provider — a self-hosted "just put a password on my dashboard" deployment — the bundled `plugins/dashboard_auth/basic` plugin registers a `DashboardAuthProvider` named `basic` that authenticates with a **username and password** instead of an OAuth redirect.
+如果您不想连接 OAuth 身份提供程序——一个自托管的 "just put a password on my dashboard" 部署——捆绑的 `plugins/dashboard_auth/basic` 插件会注册一个名为 `basic` 的 `DashboardAuthProvider`，它使用**用户名和密码**进行认证，而不是 OAuth 重定向。
 
-It plugs into the same gate as the OAuth provider: the gate engages on a non-loopback bind without `--insecure`, the login page renders a credential form for this provider (instead of a "Log in with X" button), and everything downstream of login — session cookies, transparent refresh, WS tickets, logout, the audit log — is identical to the OAuth path. Sessions are stateless HMAC-signed tokens the provider mints itself, so there's **no database and no external IDP**. Password hashing uses stdlib `scrypt` (no third-party dependency).
+它插入与 OAuth 提供程序相同的门：不带 `--insecure` 的非回环绑定会启用门，登录页面为此提供程序渲染一个凭据表单（而不是 "使用 X 登录" 按钮），并且登录之后的所有内容——会话 cookie、透明刷新、WS 票据、注销、审计日志——与 OAuth 路径相同。会话是无状态的 HMAC 签名令牌，由提供程序自行生成，因此**没有数据库，也没有外部 IDP**。密码哈希使用标准库 `scrypt`（无第三方依赖）。
 
-:::warning Use this on trusted networks only — not the public internet
-The username/password provider is intended for self-hosted / on-prem / homelab dashboards on a **trusted network**, or reachable only over a **VPN**. It protects a single shared credential with no external identity provider, MFA, or per-user accounts behind it, so it is **not suitable for exposing a dashboard directly to the public internet**. For an internet-facing dashboard, use the [Nous Research provider](#default-provider-nous-research) (or your own [self-hosted OIDC](#self-hosted-oidc-provider) / [custom OAuth](#custom-providers) provider) instead.
+:::warning 仅在受信任的网络中使用——不要用于公共互联网
+用户名/密码提供程序适用于**受信任网络**上的自托管/本地/家庭实验室仪表盘，或仅通过 **VPN** 可访问的仪表盘。它使用单个共享凭据进行保护，没有外部身份提供程序、MFA 或背后的每个用户账户，因此**不适合将仪表盘直接暴露于公共互联网**。对于面向互联网的仪表盘，请改用 [Nous Research 提供程序](#default-provider-nous-research)（或您自己的[自托管 OIDC](#self-hosted-oidc-provider) / [自定义 OAuth](#custom-providers) 提供程序）。
 :::
 
-#### Configuration
+#### 配置
 
-Like the Nous provider, it reads from `config.yaml` (canonical) with environment variables winning when set non-empty. It activates only when `username` plus either `password_hash` (preferred) or `password` are configured — otherwise it's a no-op, so OAuth users and loopback/`--insecure` operators are unaffected.
+与 Nous 提供程序一样，它从 `config.yaml`（规范）读取，当环境变量非空时，环境变量获胜。它仅在配置了 `username` 加上 `password_hash`（首选）或 `password` 时激活——否则它是一个无操作，因此 OAuth 用户和回环/`--insecure` 操作者不受影响。
 
-**`config.yaml`:**
+**`config.yaml`：**
 
 ```yaml
 dashboard:
   basic_auth:
     username: admin
-    # Preferred — no plaintext at rest. Compute with:
+    # 首选——无明文静态存储。计算方式：
     #   python -c "from plugins.dashboard_auth.basic import hash_password; print(hash_password('PW'))"
     password_hash: "scrypt$16384$8$1$…$…"
-    # ...or a plaintext password (hashed in-memory at load; less safe at rest):
+    # ...或明文密码（加载时在内存中哈希；静态存储时安全性较低）：
     # password: "s3cret"
-    secret: "<32+ random bytes, base64 or hex>"  # token-signing key
-    session_ttl_seconds: 43200                    # optional; access-token lifetime (default 12h)
+    secret: "<32+ random bytes, base64 or hex>"  # 令牌签名密钥
+    session_ttl_seconds: 43200                    # 可选；访问令牌生命周期（默认 12 小时）
 ```
 
-**Environment overrides:**
+**环境变量覆盖：**
 
-| Env var | Overrides | Notes |
+| 环境变量 | 覆盖 | 说明 |
 |---------|-----------|-------|
-| `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` | `dashboard.basic_auth.username` | required to activate |
-| `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH` | `dashboard.basic_auth.password_hash` | preferred (no plaintext at rest) |
-| `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD` | `dashboard.basic_auth.password` | plaintext; **wins over a config `password_hash`** so you can rotate via env |
-| `HERMES_DASHBOARD_BASIC_AUTH_SECRET` | `dashboard.basic_auth.secret` | token-signing key |
-| `HERMES_DASHBOARD_BASIC_AUTH_TTL_SECONDS` | `dashboard.basic_auth.session_ttl_seconds` | access-token lifetime |
+| `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` | `dashboard.basic_auth.username` | 激活所需 |
+| `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH` | `dashboard.basic_auth.password_hash` | 首选（无明文静态存储） |
+| `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD` | `dashboard.basic_auth.password` | 明文；**覆盖配置中的 `password_hash`**，因此您可以通过环境变量轮换 |
+| `HERMES_DASHBOARD_BASIC_AUTH_SECRET` | `dashboard.basic_auth.secret` | 令牌签名密钥 |
+| `HERMES_DASHBOARD_BASIC_AUTH_TTL_SECONDS` | `dashboard.basic_auth.session_ttl_seconds` | 访问令牌生命周期 |
 
-:::caution Set an explicit `secret` for stable sessions
-When `secret` is empty, a random per-process signing key is generated. That's fine for a single process, but it means **every session is invalidated on restart** and sessions **don't span multiple workers**. Set an explicit `secret` for restart-surviving / multi-worker deployments.
+:::caution 设置显式 `secret` 以实现稳定的会话
+当 `secret` 为空时，会生成一个随机的每进程签名密钥。这对于单个进程没问题，但这意味着**每次重启都会使所有会话失效**，并且会话**不能跨多个工作进程**。为重启持久/多工作进程部署设置显式的 `secret`。
 :::
 
-The `/auth/password-login` endpoint is rate-limited per client IP (default 10 attempts/minute → HTTP 429) and returns a single generic `401 Invalid credentials` for both unknown users and wrong passwords, so it can't be used as a username-enumeration oracle.
+`/auth/password-login` 端点按客户端 IP 进行速率限制（默认 10 次尝试/分钟 → HTTP 429），并且对于未知用户和错误密码都会返回单一的通用 `401 Invalid credentials` 响应，因此不能用作用户名枚举的预言机。
 
-#### Worked example: username/password
+#### 完整示例：用户名/密码
 
-From nothing to a password-gated dashboard on a trusted network in three steps.
+从零到受密码保护的仪表盘，在受信任网络上仅需三步。
 
-**1. Set credentials in `~/.hermes/.env`.** Hash the password so no plaintext sits at rest, and set a stable signing secret so sessions survive restarts:
+**1. 在 `~/.hermes/.env` 中设置凭据。** 哈希密码，以便没有明文静态存储；设置稳定的签名密钥，以便会话在重启后仍然存在：
 
 ```bash
-# Compute a scrypt hash of your chosen password:
+# 计算所选密码的 scrypt 哈希：
 HASH=$(python -c "from plugins.dashboard_auth.basic import hash_password; print(hash_password('choose-a-strong-password'))")
 
 cat >> ~/.hermes/.env <<EOF
@@ -748,13 +706,13 @@ EOF
 chmod 600 ~/.hermes/.env
 ```
 
-**2. Run the dashboard on a reachable address.** A non-loopback bind without `--insecure` engages the gate, and the username + hash activate the `basic` provider:
+**2. 在可达地址上运行仪表盘。** 不带 `--insecure` 的非回环绑定会启用门，并且用户名 + 哈希会激活 `basic` 提供程序：
 
 ```bash
 hermes dashboard --host 0.0.0.0 --port 9119 --no-open
 ```
 
-**3. Log in.** Open `http://<host>:9119/`, you'll be bounced to `/login` — a **credential form** (not a "Sign in with X" button). Enter `admin` / your password → land on the authenticated dashboard. Verify the gate from any machine:
+**3. 登录。** 打开 `http://<host>:9119/`，您将被重定向到 `/login`——一个**凭据表单**（而不是 "使用 X 登录" 按钮）。输入 `admin` / 您的密码 → 进入已认证的仪表盘。从任何机器验证门：
 
 ```bash
 curl -s http://<host>:9119/api/status | jq '.auth_required, .auth_providers'
@@ -762,66 +720,66 @@ curl -s http://<host>:9119/api/status | jq '.auth_required, .auth_providers'
 # ["basic"]
 ```
 
-`GET /api/auth/me` then returns the verified session (`provider: basic`). Keep this behind a VPN — see the warning above; for a public host use the [Nous Research](#default-provider-nous-research) or [self-hosted OIDC](#self-hosted-oidc-provider) provider instead.
+`GET /api/auth/me` 随后返回经过验证的会话（`provider: basic`）。请将其保留在 VPN 后面——请参阅上面的警告；对于公共主机，请改用 [Nous Research](#default-provider-nous-research) 或[自托管 OIDC](#self-hosted-oidc-provider) 提供程序。
 
-#### Writing your own password provider
+#### 编写您自己的密码提供程序
 
-`basic` is just one implementation of an extension point. Any plugin can register a password provider: set `supports_password = True` on your `DashboardAuthProvider` subclass and implement `complete_password_login(*, username, password) -> Session` (raise `InvalidCredentialsError` on rejection, `ProviderError` if your backing store is down). The OAuth `start_login` / `complete_login` methods can be left as `NotImplementedError` stubs for a pure-password provider. This is the path for LDAP-bind, a credentials database, or any other non-redirect auth scheme — the framework handles the form, the route, the cookies, and refresh for you.
+`basic` 只是一个扩展点的实现。任何插件都可以注册密码提供程序：在您的 `DashboardAuthProvider` 子类上设置 `supports_password = True`，并实现 `complete_password_login(*, username, password) -> Session`（在拒绝时引发 `InvalidCredentialsError`，如果后端存储不可用则引发 `ProviderError`）。对于纯密码提供程序，`start_login` / `complete_login` 方法可以作为 `NotImplementedError` 存根保留。这是用于 LDAP 绑定、凭据数据库或任何其他非重定向认证方案的路径——框架负责处理表单、路由、cookie 和刷新。
 
-### Self-hosted OIDC provider
+### 自托管 OIDC 提供程序
 
-If you run your own identity provider, the bundled `plugins/dashboard_auth/self_hosted` plugin authenticates the dashboard against it using **standard OpenID Connect** — no per-IDP code, no Nous Portal involved. It's verified against and works with any conformant OIDC server:
+如果您运行自己的身份提供程序，捆绑的 `plugins/dashboard_auth/self_hosted` 插件使用**标准 OpenID Connect** 对仪表盘进行认证——无需每个 IDP 的代码，不涉及 Nous Portal。它已经过验证，可与任何符合要求的 OIDC 服务器一起使用：
 
 > **Authentik · Keycloak · Zitadel · Authelia · Auth0 · Okta · Google · …**
 
-Like the Nous provider, it auto-loads and only registers itself once it's configured, so it's a no-op for loopback / `--insecure` dashboards.
+与 Nous 提供程序一样，它会自动加载，并且仅在配置后注册自身，因此对于回环/`--insecure` 仪表盘来说是无操作的。
 
-#### Configuration
+#### 配置
 
-Configure an **issuer** and a **client_id** (a public PKCE client — no client secret). The plugin fetches the IDP's `authorization_endpoint`, `token_endpoint`, and `jwks_uri` from `{issuer}/.well-known/openid-configuration`, so you never hardcode endpoint URLs.
+配置一个 **issuer** 和一个 **client_id**（一个公共 PKCE 客户端——无需客户端密钥）。插件从 `{issuer}/.well-known/openid-configuration` 获取 IDP 的 `authorization_endpoint`、`token_endpoint` 和 `jwks_uri`，因此您永远不必硬编码端点 URL。
 
-**`config.yaml`** — the canonical surface:
+**`config.yaml`** — 规范表面：
 
 ```yaml
 dashboard:
   oauth:
     provider: self-hosted
     self_hosted:
-      issuer: https://auth.example.com/application/o/hermes/   # required
-      client_id: hermes-dashboard                              # required
-      scopes: "openid profile email"                           # optional (this is the default)
+      issuer: https://auth.example.com/application/o/hermes/   # 必需
+      client_id: hermes-dashboard                              # 必需
+      scopes: "openid profile email"                           # 可选（这是默认值）
 ```
 
-**Environment variables** — operator overrides (env wins over `config.yaml` when set non-empty; an empty value is treated as unset):
+**环境变量** — 操作者覆盖（当非空时，环境变量覆盖 `config.yaml`；空值视为未设置）：
 
-| Env var | Overrides | Notes |
+| 环境变量 | 覆盖 | 说明 |
 |---------|-----------|-------|
-| `HERMES_DASHBOARD_OIDC_ISSUER` | `dashboard.oauth.self_hosted.issuer` | OIDC issuer URL — required |
-| `HERMES_DASHBOARD_OIDC_CLIENT_ID` | `dashboard.oauth.self_hosted.client_id` | Public client id — required |
-| `HERMES_DASHBOARD_OIDC_SCOPES` | `dashboard.oauth.self_hosted.scopes` | Defaults to `openid profile email` |
+| `HERMES_DASHBOARD_OIDC_ISSUER` | `dashboard.oauth.self_hosted.issuer` | OIDC issuer URL — 必需 |
+| `HERMES_DASHBOARD_OIDC_CLIENT_ID` | `dashboard.oauth.self_hosted.client_id` | 公共客户端 id — 必需 |
+| `HERMES_DASHBOARD_OIDC_SCOPES` | `dashboard.oauth.self_hosted.scopes` | 默认值为 `openid profile email` |
 
-In your IDP, register a **public** application/client with the authorization-code + PKCE (S256) grant and add the dashboard's callback as an allowed redirect URI. The callback is `<dashboard public URL>/auth/callback` (see [Public URL override](#public-url-override) for how the dashboard derives its public URL behind a proxy).
+在您的 IDP 中，注册一个**公共**应用/客户端，使用授权码 + PKCE（S256）授权，并将仪表盘的回调添加为允许的重定向 URI。回调是 `<dashboard public URL>/auth/callback`（有关仪表盘如何在代理后派生其公共 URL，请参阅[公共 URL 覆盖](#public-url-override)）。
 
-#### What it verifies
+#### 验证内容
 
-The provider verifies the OpenID Connect **ID token** (RS256/ES256) against the discovered `jwks_uri`, with the `iss` and `aud` claims pinned to your configured `issuer` and `client_id`. Standard OIDC claims map onto the dashboard session:
+提供程序针对发现的 `jwks_uri` 验证 OpenID Connect **ID 令牌**（RS256/ES256），并将 `iss` 和 `aud` 声明固定到您配置的 `issuer` 和 `client_id`。标准 OIDC 声明会映射到仪表盘会话：
 
-| Session field | Claim(s) |
+| 会话字段 | 声明 |
 |---------------|----------|
-| `user_id` | `sub` (required) |
+| `user_id` | `sub`（必需） |
 | `email` | `email` |
 | `display_name` | `name` → `preferred_username` → `nickname` → `email` |
-| `org_id` | `org_id` / `organization`, else joined `groups` |
+| `org_id` | `org_id` / `organization`，否则连接 `groups` |
 
-The ID token is what establishes identity — the access token is treated as opaque (the OIDC spec does not require it to be a JWT). Endpoint URLs are required to be HTTPS (loopback `http://` is allowed for local-dev IDPs), and the discovery document's advertised `issuer` must match your configured one (a trailing-slash difference is tolerated). Refresh tokens, when the IDP issues them, are used for silent re-auth via the standard `refresh_token` grant; logout calls the IDP's RFC 7009 `revocation_endpoint` when advertised.
+ID 令牌是确立身份的——访问令牌被视为不透明的（OIDC 规范不要求它是 JWT）。端点 URL 必须是 HTTPS（对于本地开发 IDP，允许回环 `http://`），并且发现文档声明的 `issuer` 必须与您配置的匹配（末尾斜杠的差异被容忍）。当 IDP 颁发刷新令牌时，它们会通过标准的 `refresh_token` 授权用于静默重新认证；注销会调用 IDP 的 RFC 7009 `revocation_endpoint`（如果已声明）。
 
-> **Confidential clients** (those with a `client_secret`) are not supported yet — configure a public + PKCE client, which is the typical choice for a browser-facing dashboard.
+> **机密客户端**（带有 `client_secret` 的客户端）尚不支持——请配置一个公共 + PKCE 客户端，这对于面向浏览器的仪表盘来说是典型选择。
 
-#### Worked example: Keycloak
+#### 完整示例：Keycloak
 
-[Keycloak](https://www.keycloak.org/) is one of the easiest self-hosted OIDC servers to stand up for a local test — it runs as a single container in dev mode (in-memory DB) and exposes textbook OIDC discovery. This walkthrough gets you from nothing to a working dashboard login in a few minutes.
+[Keycloak](https://www.keycloak.org/) 是最容易搭建本地测试的自托管 OIDC 服务器之一——它以开发模式（内存数据库）作为单个容器运行，并公开了教科书式的 OIDC 发现。此演练将带您在几分钟内从零到工作的仪表盘登录。
 
-**1. Run Keycloak with a pre-configured realm.** Save this realm export as `realm-hermes.json` — it defines a `hermes` realm, a **public PKCE client** (`hermes-dashboard`), and a test user, all imported on boot so there's nothing to click in the admin UI:
+**1. 运行预配置领域的 Keycloak。** 将此领域导出保存为 `realm-hermes.json`——它定义了一个 `hermes` 领域、一个**公共 PKCE 客户端**（`hermes-dashboard`）和一个测试用户，所有这些都在启动时导入，因此无需在管理 UI 中点击任何内容：
 
 ```json
 {
@@ -856,7 +814,7 @@ The ID token is what establishes identity — the access token is treated as opa
 }
 ```
 
-Start it (Keycloak 26+), mounting that file into the import directory:
+启动它（Keycloak 26+），将该文件挂载到导入目录：
 
 ```bash
 docker run --rm -p 8080:8080 \
@@ -867,12 +825,9 @@ docker run --rm -p 8080:8080 \
   start-dev --import-realm
 ```
 
-Once it's up, the realm advertises standard OIDC discovery at
-`http://localhost:8080/realms/hermes/.well-known/openid-configuration` (issuer
-`http://localhost:8080/realms/hermes`). The admin console is at
-`http://localhost:8080/` (`admin` / `admin`).
+启动后，领域在 `http://localhost:8080/realms/hermes/.well-known/openid-configuration` 处声明标准的 OIDC 发现（issuer 为 `http://localhost:8080/realms/hermes`）。管理控制台位于 `http://localhost:8080/`（`admin` / `admin`）。
 
-**2. Point the dashboard at it.** The self-hosted plugin permits a loopback `http://` issuer (HTTPS is required for any non-loopback issuer), so the local Keycloak works as-is:
+**2. 将仪表盘指向它。** 自托管插件允许回环 `http://` issuer（对于任何非回环 issuer 都需要 HTTPS），因此本地 Keycloak 可直接使用：
 
 ```bash
 export HERMES_DASHBOARD_OIDC_ISSUER="http://localhost:8080/realms/hermes"
@@ -881,78 +836,71 @@ export HERMES_DASHBOARD_PUBLIC_URL="http://localhost:9119"
 hermes dashboard --host 0.0.0.0 --port 9119 --no-open
 ```
 
-`HERMES_DASHBOARD_PUBLIC_URL` tells the dashboard its OAuth callback is
-`http://localhost:9119/auth/callback` — the redirect URI the realm registered
-above. Binding to `0.0.0.0` (a non-loopback bind) without `--insecure` is what
-engages the OAuth gate.
+`HERMES_DASHBOARD_PUBLIC_URL` 告诉仪表盘其 OAuth 回调是 `http://localhost:9119/auth/callback`——即上面领域注册的重定向 URI。绑定到 `0.0.0.0`（非回环绑定）且不带 `--insecure` 正是启用 OAuth 门的原因。
 
-**3. Log in.** Open `http://localhost:9119/`, you'll be bounced to `/login`. Click **Sign in with Self-Hosted OIDC** → authenticate at Keycloak as `testuser` / `testpassword` → land back on the authenticated dashboard. The sidebar shows `Logged in as Test User via self-hosted`, and `GET /api/auth/me` returns the verified session (`provider: self-hosted`, `email: testuser@example.com`).
+**3. 登录。** 打开 `http://localhost:9119/`，您将被重定向到 `/login`。点击 **使用自托管 OIDC 登录** → 在 Keycloak 上以 `testuser` / `testpassword` 进行认证 → 返回已认证的仪表盘。侧边栏显示 `Logged in as Test User via self-hosted`，并且 `GET /api/auth/me` 返回经过验证的会话（`provider: self-hosted`，`email: testuser@example.com`）。
 
-> If you bind or browse on a different host/port, add that origin's
-> `…/auth/callback` to the client's **Valid redirect URIs** in the Keycloak
-> admin console (Clients → hermes-dashboard → Settings). The same pattern works
-> for Authentik, Zitadel, Authelia, and other OIDC servers — only the issuer
-> URL and client registration UI differ.
+> 如果您在不同的主机/端口上绑定或浏览，请将该来源的 `…/auth/callback` 添加到 Keycloak 管理控制台（客户端 → hermes-dashboard → 设置）中客户端的**有效重定向 URI**。相同的模式适用于 Authentik、Zitadel、Authelia 和其他 OIDC 服务器——只有 issuer URL 和客户端注册 UI 不同。
 
-### Public URL override
+### 公共 URL 覆盖
 
-By default, the dashboard reconstructs the OAuth callback URL from the request — `X-Forwarded-Host` + `X-Forwarded-Proto` + `X-Forwarded-Prefix` (when uvicorn is configured with `proxy_headers=True`, which `start_server` enables under the gate). This works out of the box behind a reverse proxy that sets all three headers correctly.
+默认情况下，仪表盘从请求中重建 OAuth 回调 URL——`X-Forwarded-Host` + `X-Forwarded-Proto` + `X-Forwarded-Prefix`（当 uvicorn 配置了 `proxy_headers=True` 时，`start_server` 在门控下启用此功能）。这在正确设置所有这三个标头的反向代理后直接可用。
 
-For deploys behind reverse proxies that don't reliably forward those headers (manual nginx setups, on-prem ingresses, custom-domain deploys with partial proxy chains), set `dashboard.public_url` (or `HERMES_DASHBOARD_PUBLIC_URL`) to the **complete public URL** the dashboard is reached at:
+对于不能可靠转发这些标头的反向代理之后的部署（手动 nginx 设置、本地入口、具有部分代理链的自定义域名部署），请将 `dashboard.public_url`（或 `HERMES_DASHBOARD_PUBLIC_URL`）设置为访问仪表盘的**完整公共 URL**：
 
 ```yaml
 dashboard:
   public_url: "https://dashboard.example.com/hermes"
 ```
 
-When set, the OAuth callback URL becomes `<public_url>/auth/callback` verbatim — `X-Forwarded-Prefix` is ignored on that code path because the operator has explicitly declared the public URL. This is intentional: stacking the prefix on top would double-prefix the common case where the prefix is already baked into `public_url`.
+设置后，OAuth 回调 URL 将直接变为 `<public_url>/auth/callback`——在该代码路径上忽略 `X-Forwarded-Prefix`，因为操作者已显式声明了公共 URL。这是有意为之：如果前缀已包含在 `public_url` 中，再将前缀叠加会导致双重前缀，这是常见情况。
 
-Same precedence as the other dashboard settings — env wins over `config.yaml`:
+与其他仪表盘设置相同的优先级——环境变量覆盖 `config.yaml`：
 
-| Surface | Override path | When to use |
+| 表面 | 覆盖路径 | 何时使用 |
 |---------|---------------|-------------|
-| `dashboard.public_url` in `config.yaml` | `HERMES_DASHBOARD_PUBLIC_URL` | Local dev / on-prem (canonical) |
-| `HERMES_DASHBOARD_PUBLIC_URL` env var | — | Hosting-platform secrets / CI |
-| (unset) | — | Default — reconstruct from `X-Forwarded-*` headers |
+| `dashboard.public_url` in `config.yaml` | `HERMES_DASHBOARD_PUBLIC_URL` | 本地开发/本地部署（规范） |
+| `HERMES_DASHBOARD_PUBLIC_URL` 环境变量 | — | 托管平台秘密/CI |
+| （未设置） | — | 默认——从 `X-Forwarded-*` 标头重建 |
 
-Validation rejects values without `http://` / `https://` scheme, without a host, or containing quote / angle / whitespace / control characters. A malformed value silently falls through to header reconstruction so the login flow keeps working rather than dispatching the user to a hostile URL.
+验证会拒绝缺少 `http://` / `https://` 方案、缺少主机或包含引号、尖括号、空格或控制字符的值。格式错误的值会静默回退到标头重建，以便登录流程继续工作，而不是将用户发送到恶意 URL。
 
-> **Note:** `public_url` overrides the OAuth callback URL only. The `Secure` cookie flag is still controlled by `request.url.scheme` (X-Forwarded-Proto under proxy_headers), so an `http://` `public_url` on a TLS-terminated public deploy will produce non-Secure cookies. This is an operator footgun — pair `public_url` with proper TLS termination upstream.
+> **注意：** `public_url` 仅覆盖 OAuth 回调 URL。`Secure` cookie 标志仍由 `request.url.scheme` 控制（在 `proxy_headers` 下为 `X-Forwarded-Proto`），因此 TLS 终止的公共部署上的 `http://` `public_url` 会产生非安全 cookie。这是操作者需要注意的问题——请将 `public_url` 与正确的上游 TLS 终止配合使用。
 
-### OAuth flow
+### OAuth 流程
 
-The provider implements the [Nous Portal OAuth contract v1](https://github.com/NousResearch/nous-account-service/blob/main/docs/agent-dashboard-oauth-contract.md) — authorization-code grant with PKCE (S256):
+提供程序实现了 [Nous Portal OAuth 合同 v1](https://github.com/NousResearch/nous-account-service/blob/main/docs/agent-dashboard-oauth-contract.md)——授权码授权 + PKCE（S256）：
 
-1. User hits `/` without a session cookie → gate redirects to `/login`.
-2. Login page shows a "Continue with Nous Research" button → `/auth/login?provider=nous`.
-3. Server stashes PKCE state in a short-lived cookie, redirects user to `https://portal.nousresearch.com/oauth/authorize?…`.
-4. User authenticates with Portal, lands at `/auth/callback?code=…&state=…`.
-5. Server exchanges the code for an access token at `POST /api/oauth/token`, verifies the JWT signature against the Portal's JWKS (`/.well-known/jwks.json`), and sets the `hermes_session_at` cookie.
-6. User is redirected to `/` (or to the original deep-link path via the `next=` query parameter).
+1. 用户访问 `/` 时没有会话 cookie → 门重定向到 `/login`。
+2. 登录页面显示 "使用 Nous Research 继续" 按钮 → `/auth/login?provider=nous`。
+3. 服务器将 PKCE 状态存储在短期 cookie 中，并将用户重定向到 `https://portal.nousresearch.com/oauth/authorize?…`。
+4. 用户在 Portal 进行认证，到达 `/auth/callback?code=…&state=…`。
+5. 服务器在 `POST /api/oauth/token` 处将代码交换为访问令牌，根据 Portal 的 JWKS（`/.well-known/jwks.json`）验证 JWT 签名，并设置 `hermes_session_at` cookie。
+6. 用户被重定向到 `/`（或通过 `next=` 查询参数重定向到原始深度链接路径）。
 
-Access tokens have a 15-minute TTL. **There is no refresh token in contract v1** — when the token expires, the SPA's fetch wrapper detects the 401 envelope and full-page-navigates back to `/login` to re-run the flow.
+访问令牌的 TTL 为 15 分钟。**合同 v1 中没有刷新令牌**——当令牌过期时，SPA 的 fetch 包装器会检测到 401 信封并整页导航回 `/login` 以重新运行流程。
 
-### Cookies set
+### 设置的 Cookie
 
-| Name | Lifetime | Notes |
+| 名称 | 生命周期 | 说明 |
 |------|----------|-------|
-| `hermes_session_at` | Token TTL (15 min) | HttpOnly, SameSite=Lax, Secure-when-HTTPS |
-| `hermes_session_pkce` | 10 min | HttpOnly; holds the PKCE verifier + provider hint during the round trip |
-| `hermes_session_rt` | unused in v1 | Reserved for forward-compat; not written when `refresh_token` is empty |
+| `hermes_session_at` | 令牌 TTL（15 分钟） | HttpOnly, SameSite=Lax, Secure-when-HTTPS |
+| `hermes_session_pkce` | 10 分钟 | HttpOnly；在往返过程中保存 PKCE 验证器 + 提供程序提示 |
+| `hermes_session_rt` | v1 中未使用 | 保留用于向前兼容；当 `refresh_token` 为空时不写入 |
 
-All three are `Path=/` and `SameSite=Lax`. The `Secure` flag is set when the dashboard is reached over HTTPS (detected via the request URL scheme — honours `X-Forwarded-Proto` from an upstream TLS terminator under `proxy_headers=True`).
+所有三个都是 `Path=/` 和 `SameSite=Lax`。当仪表盘通过 HTTPS 访问时（通过请求 URL 方案检测——在 `proxy_headers=True` 下，尊重来自上游 TLS 终结器的 `X-Forwarded-Proto`），会设置 `Secure` 标志。
 
-### Logout
+### 注销
 
-The sidebar widget shows `Logged in as <user_id…> via nous` with a logout icon. Clicking it POSTs `/auth/logout`, which clears all dashboard-auth cookies and redirects back to `/login`.
+侧边栏小部件显示 `Logged in as <user_id…> via nous`，带有一个注销图标。点击它会发送 POST 到 `/auth/logout`，清除所有仪表盘认证 cookie，并重定向回 `/login`。
 
-### Audit log
+### 审计日志
 
-Every login start, success, failure, and session-verify failure is written as a JSON line to `$HERMES_HOME/logs/dashboard-auth.log`. Sensitive fields (`access_token`, `refresh_token`, `code`, `code_verifier`, `state`, `Authorization` header) are redacted before logging.
+每次登录开始、成功、失败和会话验证失败都会以 JSON 行的形式写入 `$HERMES_HOME/logs/dashboard-auth.log`。敏感字段（`access_token`、`refresh_token`、`code`、`code_verifier`、`state`、`Authorization` 标头）在记录前会被脱敏。
 
-### Custom providers
+### 自定义提供程序
 
-To plug a non-Nous OAuth provider (e.g. Google, GitHub, custom OIDC), create a plugin that registers a `DashboardAuthProvider`:
+要插入非 Nous 的 OAuth 提供程序（例如 Google、GitHub、自定义 OIDC），请创建一个注册 `DashboardAuthProvider` 的插件：
 
 ```python
 # ~/.hermes/plugins/dashboard-auth-myidp/__init__.py
@@ -972,147 +920,75 @@ def register(ctx):
     ctx.register_dashboard_auth_provider(MyIdPProvider())
 ```
 
-The login page lists all registered providers; multiple providers can be stacked and the user picks one at `/login`.
+登录页面列出所有已注册的提供程序；可以堆叠多个提供程序，用户在 `/login` 处选择一个。
 
-### Verifying the gate is on
+### 验证门已开启
 
 ```bash
-# Quick env-var path.
+# 快速环境变量路径。
 HERMES_DASHBOARD_OAUTH_CLIENT_ID=agent:test \
   hermes dashboard --host 0.0.0.0
 
-# Or the equivalent via config.yaml (recommended for local dev / on-prem):
+# 或通过 config.yaml 等效（推荐用于本地开发/本地部署）：
 #
 #   dashboard:
 #     oauth:
 #       client_id: agent:test
 #
-# then just:
+# 然后只需：
 hermes dashboard --host 0.0.0.0
 
-# Hit /api/status to see the gate state:
+# 访问 /api/status 查看门状态：
 curl -s http://127.0.0.1:9119/api/status | jq '.auth_required, .auth_providers'
 # true
 # ["nous"]
 ```
 
-The dashboard's React StatusPage shows the same fields under "Web server". A sidebar AuthWidget surfaces the current identity once you've signed in.
+仪表盘的 React StatusPage 在 "Web 服务器" 下显示相同的字段。侧边栏的 AuthWidget 在您登录后显示当前身份。
 
-## Connecting Hermes Desktop to a remote backend
+## 将 Hermes Desktop 连接到远程后端
 
-Hermes Desktop can drive a Hermes backend running on another machine (a VPS, a home server, a Mini behind Tailscale). In the app this lives under **Settings → Gateway → Remote gateway**, which asks for a **Remote URL** and a way to **Sign in**. (For the desktop app itself — install, settings, chat — see the [Hermes Desktop](/user-guide/desktop) page.)
+Hermes Desktop 可以驱动在另一台机器（VPS、家庭服务器、Tailscale 后的小型设备）上运行的 Hermes 后端。在应用中，这位于**设置 → 网关 → 远程网关**下，它要求输入**远程 URL** 和**登录**方式。（有关桌面应用本身——安装、设置、聊天——请参阅 [Hermes Desktop](/user-guide/desktop) 页面。）
 
-You protect the remote dashboard with one of the bundled auth providers, and the desktop app signs in against whichever one the backend advertises. For a backend reachable beyond your own machine — a VPS, a public host, anything internet-facing — the recommended provider is **OAuth (Nous Portal)** (register it with [`hermes dashboard register`](#registering-a-dashboard) and sign in with *Sign in with Nous Research*). The bundled [username/password provider](#usernamepassword-provider-no-oauth-idp) is the quickest option when the backend is on a trusted LAN or reachable only over a VPN, but is **not suitable for direct public-internet exposure**. Binding the dashboard to a non-loopback address engages its auth gate; once signed in, Desktop reuses the session for the chat WebSocket automatically — there is no token to copy or paste.
+您使用内置的认证提供程序之一保护远程仪表盘，桌面应用会针对后端宣告的任何提供程序进行登录。对于可访问范围超出您自己机器的后端——VPS、公共主机、任何面向互联网的设备——推荐的提供程序是 **OAuth (Nous Portal)**（使用 [`hermes dashboard register`](#registering-a-dashboard) 注册，并使用 *使用 Nous Research 登录* 登录）。当后端在受信任的 LAN 上或仅通过 VPN 可达时，捆绑的[用户名/密码提供程序](#usernamepassword-provider-no-oauth-idp)是最快的选择，但**不适合直接暴露在公共互联网上**。将仪表盘绑定到非回环地址会启用其认证门；登录后，Desktop 会自动为聊天 WebSocket 重用会话——无需复制或粘贴令牌。
 
-The recipe below uses the username/password path because it's the quickest to stand up on a trusted network; for the OAuth path see [Default provider: Nous Research](#default-provider-nous-research).
+以下配方使用用户名/密码路径，因为这是在受信任网络上最快搭建的方式；有关 OAuth 路径，请参阅 [默认提供程序：Nous Research](#default-provider-nous-research)。
 
-### On the backend (the remote machine)
+### 在后端（远程机器）
 
 ```bash
-# 1. Set the dashboard login credentials in ~/.hermes/.env (secrets file, 0600).
+# 1. 在 ~/.hermes/.env 中设置仪表盘登录凭据（秘密文件，0600）。
 cat >> ~/.hermes/.env <<'EOF'
 HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
 HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=choose-a-strong-password
-# Recommended: a stable signing secret so sessions survive restarts.
+# 推荐：一个稳定的签名密钥，以便会话在重启后仍然存在。
 HERMES_DASHBOARD_BASIC_AUTH_SECRET=$(openssl rand -base64 32)
 EOF
 chmod 600 ~/.hermes/.env
 
-# 2. Run the dashboard bound to a reachable address. The non-loopback bind
-#    engages the auth gate; the username/password provider handles login.
+# 2. 运行绑定到可达地址的仪表盘。非回环绑定会启用认证门；
+#    用户名/密码提供程序处理登录。
 hermes dashboard --no-open --host 0.0.0.0 --port 9119
 ```
 
-Prefer no plaintext at rest? Use `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH` with a scrypt hash instead — see [Username/password provider](#usernamepassword-provider-no-oauth-idp) for the full surface.
+更喜欢静态存储时无明文？请改用 `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH` 配合 scrypt 哈希——有关完整表面，请参阅[用户名/密码提供程序](#usernamepassword-provider-no-oauth-idp)。
 
-If you run the dashboard as a systemd service, `~/.hermes/.env` is picked up automatically when the unit has `EnvironmentFile=%h/.hermes/.env`, so the credentials are in the environment at boot.
+如果您将仪表盘作为 systemd 服务运行，当单元具有 `EnvironmentFile=%h/.hermes/.env` 时，`~/.hermes/.env` 会自动加载，因此凭据在启动时就在环境中。
 
 :::warning
-The dashboard reads and writes your `.env` (API keys, secrets) and can run agent commands. The **username/password** setup shown here is for a trusted network — never expose a password-protected dashboard directly to the open internet. Put it behind a VPN. [Tailscale](https://tailscale.com/) is the clean option: bind to the machine's tailscale IP (`--host <tailscale-ip>`) and use `http://<tailscale-ip>:9119` as the Remote URL. Only devices on your tailnet can reach it. To reach a backend over the public internet, use the **OAuth (Nous Portal)** provider instead.
+仪表盘会读取和写入您的 `.env`（API 密钥、秘密）并可以运行 Agent 命令。此处展示的**用户名/密码**设置适用于受信任的网络——切勿将受密码保护的仪表盘直接暴露到开放互联网。将其置于 VPN 之后。[Tailscale](https://tailscale.com/) 是一个干净的选择：绑定到机器的 tailscale IP（`--host <tailscale-ip>`），并使用 `http://<tailscale-ip>:9119` 作为远程 URL。只有您的 tailnet 上的设备可以访问它。要通过公共互联网访问后端，请改用 **OAuth (Nous Portal)** 提供程序。
 :::
 
-### In Hermes Desktop
+### 在 Hermes Desktop 中
 
-**Settings → Gateway → Remote gateway:**
+**设置 → 网关 → 远程网关：**
 
-- **Remote URL** — `http://<backend-host>:9119` (path prefixes like `/hermes` are supported if you front it with a reverse proxy)
-- **Sign in** — the app detects the username/password gateway and shows a **Sign in** button; click it and enter the credentials from step 1
-- **Save and reconnect** — switches the desktop shell onto the remote backend
+- **远程 URL** — `http://<backend-host>:9119`（如果您使用反向代理前置，也支持像 `/hermes` 这样的路径前缀）
+- **登录** — 应用检测到用户名/密码网关，并显示一个**登录**按钮；点击它并输入步骤 1 中的凭据
+- **保存并重新连接** — 将桌面 shell 切换到远程后端
 
-The session refreshes automatically and survives restarts when `HERMES_DASHBOARD_BASIC_AUTH_SECRET` is set on the backend.
+当在后台设置了 `HERMES_DASHBOARD_BASIC_AUTH_SECRET` 时，会话会自动刷新并在重启后仍然存在。
 
-### Environment-variable override
+### 环境变量覆盖
 
-Instead of the in-app setting, you can point the desktop at a backend with an env var before launching it. When `HERMES_DESKTOP_REMOTE_URL` is set, it overrides the saved in-app URL (the Gateway settings panel shows an "env override" badge and disables editing); you still **Sign in** with your username and password from the panel.
-
-| Env var | Value |
-|---------|-------|
-| `HERMES_DESKTOP_REMOTE_URL` | `http://<backend-host>:9119` |
-
-### Troubleshooting
-
-- **"Remote gateway incomplete"** — you haven't entered a remote URL.
-- **Sign-in fails with 401 / "Invalid credentials"** — the username or password doesn't match the backend's `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` / `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD`. The backend returns the same generic error for unknown user and wrong password, so check both. Confirm the gate with `curl -s http://<host>:9119/api/status | jq '.auth_required, .auth_providers'` — it should report `true` and include `"basic"`.
-- **No "Sign in" button — it asks for a session token instead** — the username/password provider isn't active (`/api/status` won't list `"basic"`). Make sure the username and a password (or password hash) are set and the dashboard process loaded them.
-- **Signed out on every restart** — set `HERMES_DASHBOARD_BASIC_AUTH_SECRET` to a stable value; otherwise the signing key is regenerated per boot.
-- **Connection refused / times out** — the backend bound to `127.0.0.1` (the default) instead of a reachable address, or a firewall/VPN is blocking the port. Bind to `0.0.0.0` or the tailscale IP and open the port to your trusted network.
-
-## CORS
-
-The web server restricts CORS to localhost origins only:
-
-- `http://localhost:9119` / `http://127.0.0.1:9119` (production)
-- `http://localhost:3000` / `http://127.0.0.1:3000`
-- `http://localhost:5173` / `http://127.0.0.1:5173` (Vite dev server)
-
-If you run the server on a custom port, that origin is added automatically.
-
-## Development
-
-If you're contributing to the web dashboard frontend:
-
-```bash
-# Terminal 1: start the backend API
-hermes dashboard --no-open
-
-# Terminal 2: start the Vite dev server with HMR
-cd web/
-npm install
-npm run dev
-```
-
-The Vite dev server at `http://localhost:5173` proxies `/api` requests to the FastAPI backend at `http://127.0.0.1:9119`.
-
-The frontend is built with React 19, TypeScript, Tailwind CSS v4, and shadcn/ui-style components. Production builds output to `hermes_cli/web_dist/` which the FastAPI server serves as a static SPA.
-
-## Automatic Build on Update
-
-When you run `hermes update`, the web frontend is automatically rebuilt if `npm` is available. This keeps the dashboard in sync with code updates. If `npm` isn't installed, the update skips the frontend build and `hermes dashboard` will build it on first launch.
-
-## Themes & plugins
-
-The dashboard ships with six built-in themes and can be extended with user-defined themes, plugin tabs, and backend API routes — all drop-in, no repo clone needed.
-
-**Switch themes live** from the header bar — click the palette icon next to the language switcher. Selection persists to `config.yaml` under `dashboard.theme` and is restored on page load.
-
-**Change the font independently** from the same picker — the **Font** section below the theme list overrides the UI font of whatever theme is active. The choice persists across theme switches (`config.yaml` → `dashboard.font`); pick **Theme default** to clear it and return to the active theme's own font.
-
-Built-in themes:
-
-| Theme | Character |
-|-------|-----------|
-| **Hermes Teal** (`default`) | Dark teal + cream, system fonts, comfortable spacing |
-| **Hermes Teal (Large)** (`default-large`) | Same as default with 18px text and roomier spacing |
-| **Midnight** (`midnight`) | Deep blue-violet, Inter + JetBrains Mono |
-| **Ember** (`ember`) | Warm crimson + bronze, Spectral serif + IBM Plex Mono |
-| **Mono** (`mono`) | Grayscale, IBM Plex, compact |
-| **Cyberpunk** (`cyberpunk`) | Neon green on black, Share Tech Mono |
-| **Rosé** (`rose`) | Pink + ivory, Fraunces serif, spacious |
-
-To build your own theme, add a plugin tab, inject into shell slots, or expose plugin-specific REST endpoints, see **[Extending the Dashboard](./extending-the-dashboard)** — the complete guide covers:
-
-- Theme YAML schema — palette, typography, layout, assets, componentStyles, colorOverrides, customCSS
-- Layout variants — `standard`, `cockpit`, `tiled`
-- Plugin manifest, SDK, shell slots, page-scoped slots (inject widgets into built-in pages without overriding them), backend FastAPI routes
-- A full combined theme-plus-plugin walkthrough (Strike Freedom cockpit demo)
-- Discovery, reload, and troubleshooting
+无需在应用内设置，您可以在启动桌面之前使用环境变量将其指向后端。当设置了 `HERMES_DESKTOP_REMOTE_URL` 时，它会覆盖保存的应用内 URL（网关设置

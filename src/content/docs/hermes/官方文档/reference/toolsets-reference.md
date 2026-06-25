@@ -1,55 +1,46 @@
 ---
-title: 工具集参考
-description: Hermes Agent 官方文档汉化版
----
-
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`reference/toolsets-reference.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/toolsets-reference.md)
-> 本版本为自用学习用途，非官方翻译。
-
----
 sidebar_position: 4
-title: "Toolsets Reference"
-description: "Reference for Hermes core, composite, platform, and dynamic toolsets"
+title: "工具集参考"
+description: "Hermes 核心、复合、平台和动态工具集的参考"
 ---
 
-# Toolsets Reference
+# 工具集参考
 
-Toolsets are named bundles of tools that control what the agent can do. They're the primary mechanism for configuring tool availability per platform, per session, or per task.
+工具集（Toolsets）是已命名的工具包（bundles of tools），用于控制代理（Agent）可以执行的操作。它们是按平台、会话或任务配置工具可用性的主要机制。
 
-## How Toolsets Work
+## 工具集的工作原理
 
-Every tool belongs to exactly one toolset. When you enable a toolset, all tools in that bundle become available to the agent. Toolsets come in three kinds:
+每个工具（Tool）恰好属于一个工具集。当你启用一个工具集时，该包中的所有工具都对代理可用。工具集分为三种类型：
 
-- **Core** — A single logical group of related tools (e.g., `file` bundles `read_file`, `write_file`, `patch`, `search_files`)
-- **Composite** — Combines multiple core toolsets for a common scenario (e.g., `debugging` bundles file, terminal, and web tools)
-- **Platform** — A complete tool configuration for a specific deployment context (e.g., `hermes-cli` is the default for interactive CLI sessions)
+- **核心（Core）** — 单一逻辑组的相关工具（例如，`file` 包含 `read_file`、`write_file`、`patch`、`search_files`）
+- **复合（Composite）** — 针对常见场景组合多个核心工具集（例如，`debugging` 包含文件、终端和网络工具）
+- **平台（Platform）** — 针对特定部署上下文的完整工具配置（例如，`hermes-cli` 是交互式 CLI 会话的默认配置）
 
-## Configuring Toolsets
+## 配置工具集
 
-### Per-session (CLI)
+### 按会话（CLI）
 
 ```bash
 hermes chat --toolsets web,file,terminal
-hermes chat --toolsets debugging        # composite — expands to file + terminal + web
-hermes chat --toolsets all              # everything
+hermes chat --toolsets debugging        # 复合 — 展开为 file + terminal + web
+hermes chat --toolsets all              # 所有工具
 ```
 
-### Per-platform (config.yaml)
+### 按平台（config.yaml）
 
 ```yaml
 toolsets:
-  - hermes-cli          # default for CLI
-  # - hermes-telegram   # override for Telegram gateway
+  - hermes-cli          # CLI 的默认配置
+  # - hermes-telegram   # 为 Telegram 网关覆盖默认配置
 ```
 
-### Interactive management
+### 交互式管理
 
 ```bash
-hermes tools                            # curses UI to enable/disable per platform
+hermes tools                            # 基于 curses 的 UI，用于按平台启用/禁用
 ```
 
-Or in-session:
+或在会话中：
 
 ```
 /tools list
@@ -57,80 +48,80 @@ Or in-session:
 /tools enable homeassistant
 ```
 
-## Core Toolsets
+## 核心工具集
 
-| Toolset | Tools | Purpose |
+| 工具集 | 工具 | 用途 |
 |---------|-------|---------|
-| `browser` | `browser_back`, `browser_cdp`, `browser_click`, `browser_console`, `browser_dialog`, `browser_get_images`, `browser_navigate`, `browser_press`, `browser_scroll`, `browser_snapshot`, `browser_type`, `browser_vision`, `web_search` | Core browser automation. Includes `web_search` as a fallback for quick lookups. `browser_cdp` and `browser_dialog` are gated at runtime — registered only when a CDP endpoint is reachable at session start (via `/browser connect`, `browser.cdp_url` config, Browserbase, or Camofox). `browser_dialog` works together with the `pending_dialogs` and `frame_tree` fields that `browser_snapshot` adds when a CDP supervisor is attached. |
-| `clarify` | `clarify` | Ask the user a question when the agent needs clarification. |
-| `code_execution` | `execute_code` | Run Python scripts that call Hermes tools programmatically. |
-| `cronjob` | `cronjob` | Schedule and manage recurring tasks. |
-| `debugging` | composite (`file` + `terminal` + `web`) | Debug bundle — file, process/terminal, web extract/search. |
-| `delegation` | `delegate_task` | Spawn isolated subagent instances for parallel work. |
-| `discord` | `discord` | Core Discord text/embed/DM actions (gateway-only). Active on the `hermes-discord` toolset. |
-| `discord_admin` | `discord_admin` | Discord moderation (bans, role changes, channel management). Active on the `hermes-discord` toolset; requires the bot to hold the relevant Discord permissions. |
-| `feishu_doc` | `feishu_doc_read` | Read Feishu/Lark document content. Used by the Feishu document-comment intelligent-reply handler. |
-| `feishu_drive` | `feishu_drive_add_comment`, `feishu_drive_list_comments`, `feishu_drive_list_comment_replies`, `feishu_drive_reply_comment` | Feishu/Lark drive comment operations. Scoped to the comment agent; not exposed on `hermes-cli` or other messaging toolsets. |
-| `file` | `patch`, `read_file`, `search_files`, `write_file` | File reading, writing, searching, and editing. |
-| `homeassistant` | `ha_call_service`, `ha_get_state`, `ha_list_entities`, `ha_list_services` | Smart home control via Home Assistant. Only available when `HASS_TOKEN` is set. |
-| `computer_use` | `computer_use` | Background macOS desktop control via cua-driver — does not steal cursor/focus. Works with any tool-capable model. macOS only; requires `cua-driver` on `$PATH`. |
-| `context_engine` | (varies) | Runtime tools exposed by the active context-engine plugin (empty until a plugin populates it). |
-| `image_gen` | `image_generate` | Text-to-image generation via FAL.ai (with opt-in OpenAI / xAI backends). |
-| `video_gen` | `video_generate` | Text-to-video and image-to-video via plugin-registered backends (xAI Grok-Imagine, FAL.ai Veo 3.1 / Pixverse v6 / Kling O3). Pass `image_url` to animate an image; omit it for text-to-video. |
-| `kanban` | `kanban_block`, `kanban_comment`, `kanban_complete`, `kanban_create`, `kanban_heartbeat`, `kanban_link`, `kanban_list`, `kanban_show`, `kanban_unblock` | Multi-agent coordination tools. Registered for dispatcher-spawned task workers (`HERMES_KANBAN_TASK`) and for profiles that explicitly list the `kanban` toolset by name (the `all`/`*` wildcard does **not** enable it). Workers mark tasks done, block, heartbeat, comment, and create/link follow-up tasks; orchestrator profiles additionally get board-routing tools like list/unblock. |
-| `memory` | `memory` | Persistent cross-session memory management. |
-| `messaging` | `send_message` | Send messages to other platforms (Telegram, Discord, etc.) from within a session. |
-| `moa` | `mixture_of_agents` | Multi-model consensus via Mixture of Agents. |
-| `safe` | `image_generate`, `vision_analyze`, `web_extract`, `web_search` (via `includes`) | Read-only research + media generation. No file writes, no terminal, no code execution. |
-| `search` | `web_search` | Web search only (without extract). |
-| `session_search` | `session_search` | Search past conversation sessions. |
-| `skills` | `skill_manage`, `skill_view`, `skills_list` | Skill CRUD and browsing. |
-| `spotify` | `spotify_albums`, `spotify_devices`, `spotify_library`, `spotify_playback`, `spotify_playlists`, `spotify_queue`, `spotify_search` | Native Spotify control (playback, queue, search, playlists, albums, library). Registered by the bundled `spotify` plugin. |
-| `terminal` | `process`, `terminal` | Shell command execution and background process management. |
-| `todo` | `todo` | Task list management within a session. |
-| `tts` | `text_to_speech` | Text-to-speech audio generation. |
-| `vision` | `vision_analyze` | Image analysis via vision-capable models. |
-| `video` | `video_analyze` | Video analysis and understanding tools (opt-in, not in the default toolset — add explicitly via `--toolsets`). |
-| `web` | `web_extract`, `web_search` | Web search and page content extraction. |
-| `x_search` | `x_search` | Search X (Twitter) posts and threads via xAI's built-in `x_search` Responses tool. Off by default; opt in via `hermes tools`. Schema only registered when xAI credentials (SuperGrok OAuth or `XAI_API_KEY`) are configured. |
-| `yuanbao` | `yb_query_group_info`, `yb_query_group_members`, `yb_search_sticker`, `yb_send_dm`, `yb_send_sticker` | Yuanbao DM/group actions and sticker search. Registered only on `hermes-yuanbao`. |
+| `browser` | `browser_back`, `browser_cdp`, `browser_click`, `browser_console`, `browser_dialog`, `browser_get_images`, `browser_navigate`, `browser_press`, `browser_scroll`, `browser_snapshot`, `browser_type`, `browser_vision`, `web_search` | 核心浏览器自动化。包含 `web_search` 作为快速查询的回退。`browser_cdp` 和 `browser_dialog` 在运行时被门控（gated）——仅当会话启动时 CDP 端点可访问（通过 `/browser connect`、`browser.cdp_url` 配置、Browserbase 或 Camofox）时才注册。`browser_dialog` 与 `pending_dialogs` 和 `frame_tree` 字段配合使用，当附加了 CDP 监督者时，`browser_snapshot` 会添加这些字段。 |
+| `clarify` | `clarify` | 当代理需要澄清时向用户提问。 |
+| `code_execution` | `execute_code` | 运行 Python 脚本，以编程方式调用 Hermes 工具。 |
+| `cronjob` | `cronjob` | 调度和管理定期任务。 |
+| `debugging` | 复合 (`file` + `terminal` + `web`) | 调试包 — 文件、进程/终端、网络提取/搜索。 |
+| `delegation` | `delegate_task` | 生成隔离的子代理（subagent）实例以进行并行工作。 |
+| `discord` | `discord` | 核心 Discord 文本/嵌入/DM 操作（仅限网关）。在 `hermes-discord` 工具集上生效。 |
+| `discord_admin` | `discord_admin` | Discord 管理（封禁、角色更改、频道管理）。在 `hermes-discord` 工具集上生效；要求机器人拥有相关的 Discord 权限。 |
+| `feishu_doc` | `feishu_doc_read` | 读取飞书/Lark 文档内容。由飞书文档评论智能回复处理器使用。 |
+| `feishu_drive` | `feishu_drive_add_comment`, `feishu_drive_list_comments`, `feishu_drive_list_comment_replies`, `feishu_drive_reply_comment` | 飞书/Lark 云盘评论操作。限定于评论代理（comment agent）；未在 `hermes-cli` 或其他消息工具集上暴露。 |
+| `file` | `patch`, `read_file`, `search_files`, `write_file` | 文件读取、写入、搜索和编辑。 |
+| `homeassistant` | `ha_call_service`, `ha_get_state`, `ha_list_entities`, `ha_list_services` | 通过 Home Assistant 进行智能家居控制。仅在设置了 `HASS_TOKEN` 时可用。 |
+| `computer_use` | `computer_use` | 通过 cua-driver 进行后台 macOS 桌面控制 — 不抢占光标/焦点。适用于任何支持工具的模型。仅限 macOS；需要 `cua-driver` 在 `$PATH` 中。 |
+| `context_engine` | (不定) | 由活动上下文引擎插件暴露的运行时工具（在插件填充之前为空）。 |
+| `image_gen` | `image_generate` | 通过 FAL.ai 进行文本到图像生成（可选择使用 OpenAI / xAI 后端）。 |
+| `video_gen` | `video_generate` | 通过插件注册的后端（xAI Grok-Imagine、FAL.ai Veo 3.1 / Pixverse v6 / Kling O3）进行文本到视频和图像到视频生成。传递 `image_url` 以动画化图像；省略则进行文本到视频。 |
+| `kanban` | `kanban_block`, `kanban_comment`, `kanban_complete`, `kanban_create`, `kanban_heartbeat`, `kanban_link`, `kanban_list`, `kanban_show`, `kanban_unblock` | 多代理协调工具。为调度器生成的任务工作者（`HERMES_KANBAN_TASK`）以及显式列出 `kanban` 工具集名称的配置文件注册（`all`/`*` 通配符**不会**启用它）。工作者标记任务完成、阻塞、心跳、评论以及创建/链接后续任务；编排器配置文件额外获得看板路由工具，如 list/unblock。 |
+| `memory` | `memory` | 持久化跨会话内存管理。 |
+| `messaging` | `send_message` | 从会话内向其他平台（Telegram、Discord 等）发送消息。 |
+| `moa` | `mixture_of_agents` | 通过代理混合（Mixture of Agents）实现多模型共识。 |
+| `safe` | `image_generate`, `vision_analyze`, `web_extract`, `web_search` (通过 `includes`) | 只读研究 + 媒体生成。无文件写入、无终端、无代码执行。 |
+| `search` | `web_search` | 仅限网络搜索（无提取）。 |
+| `session_search` | `session_search` | 搜索过去的会话记录。 |
+| `skills` | `skill_manage`, `skill_view`, `skills_list` | 技能的增删改查和浏览。 |
+| `spotify` | `spotify_albums`, `spotify_devices`, `spotify_library`, `spotify_playback`, `spotify_playlists`, `spotify_queue`, `spotify_search` | 原生 Spotify 控制（播放、队列、搜索、播放列表、专辑、库）。由捆绑的 `spotify` 插件注册。 |
+| `terminal` | `process`, `terminal` | Shell 命令执行和后台进程管理。 |
+| `todo` | `todo` | 会话内的任务列表管理。 |
+| `tts` | `text_to_speech` | 文本到语音音频生成。 |
+| `vision` | `vision_analyze` | 通过视觉能力模型进行图像分析。 |
+| `video` | `video_analyze` | 视频分析和理解工具（可选择加入，不在默认工具集中 — 通过 `--toolsets` 显式添加）。 |
+| `web` | `web_extract`, `web_search` | 网络搜索和页面内容提取。 |
+| `x_search` | `x_search` | 通过 xAI 内置的 `x_search` Responses 工具搜索 X（Twitter）帖子和线程。默认关闭；通过 `hermes tools` 选择加入。仅在配置了 xAI 凭据（SuperGrok OAuth 或 `XAI_API_KEY`）时注册模式。 |
+| `yuanbao` | `yb_query_group_info`, `yb_query_group_members`, `yb_search_sticker`, `yb_send_dm`, `yb_send_sticker` | 元宝 DM/群组操作和贴纸搜索。仅在 `hermes-yuanbao` 上注册。 |
 
-## Platform Toolsets
+## 平台工具集
 
-Platform toolsets define the complete tool configuration for a deployment target. Most messaging platforms use the same set as `hermes-cli`:
+平台工具集定义了部署目标的完整工具配置。大多数消息平台使用与 `hermes-cli` 相同的集合：
 
-| Toolset | Differences from `hermes-cli` |
+| 工具集 | 与 `hermes-cli` 的差异 |
 |---------|-------------------------------|
-| `hermes-cli` | Full toolset — the default for interactive CLI sessions. Includes file, terminal, web, browser, memory, skills, vision, image_gen, todo, tts, delegation, code_execution, cronjob, session_search, clarify, and `safe` (read-only) bundles plus the standard messaging tools. |
-| `hermes-acp` | Drops `clarify`, `cronjob`, `image_generate`, `send_message`, `text_to_speech`, and all four Home Assistant tools. Focused on coding tasks in IDE context. |
-| `hermes-api-server` | Drops `clarify`, `send_message`, and `text_to_speech`. Keeps everything else — suitable for programmatic access where user interaction isn't possible. |
-| `hermes-cron` | Same as `hermes-cli`. |
-| `hermes-telegram` | Same as `hermes-cli`. |
-| `hermes-discord` | Adds `discord` and `discord_admin` on top of `hermes-cli`. |
-| `hermes-slack` | Same as `hermes-cli`. |
-| `hermes-whatsapp` | Same as `hermes-cli`. |
-| `hermes-signal` | Same as `hermes-cli`. |
-| `hermes-matrix` | Same as `hermes-cli`. |
-| `hermes-mattermost` | Same as `hermes-cli`. |
-| `hermes-email` | Same as `hermes-cli`. |
-| `hermes-sms` | Same as `hermes-cli`. |
-| `hermes-bluebubbles` | Same as `hermes-cli`. |
-| `hermes-dingtalk` | Same as `hermes-cli`. |
-| `hermes-feishu` | Adds the five `feishu_doc_*` / `feishu_drive_*` tools (only used by the document-comment handler, not the regular chat adapter). |
-| `hermes-qqbot` | Same as `hermes-cli`. |
-| `hermes-wecom` | Same as `hermes-cli`. |
-| `hermes-wecom-callback` | Same as `hermes-cli`. |
-| `hermes-weixin` | Same as `hermes-cli`. |
-| `hermes-yuanbao` | Adds the five `yb_*` tools (DM/group/sticker) on top of `hermes-cli`. |
-| `hermes-homeassistant` | Same as `hermes-cli` (the Home Assistant tools are already present by default and activate when `HASS_TOKEN` is set). |
-| `hermes-webhook` | Same as `hermes-cli`. |
-| `hermes-gateway` | Internal gateway orchestrator toolset — union of every `hermes-<platform>` toolset; used when the gateway needs to accept any message source. |
+| `hermes-cli` | 完整工具集 — 交互式 CLI 会话的默认配置。包含 file、terminal、web、browser、memory、skills、vision、image_gen、todo、tts、delegation、code_execution、cronjob、session_search、clarify 和 `safe`（只读）包以及标准消息工具。 |
+| `hermes-acp` | 移除 `clarify`、`cronjob`、`image_generate`、`send_message`、`text_to_speech` 以及所有四个 Home Assistant 工具。专注于 IDE 环境中的编码任务。 |
+| `hermes-api-server` | 移除 `clarify`、`send_message` 和 `text_to_speech`。保留其他所有内容 — 适用于无法进行用户交互的程序化访问。 |
+| `hermes-cron` | 与 `hermes-cli` 相同。 |
+| `hermes-telegram` | 与 `hermes-cli` 相同。 |
+| `hermes-discord` | 在 `hermes-cli` 基础上添加 `discord` 和 `discord_admin`。 |
+| `hermes-slack` | 与 `hermes-cli` 相同。 |
+| `hermes-whatsapp` | 与 `hermes-cli` 相同。 |
+| `hermes-signal` | 与 `hermes-cli` 相同。 |
+| `hermes-matrix` | 与 `hermes-cli` 相同。 |
+| `hermes-mattermost` | 与 `hermes-cli` 相同。 |
+| `hermes-email` | 与 `hermes-cli` 相同。 |
+| `hermes-sms` | 与 `hermes-cli` 相同。 |
+| `hermes-bluebubbles` | 与 `hermes-cli` 相同。 |
+| `hermes-dingtalk` | 与 `hermes-cli` 相同。 |
+| `hermes-feishu` | 添加五个 `feishu_doc_*` / `feishu_drive_*` 工具（仅由文档评论处理器使用，而非常规聊天适配器）。 |
+| `hermes-qqbot` | 与 `hermes-cli` 相同。 |
+| `hermes-wecom` | 与 `hermes-cli` 相同。 |
+| `hermes-wecom-callback` | 与 `hermes-cli` 相同。 |
+| `hermes-weixin` | 与 `hermes-cli` 相同。 |
+| `hermes-yuanbao` | 在 `hermes-cli` 基础上添加五个 `yb_*` 工具（DM/群组/贴纸）。 |
+| `hermes-homeassistant` | 与 `hermes-cli` 相同（Home Assistant 工具默认已存在，并在设置 `HASS_TOKEN` 时激活）。 |
+| `hermes-webhook` | 与 `hermes-cli` 相同。 |
+| `hermes-gateway` | 内部网关编排器工具集 — 包含所有 `hermes-<platform>` 工具集的并集；用于网关需要接受任何消息源时。 |
 
-## Dynamic Toolsets
+## 动态工具集
 
-### MCP server toolsets
+### MCP 服务器工具集
 
-Each configured MCP server generates a `mcp-<server>` toolset at runtime. For example, if you configure a `github` MCP server, a `mcp-github` toolset is created containing all tools that server exposes.
+每个配置的 MCP 服务器在运行时生成一个 `mcp-<server>` 工具集。例如，如果你配置了一个 `github` MCP 服务器，则会创建一个 `mcp-github` 工具集，其中包含该服务器暴露的所有工具。
 
 ```yaml
 # config.yaml
@@ -140,15 +131,15 @@ mcp_servers:
     args: ["-y", "@modelcontextprotocol/server-github"]
 ```
 
-This creates a `mcp-github` toolset you can reference in `--toolsets` or platform configs.
+这将创建一个 `mcp-github` 工具集，你可以在 `--toolsets` 或平台配置中引用它。
 
-### Plugin toolsets
+### 插件工具集
 
-Plugins can register their own toolsets via `ctx.register_tool()` during plugin initialization. These appear alongside built-in toolsets and can be enabled/disabled the same way.
+插件可以通过在插件初始化期间调用 `ctx.register_tool()` 来注册自己的工具集。这些工具集与内置工具集一起出现，可以用相同的方式启用/禁用。
 
-### Custom toolsets
+### 自定义工具集
 
-Define custom toolsets in `config.yaml` to create project-specific bundles:
+在 `config.yaml` 中定义自定义工具集，以创建特定于项目的包：
 
 ```yaml
 toolsets:
@@ -162,17 +153,17 @@ custom_toolsets:
     - vision
 ```
 
-### Wildcards
+### 通配符
 
-- `all` or `*` — expands to every registered toolset (built-in + dynamic + plugin)
+- `all` 或 `*` — 展开为所有已注册的工具集（内置 + 动态 + 插件）
 
-A handful of tools have an additional availability check on top of toolset membership and are **not** turned on by `all`/`*` alone:
+少数工具在工具集成员资格之上还有一个额外的可用性检查，并且**不会**仅由 `all`/`*` 启用：
 
-- **Capability-gated** tools (browser, `computer_use`, `code_execution`, Feishu, Home Assistant, cronjob) appear only when their backend/credential prerequisite is configured.
-- **Workflow-gated** tools — the `kanban` toolset — are deliberately opt-in. `all`/`*` does **not** enable kanban; you must list `kanban` explicitly (or be a dispatcher-spawned worker with `HERMES_KANBAN_TASK` set). Kanban tools mutate shared board state, so they stay off by default even under `all`.
+- **能力门控**工具（browser、`computer_use`、`code_execution`、Feishu、Home Assistant、cronjob）仅当其后端/凭据先决条件已配置时才出现。
+- **工作流门控**工具 — `kanban` 工具集 — 故意选择加入。`all`/`*` **不会**启用 kanban；你必须显式列出 `kanban`（或者是设置了 `HERMES_KANBAN_TASK` 的调度器生成工作者）。Kanban 工具会修改共享看板状态，因此即使在 `all` 下也默认关闭。
 
-## Relationship to `hermes tools`
+## 与 `hermes tools` 的关系
 
-The `hermes tools` command provides a curses-based UI for toggling individual tools on or off per platform. This operates at the tool level (finer than toolsets) and persists to `config.yaml`. Disabled tools are filtered out even if their toolset is enabled.
+`hermes tools` 命令提供了一个基于 curses 的 UI，用于按平台切换单个工具的启用/禁用状态。它在工具级别（比工具集更精细）操作，并持久化到 `config.yaml`。即使其工具集已启用，禁用的工具也会被过滤掉。
 
-See also: [Tools Reference](./tools-reference.md) for the complete list of individual tools and their parameters.
+另请参阅：[工具参考](./tools-reference.md) 获取完整单个工具及其参数的列表。

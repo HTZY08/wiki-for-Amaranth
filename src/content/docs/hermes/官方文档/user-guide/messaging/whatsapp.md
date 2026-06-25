@@ -1,275 +1,38 @@
----
-title: WhatsApp
-description: Hermes Agent 官方文档汉化版
+--- frontmatter ---
 ---
 
-> 本文档基于 [Hermes Agent 官方文档](https://hermes-agent.nousresearch.com/docs/) 汉化
-> 原文地址: [`user-guide/messaging/whatsapp.md`](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/messaging/whatsapp.md)
-> 本版本为自用学习用途，非官方翻译。
+## 故障排除
 
----
-sidebar_position: 5
-title: "WhatsApp"
-description: "Set up Hermes Agent as a WhatsApp bot via the built-in Baileys bridge"
----
-
-# WhatsApp Setup
-
-Hermes connects to WhatsApp through a built-in bridge based on **Baileys**. This works by emulating a WhatsApp Web session — **not** through the official WhatsApp Business API. No Meta developer account or Business verification is required.
-
-> Run `hermes gateway setup` and pick **WhatsApp** for a guided walk-through.
-
-:::tip Two WhatsApp integrations
-This page is for the **Baileys bridge** — quick to set up, personal accounts, no public URL needed, ban risk.
-
-If you're running a real business bot and want stability, see the **[WhatsApp Business Cloud API guide](./whatsapp-cloud.md)** instead. It's the official Meta-supported path: no account ban risk, but requires a Meta Business account and a public webhook URL.
-
-The two adapters can also run in parallel against different phone numbers if you have a reason to.
-:::
-
-:::warning Unofficial API — Ban Risk
-WhatsApp does **not** officially support third-party bots outside the Business API. Using a third-party bridge carries a small risk of account restrictions. To minimize risk:
-- **Use a dedicated phone number** for the bot (not your personal number)
-- **Don't send bulk/spam messages** — keep usage conversational
-- **Don't automate outbound messaging** to people who haven't messaged first
-:::
-
-:::warning WhatsApp Web Protocol Updates
-WhatsApp periodically updates their Web protocol, which can temporarily break compatibility
-with third-party bridges. When this happens, Hermes will update the bridge dependency. If the
-bot stops working after a WhatsApp update, pull the latest Hermes version and re-pair.
-:::
-
-## Two Modes
-
-| Mode | How it works | Best for |
-|------|-------------|----------|
-| **Separate bot number** (recommended) | Dedicate a phone number to the bot. People message that number directly. | Clean UX, multiple users, lower ban risk |
-| **Personal self-chat** | Use your own WhatsApp. You message yourself to talk to the agent. | Quick setup, single user, testing |
-
----
-
-## Prerequisites
-
-- **Node.js v18+** and **npm** — the WhatsApp bridge runs as a Node.js process
-- **A phone with WhatsApp** installed (for scanning the QR code)
-
-Unlike older browser-driven bridges, the current Baileys-based bridge does **not** require a local Chromium or Puppeteer dependency stack.
-
----
-
-## Step 1: Run the Setup Wizard
-
-```bash
-hermes whatsapp
-```
-
-The wizard will:
-
-1. Ask which mode you want (**bot** or **self-chat**)
-2. Install bridge dependencies if needed
-3. Display a **QR code** in your terminal
-4. Wait for you to scan it
-
-**To scan the QR code:**
-
-1. Open WhatsApp on your phone
-2. Go to **Settings → Linked Devices**
-3. Tap **Link a Device**
-4. Point your camera at the terminal QR code
-
-Once paired, the wizard confirms the connection and exits. Your session is saved automatically.
-
-:::tip
-If the QR code looks garbled, make sure your terminal is at least 60 columns wide and supports
-Unicode. You can also try a different terminal emulator.
-:::
-
----
-
-## Step 2: Getting a Second Phone Number (Bot Mode)
-
-For bot mode, you need a phone number that isn't already registered with WhatsApp. Three options:
-
-| Option | Cost | Notes |
-|--------|------|-------|
-| **Google Voice** | Free | US only. Get a number at [voice.google.com](https://voice.google.com). Verify WhatsApp via SMS through the Google Voice app. |
-| **Prepaid SIM** | $5–15 one-time | Any carrier. Activate, verify WhatsApp, then the SIM can sit in a drawer. Number must stay active (make a call every 90 days). |
-| **VoIP services** | Free–$5/month | TextNow, TextFree, or similar. Some VoIP numbers are blocked by WhatsApp — try a few if the first doesn't work. |
-
-After getting the number:
-
-1. Install WhatsApp on a phone (or use WhatsApp Business app with dual-SIM)
-2. Register the new number with WhatsApp
-3. Run `hermes whatsapp` and scan the QR code from that WhatsApp account
-
----
-
-## Step 3: Configure Hermes
-
-Add the following to your `~/.hermes/.env` file:
-
-```bash
-# Required
-WHATSAPP_ENABLED=true
-WHATSAPP_MODE=bot                          # "bot" or "self-chat"
-
-# Access control — pick ONE of these options:
-WHATSAPP_ALLOWED_USERS=15551234567         # Comma-separated phone numbers (with country code, no +)
-# WHATSAPP_ALLOWED_USERS=*                 # OR use * to allow everyone
-# WHATSAPP_ALLOW_ALL_USERS=true            # OR set this flag instead (same effect as *)
-```
-
-:::tip Allow-all shorthand
-Setting `WHATSAPP_ALLOWED_USERS=*` allows **all** senders (equivalent to `WHATSAPP_ALLOW_ALL_USERS=true`).
-This is consistent with [Signal group allowlists](/reference/environment-variables).
-To use the pairing flow instead, remove both variables and rely on the
-[DM pairing system](/user-guide/security#dm-pairing-system).
-:::
-
-Optional behavior settings in `~/.hermes/config.yaml`:
-
-```yaml
-unauthorized_dm_behavior: pair
-
-whatsapp:
-  unauthorized_dm_behavior: ignore
-```
-
-- `unauthorized_dm_behavior: pair` is the global default. Unknown DM senders get a pairing code.
-- `whatsapp.unauthorized_dm_behavior: ignore` makes WhatsApp stay silent for unauthorized DMs, which is usually the better choice for a private number.
-
-Then start the gateway:
-
-```bash
-hermes gateway              # Foreground
-hermes gateway install      # Install as a user service
-sudo hermes gateway install --system   # Linux only: boot-time system service
-```
-
-The gateway starts the WhatsApp bridge automatically using the saved session.
-
----
-
-## Session Persistence
-
-The Baileys bridge saves its session under `~/.hermes/platforms/whatsapp/session`. This means:
-
-- **Sessions survive restarts** — you don't need to re-scan the QR code every time
-- The session data includes encryption keys and device credentials
-- **Do not share or commit this session directory** — it grants full access to the WhatsApp account
-
----
-
-## Re-pairing
-
-If the session breaks (phone reset, WhatsApp update, manually unlinked), you'll see connection
-errors in the gateway logs. To fix it:
-
-```bash
-hermes whatsapp
-```
-
-This generates a fresh QR code. Scan it again and the session is re-established. The gateway
-handles **temporary** disconnections (network blips, phone going offline briefly) automatically
-with reconnection logic.
-
----
-
-## Voice Messages
-
-Hermes supports voice on WhatsApp:
-
-- **Incoming:** Voice messages (`.ogg` opus) are automatically transcribed using the configured STT provider: local `faster-whisper`, Groq Whisper (`GROQ_API_KEY`), or OpenAI Whisper (`VOICE_TOOLS_OPENAI_KEY`)
-- **Outgoing:** TTS responses are sent as MP3 audio file attachments
-- Agent responses are prefixed with "⚕ **Hermes Agent**" by default. You can customize or disable this in `config.yaml`:
-
-```yaml
-# ~/.hermes/config.yaml
-whatsapp:
-  reply_prefix: ""                          # Empty string disables the header
-  # reply_prefix: "🤖 *My Bot*\n──────\n"  # Custom prefix (supports \n for newlines)
-```
-
----
-
-## Message Formatting & Delivery
-
-WhatsApp supports **streaming (progressive) responses** — the bot edits its message in real-time as the AI generates text, just like Discord and Telegram. Internally, WhatsApp is classified as a TIER_MEDIUM platform for delivery capabilities.
-
-### Chunking
-
-Long responses are automatically split into multiple messages at **4,096 characters** per chunk (WhatsApp's practical display limit). You don't need to configure anything — the gateway handles splitting and sends chunks sequentially.
-
-### WhatsApp-Compatible Markdown
-
-Standard Markdown in AI responses is automatically converted to WhatsApp's native formatting:
-
-| Markdown | WhatsApp | Renders as |
-|----------|----------|------------|
-| `**bold**` | `*bold*` | **bold** |
-| `~~strikethrough~~` | `~strikethrough~` | ~~strikethrough~~ |
-| `# Heading` | `*Heading*` | Bold text (no native headings) |
-| `[link text](url)` | `link text (url)` | Inline URL |
-
-Code blocks and inline code are preserved as-is since WhatsApp supports triple-backtick formatting natively.
-
-### Tool Progress
-
-When the agent calls tools (web search, file operations, etc.), WhatsApp displays real-time progress indicators showing which tool is running. This is enabled by default — no configuration needed.
-
-### Message Batching (Debounce)
-
-WhatsApp delivers each message individually, so a rapid burst (forwarded batches, paste-splits, multi-line text) would otherwise trigger a separate agent invocation per fragment — wasting tokens and producing several disjointed replies. The adapter buffers successive text messages from the same chat and dispatches them as one combined request after a short quiet period (default **5s**, extended to **10s** for very long fragments). Tune via `config.yaml`:
-
-```yaml
-# ~/.hermes/config.yaml
-gateway:
-  platforms:
-    whatsapp:
-      extra:
-        text_batch_delay_seconds: 5.0         # quiet period before flushing a batch
-        text_batch_split_delay_seconds: 10.0  # extended delay near the split threshold
-```
-
-Set `text_batch_delay_seconds: 0` to dispatch each message immediately (disables batching).
-
----
-
-## Troubleshooting
-
-| Problem | Solution |
+| 问题 | 解决方案 |
 |---------|----------|
-| **QR code not scanning** | Ensure terminal is wide enough (60+ columns). Try a different terminal. Make sure you're scanning from the correct WhatsApp account (bot number, not personal). |
-| **QR code expires** | QR codes refresh every ~20 seconds. If it times out, restart `hermes whatsapp`. |
-| **Session not persisting** | Check that `~/.hermes/platforms/whatsapp/session` exists and is writable. If containerized, mount it as a persistent volume. |
-| **Logged out unexpectedly** | WhatsApp unlinks devices after long inactivity. Keep the phone on and connected to the network, then re-pair with `hermes whatsapp` if needed. |
-| **Bridge crashes or reconnect loops** | Restart the gateway, update Hermes, and re-pair if the session was invalidated by a WhatsApp protocol change. |
-| **Bot stops working after WhatsApp update** | Update Hermes to get the latest bridge version, then re-pair. |
-| **macOS: "Node.js not installed" but node works in terminal** | launchd services don't inherit your shell PATH. Run `hermes gateway install` to re-snapshot your current PATH into the plist, then `hermes gateway start`. See the [Gateway Service docs](./index.md#macos-launchd) for details. |
-| **Messages not being received** | Verify `WHATSAPP_ALLOWED_USERS` includes the sender's number (with country code, no `+` or spaces), or set it to `*` to allow everyone. Set `WHATSAPP_DEBUG=true` in `.env` and restart the gateway to see raw message events in `bridge.log`. |
-| **Bot replies to strangers with a pairing code** | Set `whatsapp.unauthorized_dm_behavior: ignore` in `~/.hermes/config.yaml` if you want unauthorized DMs to be silently ignored instead. |
+| **二维码无法扫描** | 确保终端宽度足够（60 列以上）。尝试使用不同的终端。确认扫描的是正确的 WhatsApp 账户（机器人号码，而非个人号码）。 |
+| **二维码过期** | 二维码每约 20 秒刷新一次。如果超时，请重新启动 `hermes whatsapp`。 |
+| **会话未持久化** | 检查 `~/.hermes/platforms/whatsapp/session` 是否存在且可写。如果使用容器化部署，请将其挂载为持久卷。 |
+| **意外登出** | 长时间不活动后，WhatsApp 会取消设备链接。请保持手机开机并连接网络，如有必要，使用 `hermes whatsapp` 重新配对。 |
+| **桥接崩溃或重连循环** | 重启网关，更新 Hermes，如果会话因 WhatsApp 协议变更而失效，则重新配对。 |
+| **WhatsApp 更新后机器人停止工作** | 更新 Hermes 以获取最新桥接版本，然后重新配对。 |
+| **macOS：终端中可以运行 `node`，但提示“Node.js not installed”** | launchd 服务不会继承你的 shell PATH。运行 `hermes gateway install` 将当前 PATH 重新快照到 plist 中，然后运行 `hermes gateway start`。详情请参阅[网关服务文档](./index.md#macos-launchd)。 |
+| **无法接收消息** | 确认 `WHATSAPP_ALLOWED_USERS` 包含发送者的号码（包含国家代码，不含 `+` 或空格），或将其设置为 `*` 以允许所有人。在 `.env` 中设置 `WHATSAPP_DEBUG=true` 并重启网关，可在 `bridge.log` 中查看原始消息事件。 |
+| **机器人向陌生人回复配对码** | 如果希望未授权的私信被静默忽略，可在 `~/.hermes/config.yaml` 中设置 `whatsapp.unauthorized_dm_behavior: ignore`。 |
 
 ---
 
-## Security
+--- body ---
+## 安全
 
 :::warning
-**Configure access control** before going live. Set `WHATSAPP_ALLOWED_USERS` with specific
-phone numbers (including country code, without the `+`), use `*` to allow everyone, or set
-`WHATSAPP_ALLOW_ALL_USERS=true`. Without any of these, the gateway **denies all incoming
-messages** as a safety measure.
+**在正式上线之前配置访问控制**。使用具体电话号码（包含国家代码，不含 `+`）设置 `WHATSAPP_ALLOWED_USERS`，使用 `*` 允许所有人，或设置 `WHATSAPP_ALLOW_ALL_USERS=true`。如果未设置任何这些选项，网关将**拒绝所有传入消息**作为安全措施。
 :::
 
-By default, unauthorized DMs still receive a pairing code reply. If you want a private WhatsApp number to stay completely silent to strangers, set:
+默认情况下，未授权的私信仍会收到配对码回复。如果你希望一个私密的 WhatsApp 号码对陌生人完全保持沉默，请设置：
 
 ```yaml
 whatsapp:
   unauthorized_dm_behavior: ignore
 ```
 
-- The `~/.hermes/platforms/whatsapp/session` directory contains full session credentials — protect it like a password
-- Set file permissions: `chmod 700 ~/.hermes/platforms/whatsapp/session`
-- Use a **dedicated phone number** for the bot to isolate risk from your personal account
-- If you suspect compromise, unlink the device from WhatsApp → Settings → Linked Devices
-- Phone numbers in logs are partially redacted, but review your log retention policy
+- `~/.hermes/platforms/whatsapp/session` 目录包含完整的会话凭证 —— 请像保护密码一样保护它
+- 设置文件权限：`chmod 700 ~/.hermes/platforms/whatsapp/session`
+- 为机器人使用**专用电话号码**，以隔离对个人账户的风险
+- 如果怀疑泄露，请通过 WhatsApp → 设置 → 已链接设备 取消设备链接
+- 日志中的电话号码会部分脱敏，但请检查你的日志保留策略
