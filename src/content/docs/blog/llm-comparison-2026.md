@@ -42,6 +42,24 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 
 ## 一'、AA Index 智能排行 TOP 20（2026 年 6 月）
 
+
+### OpenRouter 神秘模型
+
+以下模型出现在 OpenRouter 上，但来源不明或名称不直观。每日自动检测更新。
+
+| 模型 ID | 解密名称 | 上下文 | 输入/输出价格 |
+|---------|---------|:-----:|:------------:|
+| `sakana/fugu-ultra` | 未知/社区模型 | 1000000 | $0.000005/$0.00003 |
+| `z-ai/glm-5.2` | 未知/社区模型 | 1048576 | $0.00000094/$0.000003 |
+| `openrouter/fusion` | 未知/社区模型 | 1000000 | $-1/$-1 |
+| `moonshotai/kimi-k2.7-code` | 未知/社区模型 | 262144 | $0.00000074/$0.0000035 |
+| `~anthropic/claude-fable-latest` | 未知/社区模型 | 1000000 | $0.00001/$0.00005 |
+| `nex-agi/nex-n2-pro` | 未知/社区模型 | 262144 | $0.00000025/$0.000001 |
+| `stepfun/step-3.7-flash` | 阶跃星辰 Step 系列 | 256000 | $0.0000002/$0.00000115 |
+| `x-ai/grok-build-0.1` | 未知/社区模型 | 256000 | $0.000001/$0.000002 |
+| `perceptron/perceptron-mk1` | 未知/社区模型 | 32768 | $0.00000015/$0.0000015 |
+| `inclusionai/ring-2.6-1t` | 未知/社区模型 | 262144 | $0.000000075/$0.000000625 |
+
 > 数据来源：[Artificial Analysis](https://artificialanalysis.ai) Intelligence Index v4.1（2026-06-27 快照）及 [buildfastwithai.com](https://www.buildfastwithai.com/blogs/best-ai-models-june-2026)。*标记为同家族估算值。**Claude Fable 5（AA Index 64.9，6月9-12日短暂登顶）已被美国政府出口管制令暂停服务，标记为 🔒。***
 
 | 排名 | 模型 | 公司 | AA Index | 价格 $/1M tok | 上下文 |
@@ -761,3 +779,9 @@ OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类�
 | MiMo-V2 Flash | 2026-06-30 |
 
 > 下线日期为 API 停止服务或不再推荐使用的保守估计时间。每日脚本自动检测新下线模型。
+
+### 🪦 已下线模型
+
+- **GLM-5.1 / 5.2 Max** — 下线日期: 2026-06-30
+- **Kimi K2.6 / K2.7** — 下线日期: 2026-06-30
+
