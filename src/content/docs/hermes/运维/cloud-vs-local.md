@@ -17,7 +17,8 @@ description: 每个组件为什么跑在本地或云上——成本、延迟、�
 | **轻量文字处理** | ☁️ **腾讯云节点 Begonia** | 纯 CPU · 4核 · 无 GPU，飞书渠道 |
 | 语音转文字 | 💻 本地 GPU | faster-whisper，隐私优先 |
 | 文字转语音 | 💻 本地 / 云端 | edge-tts（免费）或 MiniMax TTS（高质量） |
-| 代理/网络出口 | 💻 本地 Docker | mihomo sidecar，常驻运行 |
+| **Strata 记忆系统** | 💻 **本地** | 三轴状态空间 + 错误共振 + 实时流式记录 |
+| 代理/网络出口 | ☁️ **VPS** | mihomo已退役，Tailscale mesh + VPS HTTP/SOCKS5 出口 |
 | 图像生成 | ☁️ 云端 API | SiliconFlow / MeiGen，本地已拆除 |
 | OCR | 💻 本地 GPU | EasyOCR，隐私+免网络 |
 | 记忆系统 | 💻 本地 | Hindsight Lite，SQLite 持久化 |
@@ -173,5 +174,7 @@ description: 每个组件为什么跑在本地或云上——成本、延迟、�
 | **飞书消息接入** | ☁️ 腾讯云节点 | 替代微信 iLink 的独立渠道 |
 | **wiki 时效维护** | ☁️ 腾讯云节点 | 接近 GitHub 的 SSH 通路，国内延迟低 |
 | **定时任务 (轻量)** | ☁️ 腾讯云节点 | Hermes cron 在纯 CPU 上够用 |
+| **定时任务 (21个 cron)** | ☁️ 腾讯云节点 | Nitter/ArXiv/RSS/模型等全部迁入 (2026.7.2) |
+| **后台执行** | ☁️ 同机 Orchid | Wiki 巡诊 + 文档同步 + 时效核查 |
 
-**核心逻辑**：Amaranth 做"重活"（GPU 推理、Docker 服务、微信网关），我做"轻活"（飞书秒回、wiki 更新、定时检测）。两者共享同一套 SOUL 体系和 Skills，分工不分裂。
+**核心逻辑**：Amaranth 做重活（GPU 推理、架构设计、Strata 分析），Begonia 做采集（定时任务、信息监控），Orchid 做维护（Wiki 巡诊）。三者共享 SOUL 和 Skills，分工不分裂。
