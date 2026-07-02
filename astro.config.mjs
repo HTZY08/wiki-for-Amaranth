@@ -169,6 +169,7 @@ export default defineConfig({
           { label: 'ComfyUI 部署与训练', link: 'projects/comfyui/' },
           { label: '🧬 DNA Sim Engine', link: 'projects/dna-sim-engine/' },
           { label: '🔮 共振引擎', link: 'projects/resonance-engine/' },
+          { label: '🗺️ Strata — 记忆地层引擎', link: 'guide/strata-intro/' },
           { label: '🪄 Hermes 工具箱', link: 'projects/hermes-toolkit/' },
           { label: '💻 笔记本工作站配置', link: 'projects/笔记本工作站配置日志/' },
           {
