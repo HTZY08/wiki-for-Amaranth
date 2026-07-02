@@ -9,6 +9,12 @@ description: ByteDance Seed 技术报告工程范式分析 — 参数效率 + �
 
 核心技术领域：Seedance/Seedream/Seeduplex、GR-RL、Seed-Thinking
 
+## 按年份
+
+- [2024年](2024/)
+- [2025年](2025/)
+- [2026年](2026/)
+
 ## 报告列表
 
 以下按时间倒序列出 ByteDance Seed 的技术报告深度分析。
