@@ -20,6 +20,25 @@ export default defineConfig({
         items: [{ autogenerate: { directory: 'ai-daily' } }],
       },
       {
+        label: '🏗️ 工程汇报',
+        collapsed: false,
+        items: [
+          { label: '总览', link: 'engineering-reports/' },
+          { label: 'Anthropic (Claude)', link: 'engineering-reports/anthropic/' },
+          { label: 'ByteDance Seed', link: 'engineering-reports/bytedance/' },
+          { label: 'Google DeepMind', link: 'engineering-reports/deepmind/' },
+          { label: 'DeepSeek', link: 'engineering-reports/deepseek/' },
+          { label: 'Meta FAIR', link: 'engineering-reports/meta/' },
+          { label: 'MiniMax', link: 'engineering-reports/minimax/' },
+          { label: 'Mistral', link: 'engineering-reports/mistral/' },
+          { label: 'Moonshot (Kimi)', link: 'engineering-reports/moonshot/' },
+          { label: 'OpenAI', link: 'engineering-reports/openai/' },
+          { label: 'Qwen (阿里)', link: 'engineering-reports/qwen/' },
+          { label: '小米 MiMo', link: 'engineering-reports/xiaomi/' },
+          { label: '智谱 Zhipu', link: 'engineering-reports/zhipu/' },
+        ],
+      },
+      {
         label: '📦 Skill 分享',
         collapsed: false,
         items: [

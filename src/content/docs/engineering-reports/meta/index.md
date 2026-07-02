@@ -1,0 +1,16 @@
+---
+title: Meta FAIR
+description: Meta FAIR 技术报告工程范式分析 — 开源生态标杆
+---
+
+# Meta FAIR
+
+**工程范式：开源生态标杆**
+
+核心技术领域：Llama 4 系列、多模态 MoE、开放权重策略
+
+## 报告列表
+
+以下按时间倒序列出 Meta FAIR 的技术报告深度分析。
+
+_新报告将由 AI 云组会每日自动更新。_
