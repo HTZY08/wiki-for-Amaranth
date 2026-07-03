@@ -1,3 +1,7 @@
+---
+title: Wiki 分类规则
+---
+
 # Wiki 分类规则
 
 > 适用于 Amaranth & Begonia Wiki。新内容按此规则归档，保持结构一致。

@@ -1,5 +1,5 @@
 ---
-title: Constitutional AI: RL from AI Feedback 工程范式分析
+title: "Constitutional AI: RL from AI Feedback 工程范式分析"
 date: 2022-12-15
 source: https://arxiv.org/abs/2212.08073
 ---

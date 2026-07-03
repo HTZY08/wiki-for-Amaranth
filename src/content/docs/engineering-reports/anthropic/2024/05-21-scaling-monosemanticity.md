@@ -1,5 +1,5 @@
 ---
-title: Scaling Monosemanticity: 可解释性里程碑的工程范式分析
+title: "Scaling Monosemanticity: 可解释性里程碑的工程范式分析"
 date: 2024-05-21
 source: https://transformer-circuits.pub/2024/scaling-monosemanticity
 ---

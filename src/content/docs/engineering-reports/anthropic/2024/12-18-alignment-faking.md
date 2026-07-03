@@ -1,5 +1,5 @@
 ---
-title: Alignment Faking: 对齐伪装现象的工程范式分析
+title: "Alignment Faking: 对齐伪装现象的工程范式分析"
 date: 2024-12-18
 source: https://arxiv.org/abs/2412.14093
 ---

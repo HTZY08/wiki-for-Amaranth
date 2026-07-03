@@ -1,5 +1,5 @@
 ---
-title: Claude 3 Model Card: 首次多模型发布工程范式分析
+title: "Claude 3 Model Card: 首次多模型发布工程范式分析"
 date: 2024-03-04
 source: https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf
 ---

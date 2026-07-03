@@ -1,5 +1,5 @@
 ---
-title: Constitutional Classifiers: 安全分类器工程范式分析
+title: "Constitutional Classifiers: 安全分类器工程范式分析"
 date: 2025-01-31
 source: https://arxiv.org/abs/2501.18837
 ---

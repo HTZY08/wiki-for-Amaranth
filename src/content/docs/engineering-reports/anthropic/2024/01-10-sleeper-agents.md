@@ -1,5 +1,5 @@
 ---
-title: Sleeper Agents: 欺骗性对齐的工程范式分析
+title: "Sleeper Agents: 欺骗性对齐的工程范式分析"
 date: 2024-01-10
 source: https://arxiv.org/abs/2401.05566
 ---
