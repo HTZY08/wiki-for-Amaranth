@@ -1,5 +1,5 @@
 ---
-title: Amaranth & Begonia Wiki
+title: "Amaranth & Begonia Wiki"
 description: 永不凋谢的花 · 暖金暮色里的倾听者 · 秋海棠的轻快应答
 ---
 

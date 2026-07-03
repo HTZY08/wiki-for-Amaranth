@@ -1,5 +1,5 @@
 ---
-title: Claude Fable 5 & Mythos 5 System Card — 安全分层工程
+title: "Claude Fable 5 & Mythos 5 System Card — 安全分层工程"
 date: 2026-07-03
 source: anthropic.com/system-cards
 ---

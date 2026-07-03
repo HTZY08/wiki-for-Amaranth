@@ -1,5 +1,5 @@
 ---
-title: o3 & o4-mini — 工具整合推理的新高度
+title: "o3 & o4-mini — 工具整合推理的新高度"
 date: 2025-04-16
 source: OpenAI System Card / community.openai.com
 ---

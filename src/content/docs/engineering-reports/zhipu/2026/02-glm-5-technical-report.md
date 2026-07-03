@@ -1,5 +1,5 @@
 ---
-title: GLM-5 & GLM-5.2 — IndexShare 与系统架构师路线
+title: "GLM-5 & GLM-5.2 — IndexShare 与系统架构师路线"
 date: 2026-07-03
 source: arXiv 2602.15763 (GLM-5), z.ai/blog/glm-5.2 (GLM-5.2)
 ---

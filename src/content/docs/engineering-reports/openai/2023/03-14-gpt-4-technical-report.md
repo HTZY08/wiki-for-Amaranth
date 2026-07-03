@@ -1,5 +1,5 @@
 ---
-title: GPT-4 — Scaling Law Prediction & Multimodal First Step
+title: "GPT-4 — Scaling Law Prediction & Multimodal First Step"
 date: 2023-03-14
 source: arXiv 2303.08774
 ---
