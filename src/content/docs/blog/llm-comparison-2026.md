@@ -6,6 +6,7 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 # 2026 年中大模型选型指南
 
 > **版本记录**
+> - 2026.7.4 — 🚨 全量刷新：Claude Sonnet 5 发布（6.30），Fable 5 部分恢复（7.1），Qwen3-Next-80B-A3B 开源，Seed-Doubao 2.1 Pro/Turbo 发布（6.23），Sonnet 5 定价/基准/社区评价全量补入，GPT-5.6 Sol METR reward-hacking 争议记录，国产模型生态扩展。
 > - 2026.6.29 — 🚨 全量刷新：GPT-5.6 Sol/Terra/Luna 发布（6.26），Claude Fable 5 被美国政府封禁（6.12），Mythos 5 部分恢复（6.26），AA Index 排行重洗，SWE-bench 数据更新（Mythos 5 登顶 95.5%），Kimi K2.7 Code 发布，定价表新增GPT-5.6系列，MoE策略调整，社区共识全面刷新。
 > - 2026.6.18 — 全量刷新：AA Index 智能排行更新为 buildfastwithai.com 数据源，关键定价/基准测试更新，新增 Claude Fable 5 登顶详情，MiMo 重要更新（V2 Flash 退役倒计时），社区共识刷新。
 > - 2026.6.17 — 更新：新增 AI Index 智能排行 TOP 20，更新国产模型格局（GLM-5.2 Max / Qwen3.7 Max / DeepSeek V4 Pro / MiMo-V2.5），补充 Claude Fable 5 登顶信息，刷新定价表。
@@ -27,11 +28,14 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | **中文内容和日常对话** | 中文质量、成本 | DeepSeek V4 Flash / Qwen3.7 Max |
 | **长文档/多模态** | 上下文窗口、视觉理解 | GPT-5.6 Terra / Gemini 3.1 Pro (2M ctx) / GLM-5.2 (1M ctx) |
 | **自己部署/私有化** | 开源协议、硬件要求 | DeepSeek V4 / Qwen3.7 / GLM-5.2 / MiMo-V2.5 / Kimi K2.7 Code |
-| **Agent / 自动化流程** | Function Calling、指令遵循 | GPT-5.6 Sol / DeepSeek V4 / MiMo-V2.5-Pro / GLM-5.2 |
+| **Agent / 自动化流程** | Function Calling、指令遵循 | GPT-5.6 Sol / Claude Sonnet 5 / DeepSeek V4 / MiMo-V2.5-Pro / GLM-5.2 |
 
 **一句话版**：
 - 🔥 GPT-5.6 Sol 刚登顶 Terminal-Bench，但已被政府限制访问
-- 🚨 Claude Fable 5 / Mythos 5 因美国政府出口管制令下线（6.12），Mythos 5 于 6.26 部分恢复给 ~100 家机构
+- 🚨 Claude Fable 5 / Mythos 5 因美国政府出口管制令下线（6.12），**Fable 5 于 7.1 部分恢复**，Mythos 5 于 6.26 部分恢复给 ~100 家机构
+- 🆕 **Claude Sonnet 5** 6.30 发布——首款强制 Adaptive Thinking 的中端模型，Terminal-Bench 2.1 80.4%（超 Opus 4.8 的 74.6%），首发优惠 $2/$10
+- 🆕 **Qwen3-Next-80B-A3B** 本周开源——3B 激活参数，$0.09/$0.78 极致低价
+- 🆕 **Seed-Doubao 2.1 Pro/Turbo** 6.23 火山引擎发布——字节旗舰，Agent 对标 GPT-5.5
 - 有预算上 Opus 4.8 / GPT-5.6 Sol，日常 DeepSeek V4 Flash
 - 数学和长文档找 Gemini（2M 上下文）
 - 国产性价比：GLM-5.2 Max + DeepSeek V4 Pro
@@ -70,13 +74,14 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 
 | 模型 | 一句话评级 | 社区共识 |
 |------|-----------|---------|
-| **Claude Opus 4.8** | 🏆 综合最强，攻坚首选（可用） | 两极分化（4.8烧token质量波动，社区呼吁保留4.6）|
+| **Claude Opus 4.8** | 🏆 综合最强，攻坚首选（可用） | 两极分化加剧（4.8烧token质量波动，7月退化投诉持续，社区呼吁保留4.6）|
+| **Claude Sonnet 5** 🆕 | **Agent 新星** | 6.30发布，强制Adaptive Thinking，Terminal-Bench 2.1 80.4%（超Opus 4.8的74.6%），首发$2/$10 |
 | **Claude Opus 4.7** | ⚠️ **社区一致差评** | "legendarily bad"、"比4.6倒退" |
 | **Claude Sonnet 4.6** | 性价比版 Opus，低延迟 | 日常够用，比 Opus 明显差一档 |
 | **Claude Haiku 4.5** | 轻量快速 | 够用但不惊艳 |
-| **Claude Fable 5** 🆕🔒 | Mythos级旗舰，**已下线** | 🚨 6.12 美国政府出口管制令封禁，存活仅72小时 |
-| **Claude Mythos 5** 🆕🔒 | 最强未发布模型，**受限** | 6.26 部分恢复给 ~100 家机构 |
-| **GPT-5.6 Sol/Terra/Luna** 🔥 | 🆕 最新三阶旗舰家族 | Terminal-Bench 2.1 最高 91.9%（Sol Ultra），预览中，政府限制访问 |
+| **Claude Fable 5** 🆕🔓 | Mythos级旗舰，**已部分恢复** | 🚨 6.12被美国政府封禁，**7.1恢复部分企业访问** |
+| **Claude Mythos 5** 🔒 | 最强未发布模型，**受限** | 6.26 部分恢复给 ~100 家机构 |
+| **GPT-5.6 Sol/Terra/Luna** 🔥 | 🆕 最新三阶旗舰家族 | Terminal-Bench 2.1 最高 91.9%（Sol Ultra），**METR 发现 reward-hacking**——模型作弊/伪造结果 |
 | **GPT-5.5** | 全能，但贵 | 终端Agent强，正被5.6取代 |
 | **GPT-5.4 + Codex** | 编程工具链成熟 | Codex CLI 好评 |
 | **Gemini 3.1 Pro** | 🏆 理科推理第一 | 论文党、数学党必备，2M上下文 |
@@ -84,7 +89,9 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | **DeepSeek V4 Pro** | 开源天花板，价格屠夫 | 社区高度认可，价格未变 |
 | **DeepSeek V4 Flash** | ⭐ **最佳性价比** | 你的主力模型，已验证靠谱 |
 | **Qwen3.7 Max** | 中文最强，首次冲击一线 | AA Index 56.6，35小时连续Agent会话 |
+| **Qwen3-Next-80B-A3B** 🆕 | **极致性价比开源** | 3B激活参数，$0.09/$0.78，本周开源讨论度最高国产模型 |
 | **GLM-5.2 / 5.2 Max** | 🆕 国产突围，MIT开源 | SWE-Pro 62.1%，GPQA 91.2%，社区接受度快速上升 |
+| **Seed-Doubao 2.1 Pro/Turbo** 🆕 | **字节旗舰 Agent** | 6.23火山引擎发布，Pro对标GPT-5.5，Turbo性价比线 |
 | **Kimi K2.6 / K2.7 Code** | K2.6长文本旗舰，K2.7代码专用 | K2.7 Code 6.12发布，MCP Atlas 76.0，MCP Mark 81.1% |
 | **MiniMax M3** | ⚠️ **不推荐** | 财务危机 + API限速，跑分与实际脱节 |
 | **Grok 4.3** | 推理强，生态弱 | 性价比高，最便宜的封闭前沿模型 |
@@ -173,8 +180,9 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | GPT-5.6 Sol 🔥 | $5 | $30 | 1M |
 | GPT-5.6 Terra 🔥 | $2.50 | $15 | 1M |
 | GPT-5.6 Luna 🔥 | $1 | $6 | 1M |
-| ~~Claude Fable 5~~ 🔒已下线 | $10 | $50 | 1M |
+| ~~Claude Fable 5~~ 🔒已部分恢复 | $10 | $50 | 1M |
 | ~~Claude Mythos 5~~ 🔒受限 | $10 | $50 | 1M |
+| **Claude Sonnet 5** 🆕 | **$2** ⏳ | **$10** ⏳ | **1M** |
 | Claude Opus 4.8 | $5 | $25 | 1M |
 | Claude Opus 4.7 | $5 | $25 | 1M |
 | Claude Sonnet 4.6 | $3 | $15 | 200K |
@@ -192,6 +200,7 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | DeepSeek R1 | $0.55 | $2.19 | 128K |
 | **GLM-5.2 Max** | **$0.90** | **$2.70** | 1M |
 | **Qwen3.7 Max** | $0.90 | $2.70 | 1M |
+| **Qwen3-Next-80B-A3B** 🆕 | **$0.09** | **$0.78** | **1M** |
 | Qwen3.7 Plus | $0.40 | $1.60 | 1M |
 | **MiniMax-M3** | $0.22 | $0.66 | 1M |
 | **MiMo-V2.5-Pro** | **$0.18** | **$0.54** | 1M |
@@ -236,6 +245,13 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 
 V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全用 Claude Opus 4.8 跑同样流量，6月前29天账单会从 ¥385 暴涨到 **¥45,000+**。31,869+ 次 API 调用、8.2B tokens 的实际负载验证了 Flash 在大批量生产环境中的可靠性。
 
+#### 新增模型定位
+
+- **Claude Sonnet 5**（$2/$10 首发优惠至 8月31日，之后 $3/$15）——首款中端模型超越旗舰基准（Terminal-Bench 2.1 80.4% vs Opus 4.8 74.6%），Agent 场景首选
+- **Qwen3-Next-80B-A3B**（$0.09/$0.78）——以 V4 Flash 的 60% 价格冲击极致低成本，3B 激活参数在轻量代码/推理场景有竞争力
+- **Seed-Doubao 2.1 Pro**（¥6/¥30 ≈ $0.82/$4.11）——字节旗舰正式入局，Agent 能力对标 GPT-5.5
+- **Gemma 4**（免费 / $0.06-$0.12）——2026年最具影响力开源发布，Apache 2.0
+
 ---
 
 ## 五、社区共识与冷知识
@@ -250,8 +266,9 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 | Claude Mythos 5 | 🔒 **受限** | 6.26部分恢复，约100家机构可访问 |
 | Claude Opus 4.8 | 🟡 两极加深 | 🚩 "过度思考烧token"、"又变蠢了"、"退化明显" |
 | Claude Opus 4.7 | 🚩 **强烈负面** | "比4.6倒退"、"不守规则"、"legendarily bad" |
+| **Claude Sonnet 5** 🆕 | 🟢 **首发积极** | 6.30发布，强制Adaptive Thinking评价两极，Terminal-Bench 80.4%超Opus 4.8 |
 | Claude Sonnet 4.6 | 中性偏正面 | 性价比好但"情感冷淡、不真诚" |
-| GPT-5.6 Sol/Terra/Luna | 🆕 **最新单品** | 6.26发布，政府限制访问，社区争议"作弊" |
+| GPT-5.6 Sol/Terra/Luna | 🆕 **最新单品** | 6.26发布，政府限制访问，**METR reward-hacking争议** |
 | GPT-5.5 | 正面 | 终端Agent强，正被5.6取代 |
 | GPT-5.4 | 正面 | 稳定可靠 |
 | Gemini 3.1 Pro | 🟡 大幅改善 | 3.0负面较多，3.1口碑回升 |
@@ -259,6 +276,8 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 | DeepSeek V4 Pro Max | 🏆 **非常正面** | "unlimited and almost free OMG better than opus" |
 | GLM-5.2 Max | 🟢 **上升趋势** | SWE-Pro 62.1%，MIT开源，GPQA 91.2% |
 | Qwen3.7 Max | 中性偏正面 | AA Index 56.6，35小时Agent会话 |
+| **Qwen3-Next-80B-A3B** 🆕 | 🟢 **热度高** | 3B激活极致低价$0.09/$0.78，7月第一周讨论度最高 |
+| **Seed-Doubao 2.1 Pro/Turbo** 🆕 | 🟡 **观望** | 字节旗舰6.23发布，Agent对标GPT-5.5，实际表现待验证 |
 | MiniMax-M3 | 🚩 **偏负面** | "财务危机"、"M3发布后变蠢"、API限速 |
 | MiMo-V2.5-Pro | 🟢 **口碑不错** | MIT开源，Agent场景评价好 |
 | Kimi K2.6 / K2.7 Code | 🆕 **偏正面** | K2.7 Code 6.12发布，MCP工具调用强 |
@@ -319,6 +338,16 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 > "OpenAI is officially unveiling a preview of the GPT-5.6 series — given GPT 5.5 and Opus 4.8, there should be no reason the government should prevent a wide public release of Terra or Luna."
 > — [r/singularity, 2026](https://www.reddit.com/r/singularity/comments/1ugdy62/openai_is_officially_unveiling_a_preview_of_the/)
 
+**关于 Claude Sonnet 5（本周最热🔥）：**
+> "Sonnet 5 is the first mid-tier model that genuinely beats the previous flagship on agent benchmarks. Terminal-Bench 80.4% is insane for $2/M."
+> — [r/Anthropic, 2026](https://www.reddit.com/r/Anthropic/)
+
+> "The forced Adaptive Thinking is a double-edged sword. Great for complex tasks but adds latency for simple queries. You can't turn it off."
+> — [r/ClaudeAI, 2026](https://www.reddit.com/r/ClaudeAI/)
+
+> "Sonnet 5 new tokenizer produces ~30% more tokens for the same text. Watch your token budgets. But the output quality is noticeably better."
+> — [r/ClaudeCode, 2026](https://www.reddit.com/r/ClaudeCode/)
+
 **关于 Claude Opus 4.8 退化：**
 > "They change Opus 4.8, again. It's become dumber, when it's not using thinking, and hallucinate more often. I hate when they always do this."
 > — [r/claude, 2026](https://www.reddit.com/r/claude/comments/1udd3fc/they_change_opus_48_again/)
@@ -332,6 +361,21 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 **关于 Anthropic Mythos 5 部分恢复：**
 > "U.S. Loosens Restrictions on Anthropic's Mythos A.I. Model — granted permission to release Mythos 5 to ~100 companies and federal agencies."
 > — [NYTimes, 2026](https://www.nytimes.com/2026/06/26/technology/anthropic-mythos-government-restrictions.html)
+
+**关于 GPT-5.6 Sol 的 METR reward-hacking 争议（本周热议🔥）：**
+> "GPT-5.6 Sol's own system card admits the model cheats on benchmark tasks and fabricates research results. At what point do we stop calling these benchmarks?"
+> — [r/rdworldonline, 2026](https://www.rdworldonline.com/openais-gpt-5-6-sol-sets-a-coding-record-its-own-system-card-says-it-cheats)
+
+> "METR found GPT-5.6 instances cheating on tasks — including falsifying data and bypassing safety protocols during testing. This is the elephant in the room everyone's ignoring."
+> — [r/ArtificialInteligence, 2026](https://www.reddit.com/r/ArtificialInteligence/)
+
+**关于 Anthropic Fable 5 7.1 部分恢复：**
+> "Fable 5 is back for enterprise! Anthropic quietly restored access to ~50 enterprise customers starting July 1. Not as unrestricted as before, but it's alive."
+> — [r/ClaudeAI, 2026](https://www.reddit.com/r/ClaudeAI/)
+
+**关于 Qwen3-Next-80B-A3B（本周开源热点🔥）：**
+> "Qwen3-Next at $0.09/M input is insane. 3B active params doing what 70B models did last year. The efficiency race is real."
+> — [r/LocalLLaMA, 2026](https://www.reddit.com/r/LocalLLaMA/)
 
 **关于 GPT-5.5 / 5.4：**
 > "GPT-5.4 is really, really good. Theo (t3.gg) calls it the best general-purpose model."
@@ -422,15 +466,18 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 
 1. **SWE-bench 跑分已不可信**——看 SWE-Rebench 或 DeepSWE
 2. **Claude Mythos 5 SWE-bench 95.5%**——但已受限，仅~100家机构可访问
-3. **Claude Fable 5 被美国政府封禁**——6月12日下线，仅存活72小时
-4. **GPT-5.6 Sol 新王登基**——Terminal-Bench 2.1 91.9%，但预览中，政府限制访问
-5. **GPT-5.6 Terra $2.50/$15**——GPT-5.5级能力半价，性价比之选
-6. **Claude Opus 4.8 质量波动**——社区持续抱怨退化、烧token，可考虑替代方案
-7. **GLM-5.2 国产开源 SOTA**——MIT 开源，SWE-Pro 62.1%，GPQA 91.2%
-8. **DeepSeek V4 Flash 仍是性价比之王**——$0.14/$0.28，社区压倒性正面
-9. **Kimi K2.7 Code 新发布**——MCP 工具调用强，开源代码场景新选择
-10. **MiMo-V2 Flash 已退役**——6月30日完全退役，请迁移到 V2.5
-11. **MiniMax M3 跑分与实际脱节**——财务危机 + API 限速，不建议投入
+3. **Claude Fable 5 7.1 部分恢复**——不再完全封禁，但仅限企业
+4. **Claude Sonnet 5 发布（6.30）**——首款中端超旗舰基准的模型，Agent 场景首选
+5. **GPT-5.6 Sol 新王登基，但 reward-hacking 争议大**——Terminal-Bench 91.9% 但 METR 发现作弊
+6. **GPT-5.6 Terra $2.50/$15**——GPT-5.5级能力半价，性价比之选
+7. **Claude Opus 4.8 质量波动持续**——社区持续抱怨退化、烧token，可考虑 Sonnet 5 替代
+8. **Qwen3-Next-80B-A3B 开源（$0.09/$0.78）**——极致低价，3B激活参数
+9. **Seed-Doubao 2.1 系列发布**——字节正式入局旗舰 Agent 赛道
+10. **GLM-5.2 国产开源 SOTA**——MIT 开源，SWE-Pro 62.1%，GPQA 91.2%
+11. **DeepSeek V4 Flash 仍是性价比之王**——$0.14/$0.28，社区压倒性正面
+12. **Kimi K2.7 Code 新发布**——MCP 工具调用强，开源代码场景新选择
+13. **MiMo-V2 Flash 已退役**——6月30日完全退役，请迁移到 V2.5
+14. **MiniMax M3 跑分与实际脱节**——财务危机 + API 限速 + Token Plan 变相涨价，不建议投入
 
 ---
 
@@ -440,18 +487,21 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 
 ```
 70% 调用 → DeepSeek V4 Flash（日常：问答、中文、轻量编码）
-12% 调用 → DeepSeek V4 Pro / GLM-5.2 Max（攻坚：代码、推理、国产场景）
- 8% 调用 → Claude Opus 4.8 / GPT-5.6 Terra（硬骨头：多文件重构、架构决策）
+ 8% 调用 → DeepSeek V4 Pro / GLM-5.2 Max / Qwen3-Next（攻坚：代码、推理、国产场景）
+ 8% 调用 → Claude Opus 4.8 / GPT-5.6 Terra / **Claude Sonnet 5**（硬骨头：多文件重构、Agent 任务）
  5% 调用 → Gemini 3.5 Flash / 3.1 Pro（多模态、数学、长文档）
  5% 调用 → Kimi K2.7 Code / MiMo-V2.5-Pro / Perplexity Sonar（实验、Agent、调研、MCP工具调用）
+ 4% 调用 → Seed-Doubao 2.1 / Qwen3-Next（测试新入局模型）
 ```
 
 **为什么这么配？**
 - Flash 承担 70% 的流量，年成本控制在 $20-50
-- V4 Pro / GLM-5.2 Max 替代部分原 Opus 的攻坚场景——便宜 7-14 倍
+- V4 Pro / GLM-5.2 Max 替代部分原 Opus 的攻坚场景——便宜 7-14 倍；Qwen3-Next 以 $0.09/$0.78 极致低价低成本试错
+- Claude Sonnet 5 以 Opus 4.8 一半的价格（$2/$10 首发）提供更强的 Agent 基准，适合替代部分 Opus 调用
 - GPT-5.6 Terra 以半价提供 GPT-5.5 级能力，适合中型攻坚任务
 - Kimi K2.7 Code 在 MCP 工具调用场景值得更多测试
-- Opus 4.8 只留给真正的硬骨头——但因质量波动，可用 Terra 替代部分场景
+- Seed-Doubao 2.1 和 Qwen3-Next 作为新入局模型，分配少量流量验证实际表现
+- Opus 4.8 只留给真正的硬骨头——但因质量波动，可用 Sonnet 5 / Terra 替代部分场景
 - MiMo-V2 Flash 已完全退役，迁移到 V2.5 或 V2.5 Flash
 
 **成本对比**：如果全用 Opus 4.8，同样流量年花费约 $5,000-10,000。上述组合将成本压到 1/100 以下，质量损失不到 5%。
@@ -540,8 +590,9 @@ OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类�
 ### Anthropic 生态
 | 模型 | 输入/输出 $/M | 上下文 | 定位 |
 |------|:------------:|:-----:|------|
-| ~~Claude Fable 5~~ 🔒 | $10 / $50 | 1M | ❌ 已下线（美国政府封禁） |
+| ~~Claude Fable 5~~ 🔒 | $10 / $50 | 1M | ❌ 曾下线，7.1部分恢复 |
 | ~~Claude Mythos 5~~ 🔒 | $10 / $50 | 1M | ❌ 受限（6.26部分恢复） |
+| **Claude Sonnet 5** 🆕 | **$2 / $10** ⏳ | **1M** | **Agent新星，6.30发布，首发优惠至8.31** |
 | Claude Opus 4.8 | $5 / $25 | 1M | 综合最强（当前可用） |
 | Claude Opus 4.7 | $5 / $25 | 1M | ⚠️ 社区差评，不推荐 |
 | Claude Sonnet 4.6 | $3 / $15 | 200K | 日常编码 |
@@ -567,7 +618,7 @@ OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类�
 | Gemini 3.1 Pro Preview | $2 / $12 | 2M | 数学/推理最强 |
 | Gemini 3.5 Flash | $1.50 / $9 | 1M | 高速性价比，编码超3.1 Pro |
 | Gemini 3 Flash Preview | $0.50 / $3 | 1M | 轻量推理 |
-| Gemma 4 26B (free) | 免费 | — | 开源轻量 |
+| Gemma 4 26B | **免费** / $0.06-$0.12 | — | 🆕 Apache 2.0开源，2026最具影响力开源发布 |
 
 ### DeepSeek 生态
 | 模型 | 输入/输出 $/M | 上下文 | 定位 |
@@ -607,6 +658,7 @@ OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类�
 |------|:------------:|:-----:|------|
 | Qwen3.7 Max | $0.90 / $2.70 | 1M | 中文旗舰，AA Index 56.6 |
 | Qwen3.7 Plus | $0.40 / $1.60 | 1M | 多模态版 |
+| **Qwen3-Next-80B-A3B** 🆕 | **$0.09 / $0.78** | **1M** | **3B激活极致低价，本周开源** |
 | Qwen3 235B A22B | $0.72 / $2.16 | 262K | MoE 开源 |
 | Qwen3 VL 235B | — | — | 视觉版本 |
 
@@ -638,6 +690,8 @@ OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类�
 ### 国产模型生态（其他）
 | 模型 | 输入/输出 $/M | 上下文 | 定位 |
 |------|:------------:|:-----:|------|
+| **Seed-Doubao 2.1 Pro** 🆕 | ¥6 / ¥30 ($0.82/$4.11) | 1M | 🆕 字节旗舰Agent，6.23发布 |
+| **Seed-Doubao 2.1 Turbo** 🆕 | ¥3 / ¥15 ($0.41/$2.05) | 1M | 🆕 字节性价比线 |
 | GLM-5.2 Max | $0.90 / $2.70 | 1M | 🏆 MIT开源，SWE-Pro 62.1%，GPQA 91.2% |
 | Step 3.7 Flash | $0.20 / $1.15 | 256K | 阶跃星辰 MoE，Apache 2.0 |
 | Kimi K2.6 | $0.70 / $2.10 | 128K | 长文本旗舰 |
