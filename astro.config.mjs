@@ -17,7 +17,12 @@ export default defineConfig({
       },
       {
         label: '☁️ AI云组会',
-        items: [{ autogenerate: { directory: 'ai-daily' } }],
+        collapsed: false,
+        items: [
+          { label: '总览', link: 'ai-daily/' },
+          { label: '2026年7月', link: 'ai-daily/07月-2026' },
+          { label: '2026年6月', link: 'ai-daily/06月-2026' },
+        ],
       },
       {
         label: '🏗️ 工程汇报',
