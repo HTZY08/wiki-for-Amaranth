@@ -72,6 +72,7 @@ export default defineConfig({
         collapsed: false,
         items: [
           { label: '商汤 SenseNova 免费 API', link: 'freebies/2026-06-10-sensenova-token-plan/' },
+          { label: '📐 实用数学指南', link: 'freebies/math-handbook/' },
         ],
       },
       {
