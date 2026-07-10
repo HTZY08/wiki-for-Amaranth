@@ -30,6 +30,7 @@ description: 从零开始的 Hermes 环境技术时间线 — 自动更新
 | 2026-06-07 | **ComfyUI** | ComfyUI下一步计划 |
 | 2026-06-12 | **Kanban** | Hermes Kanban系统架构说明 |
 | 2026-06-25 | **Cron** | AI云组会日报 · Jun 25 00:18 |
+| 2026-07-10 | **GLM-OCR** | 实用数学手册 1326页 全文OCR（四毛五，LaTeX公式完美识别） |
 
 ## 数据统计
 
