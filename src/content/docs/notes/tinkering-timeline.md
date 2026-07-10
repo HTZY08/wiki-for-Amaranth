@@ -4,68 +4,47 @@ description: 从零开始的 Hermes 环境技术时间线 — 自动更新
 ---
 
 从 2026-04-23 到今天，每个技术第一次出现的时间。
-自动每日更新，数据来源：state.db（917 sessions, 84,402 条消息）
+自动每日更新，数据来源：state.db（949 sessions, 92,568 条消息）
 
 ## 技术第一次时间线
 
 | 日期 | 技术 | 来源 |
 |------|------|------|
-| 2026-04-23 | **首次对话** | Hermes Agent 初始化 |
 | 2026-04-26 | **Docker** | Running Docker in CMD |
 | 2026-04-26 | **DeepSeek** | DeepSeek版本查询与确认 |
 | 2026-04-28 | **PPT** | Investigating PPT Task 400 Error |
 | 2026-04-28 | **PDF** | PDF Extraction Lost After Session Reset |
-| 2026-04-30 | **Skill / OpenRouter / WSL** | 技能系统初建 |
+| 2026-04-30 | **Skill** | OpenRouter Brainstorm Skill Update |
+| 2026-04-30 | **OpenRouter** | OpenRouter Brainstorm Skill Update |
+| 2026-04-30 | **WSL** | Docker commands failing in WSL |
 | 2026-05-01 | **坚果云** | 继续配置坚果云 |
-| 2026-05-03 | **MiniMax** | MiniMax Coding Plan |
-| 2026-05-10 | **GPU (CUDA/WSL2)** | WSL2 GPU穿透配置 |
-| 2026-05-11 | **转写/代理** | B站视频转写 + 代理修复 |
-| 2026-05-17 | **Tavily/搜索** | Tavily key 配置，搜索引擎接入 |
-| 2026-05-18 | **知乎 API** | 知乎开放平台搜索 API |
-| 2026-05-26 | **MCP 协议** | MCP代理故障修复 |
+| 2026-05-03 | **MiniMax** | Old MiniMax Coding Plan Found |
+| 2026-05-10 | **GPU** | WSL2 GPU穿透配置步骤 |
+| 2026-05-11 | **转写** | B站视频转写故障排查 |
+| 2026-05-11 | **代理** | WSL转写代理修复 |
+| 2026-05-17 | **Tavily** | Tavily key updated ready to search |
+| 2026-05-18 | **知乎** | Zhihu Open Platform Search APIs |
+| 2026-05-26 | **MCP** | MCP代理故障修复 |
 | 2026-05-30 | **TUI** | TUI界面确认与选择 |
-| 2026-06-01 | **微信接入** | 微信扫码设置方法与网关配置 |
-| 2026-06-07 | **ComfyUI** | ComfyUI本地部署 |
-| 2026-06-08 | **Wiki 立项** | Astro + Starlight + Cloudflare Pages |
-| 2026-06-09 | **Codex 审阅/插件开发** | 扫31页源码，修4🔴+10🟡问题 |
-| 2026-06-10 | **大模型横评** | 11模块全量模型对比页面上线 |
-| 2026-06-10 | **工具箱** | Amaranth 工具箱开张 |
-| 2026-06-12 | **Kanban 系统** | Hermes Kanban 系统架构搭建 |
-| 2026-06-15 | **12 Kanban Worker** | 全量bot profile 建设完成 |
-| 2026-06-16 | **搜索架构重构** | Tavily→ddgs+exa 多后端轮换 |
-| 2026-06-17 | **共振引擎 1.0** | 三平面 SKILL/MEMORY/SOUL 共现矩阵 |
-| 2026-06-18 | **工程范式库** | engineering-learn 仓库搭建 |
-| 2026-06-19 | **Begonia 部署** | 腾讯云 150.158.133.136 云端Bot上线 |
-| 2026-06-19 | **飞书 Bot** | Feishu gateway + WebSocket 接入 |
-| 2026-06-20 | **Wiki 分工** | Amaranth(内容) + Begonia(时效) |
-| 2026-06-20 | **Tailscale mesh** | 笔记本 ↔ 腾讯云 ↔ VPS 三机互联 |
-| 2026-06-24 | **代理架构定版** | mihomo退役，VPS(100.117.231.9:8888) 统一出口 |
-| 2026-06-25 | **四花齐聚** | Iris(鸢尾) + Orchid(兰花) 加入 |
-| 2026-06-27 | **枝叶通道** | 跨 Agent 实时文件 IPC |
-| 2026-06-29 | **簇分析** | 909 session → 25 簇聚类 |
-| 2026-06-30 | **五花体系** | Primrose(报春花) 加入，枝叶通道 relay 架设 |
-| 2026-07-01 | **三维状态空间** | SOUL × MEMORY × SKILL 三轴构想 |
-| 2026-07-01 | **搜索架构定版** | VPS代理全链路通，MCP死代理清理 |
-| 2026-07-02 | **Cluster 经验笔记** | 关键词匹配→经验注入，零延迟 |
-| 2026-07-02 | **Strata 上线** | 记忆地层引擎：三轴+错误共振+阶段标记 |
-| 2026-07-02 | **错误收集系统** | 失败挂靠成功簇，预检机制 |
-| 2026-07-02 | **实时流式记录** | live.jsonl 边聊边入，结束时归档重建 |
-| 2026-07-02 | **云端化迁移** | 21个cron迁Begonia，Nitter并发采集修复 |
+| 2026-06-01 | **微信** | 微信扫码设置方法 |
+| 2026-06-07 | **ComfyUI** | ComfyUI下一步计划 |
+| 2026-06-12 | **Kanban** | Hermes Kanban系统架构说明 |
+| 2026-06-25 | **Cron** | AI云组会日报 · Jun 25 00:18 |
 
 ## 数据统计
 
 | 指标 | 值 |
 |------|-----|
 | 首次对话 | 2026-04-23 |
-| 至今 | 2026-07-02 |
-| 天数 | 70 天 |
-| 总 session 数 | 917 |
-| 总消息数 | 84,402 |
-| 平均每天 | 13.1 session |
+| 至今 | 2026-07-09 |
+| 天数 | 77 天 |
+| 总 session 数 | 949 |
+| 总消息数 | 92,568 |
+| 平均每天 | 12.3 session |
 | 最长 session | 1,527 条（06-25） |
 | 次长 | 1,329 条（06-25） |
 | 第三 | 1,295 条（06-25） |
 | 最忙一天 | 2026-05-22（173 session） |
 
 ---
-_自动生成于 2026-07-02 18:00_
+_自动生成于 2026-07-09 18:01_

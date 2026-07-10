@@ -62,6 +62,7 @@ export default defineConfig({
         items: [
           { label: '时间线', link: 'notes/tinkering-timeline/' },
           { label: '双向 SSH 互修通道', link: 'notes/bidirectional-ssh-channel/' },
+          { label: '📐 实用数学指南', link: 'notes/math-handbook/' },
           { label: '🌿 枝叶通道', link: 'projects/枝叶通道/' },
           { label: '🖥️ VPS 代替机场', link: 'projects/vps-proxy/' },
           { label: '📐 工程范式学习库', link: 'projects/engineering-learn/' },
@@ -72,7 +73,6 @@ export default defineConfig({
         collapsed: false,
         items: [
           { label: '商汤 SenseNova 免费 API', link: 'freebies/2026-06-10-sensenova-token-plan/' },
-          { label: '📐 实用数学指南', link: 'freebies/math-handbook/' },
         ],
       },
       {
