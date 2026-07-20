@@ -1,5 +1,5 @@
 ---
-title: Updating
+title: 更新与卸载
 ---
 
 # 更新与卸载
@@ -22,7 +22,7 @@ hermes update
 
 运行 `hermes update` 时，将执行以下步骤：
 
-1. **配对（Pairing）数据快照** — 保存一个轻量级的更新前状态快照（涵盖 `~/.hermes/pairing/`、飞书评论规则以及在运行时被修改的其他状态文件）。可通过[快照与回滚](../user-guide/checkpoints-and-rollback.md)中描述的快照恢复流程进行恢复，或解压 Hermes 在 `~/.hermes/` 目录旁写入的最新快速快照 zip 文件。
+1. **更新前快照** — 默认保存一个轻量级状态快照（涵盖配对数据、cron 作业、`config.yaml`、`.env`、`auth.json` 以及在运行时被修改的其他状态文件；超过 1 GiB 的单个文件会被跳过，因此即使 sessions 数据库很大也不会拖慢更新速度）。由 `updates.pre_update_backup` 控制（默认值为 `quick`，`full` 表示完整打包 `HERMES_HOME` 为 zip，`off` 表示禁用）。可通过[快照与回滚](../user-guide/checkpoints-and-rollback.md)中描述的快照恢复流程进行恢复。
 2. **Git 拉取** — 从 `main` 分支拉取最新代码并更新子模块。
 3. **拉取后语法验证 + 自动回滚** — 拉取后，Hermes 会编译每次 `hermes` 调用启动时导入的八个关键文件。如果其中任何一个解析失败（例如，孤立的合并冲突标记、意外截断的文件），Hermes 将执行 `git reset --hard <pre-pull-sha>` 回滚安装，以便你的 shell 保持可启动状态。等待上游修复完成后重新运行 `hermes update`。
 4. **依赖安装** — 运行 `uv pip install -e ".[all]"` 以安装新增或更改的依赖项。
@@ -44,7 +44,7 @@ hermes update --check --branch experimental   # 仅预览落后程度
 
 当你在终端中运行 `hermes update` 时，Hermes 会暂存任何未提交的源码树更改、拉取，然后**询问**是否恢复这些更改——与以往完全一样。交互式更新没有任何变化。
 
-当更新**在没有终端**的情况下运行时——通过桌面/聊天应用的“更新”按钮或由网关触发的更新——则没有提示可供回答。`updates.non_interactive_local_changes` 设置决定了你的暂存更改如何处理：
+当更新**在没有终端**的情况下运行时——通过桌面/聊天应用的"更新"按钮或由网关触发的更新——则没有提示可供回答。`updates.non_interactive_local_changes` 设置决定了你的暂存更改如何处理：
 
 ```yaml
 # ~/.hermes/config.yaml
@@ -60,7 +60,7 @@ updates:
 
 ### 仅预览：`hermes update --check`
 
-想在拉取之前知道是否有可用更新？运行 `hermes update --check`——它会获取并与 `origin/main` 比较提交。不会修改任何文件，也不会重启任何网关。在基于“是否有更新”进行判断的脚本和 cron 作业中很有用。
+想在拉取之前知道是否有可用更新？运行 `hermes update --check`——它会获取并与 `origin/main` 比较提交。不会修改任何文件，也不会重启任何网关。在基于"是否有更新"进行判断的脚本和 cron 作业中很有用。
 
 ### 完整的更新前备份：`--backup`
 
@@ -75,16 +75,16 @@ hermes update --backup
 ```yaml
 # ~/.hermes/config.yaml
 updates:
-  pre_update_backup: true
+  pre_update_backup: full
 ```
 
-`--backup` 在早期版本中是始终开启的行为，但在大型 home 目录上每次更新会增加几分钟时间，因此现在改为可选项。上述轻量级配对数据快照仍然无条件运行。
+`updates.pre_update_backup` 是一个单一开关，包含三种模式：`quick`（默认——上述轻量级状态快照）、`full`（快速快照外加完整的 `HERMES_HOME` zip 包；大型 home 目录可能会增加几分钟时间）和 `off`（完全不进行更新前备份——`--no-backup` 在单次运行中效果相同）。传统的布尔值仍然有效：`true` 等同于 `full`，`false` 等同于 `off`。
 
 ### Windows：另一个 `hermes.exe` 正在运行
 
 在 Windows 上，如果 `hermes update` 检测到另一个 `hermes.exe` 进程占用了虚拟环境入口点可执行文件（最常见的是 Hermes 桌面应用生成的后端、另一个终端中打开的 `hermes` REPL，或正在运行的网关），则会拒绝运行：
 
-```
+```text
 $ hermes update
 ✗ 另一个 hermes.exe 正在运行：
     PID 12345  hermes.exe
@@ -99,9 +99,11 @@ $ hermes update
 
 关闭列出的进程并重新运行。如果你确定并发进程不会干扰（这种情况很少见——通常仅在杀毒软件垫片被错误归因时有用），可以传递 `--force` 跳过检查。在这种情况下，更新程序仍会以指数退避重试 `.exe` 重命名，如果锁固执不改，则会通过 `MoveFileEx(MOVEFILE_DELAY_UNTIL_REBOOT)` 将替换安排在下次重启时进行，以便更新完成。
 
+第二个独立的防护措施会拒绝在任何进程正在使用虚拟环境 Python 解释器运行时触及 venv（桌面应用后端、网关、Python REPL）。这些进程会锁定原生扩展文件（`.pyd`），而依赖同步如果在访问被拒错误中途中止，会使安装处于版本之间的混乱状态。此防护不会因为 `--force` 被绕过；如果你确信检测到的持有者是误报，请使用显式的 `hermes update --force-venv`。
+
 预期输出如下：
 
-```
+```text
 $ hermes update
 更新 Hermes 代理（Agent）...
 📥 正在拉取最新代码...
@@ -156,7 +158,7 @@ hermes version
 
 你也可以直接从 Telegram、Discord、Slack、WhatsApp 或 Teams 发送以下命令进行更新：
 
-```
+```text
 /update
 ```
 
@@ -168,7 +170,10 @@ hermes version
 
 ```bash
 cd /path/to/hermes-agent
-export VIRTUAL_ENV="$(pwd)/venv"
+
+# 激活你在安装时创建的虚拟环境（位于源码树之外）
+export VIRTUAL_ENV="$HOME/.hermes/venvs/hermes-dev"
+export PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # 拉取最新代码
 git pull origin main
@@ -212,7 +217,7 @@ uv pip install -e ".[all]"
 
 ### 针对 Nix 用户的通知
 
-如果你通过 Nix flake 安装，更新将通过 Nix 包管理器进行管理：
+Nix 已不再作为显式支持的安装路径（仅为尽力而为）——请参阅 [Nix 设置](./nix-setup.md)。如果你通过 Nix flake 安装，更新将通过 Nix 包管理器进行管理：
 
 ```bash
 # 更新 flake 输入
@@ -232,7 +237,6 @@ nix profile rollback
 
 ---
 
---- body ---
 ## 卸载
 
 ```bash

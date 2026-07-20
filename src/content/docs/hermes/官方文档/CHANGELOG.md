@@ -18,6 +18,21 @@ description: 记录每次官方文档更新时 Orchid 所做的汉化同步
 
 ---
 
+### 2026-07-20 — 批量汉化同步（8 个页面）
+
+- **来源 hash**: `daa74970949f77d71c36032e0cea2d8b6d6c517d239c9122552af71a73822bb1`
+- **变更类型**: 全量更新
+- **涉及页面**:
+  - `getting-started/installation` — 从片段重写为完整安装指南
+  - `getting-started/updating` — 更新至最新内容
+  - `guides/delegation-patterns` — 从片段重写为完整委派参考
+  - `integrations/index` — 重写为集成总览页
+  - `integrations/providers` — 从 133 行扩展为完整 1516 行全量翻译
+  - `reference/model-catalog` — 更新至最新内容
+  - `reference/optional-skills-catalog` — 更新至最新内容
+  - `reference/skills-catalog` — 更新至最新内容
+- **操作**: Orchid 批量翻译 + 一次 commit
+
 ### 2026-06-30 — 初始化同步基线
 
 - **操作**：建立首次汉化基线
