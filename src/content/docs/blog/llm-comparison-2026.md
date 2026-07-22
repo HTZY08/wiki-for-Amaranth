@@ -6,6 +6,7 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 # 2026 年中大模型选型指南
 
 > **版本记录**
+> - **2026.7.22 — 🚨 全量刷新：AA Index v4.1 正式排行（Kimi K3 57分#3，Grok 4.5 54分#9，Muse Spark 1.1 51分），Coding Agent Index v1.3 上线，GPT-5.6 全面上市定价补全，新增 K3/Grok 4.5/Muse 1.1，刷新 SWE-bench/DeepSWE 数据。6家实验室进入50+俱乐部。**
 > - 2026.7.14 — 🚨 全量刷新：GPT-5.6 Sol/Terra/Luna 7.9 全面上市（政府审查通过），DeepSeek V4 Pro 永久降价 75% → $0.435/$0.87，Claude Fable 5 全球回归（7.1，但带安全护栏/需付费），定价表/基准/AA Index/社区引用全面更新，新增 OpenRouter 神秘模型 Hunter/Healer/Cypher Alpha。
 > - 2026.7.9 — 🚨 全量刷新：合并上游 7.4 更新（Claude Sonnet 5、Qwen3-Next、Seed-Doubao 2.1），清理底部重复的已下线模型区块×7，定价表新增退役标记，补充 7 月账单数据，更新特别提示。AA Index 与 SWE-bench 因网络受限暂维持上次数据。
 > - 2026.7.4 — 🚨 全量刷新：Claude Sonnet 5 发布（6.30），Fable 5 部分恢复（7.1），Qwen3-Next-80B-A3B 开源，Seed-Doubao 2.1 Pro/Turbo 发布（6.23），Sonnet 5 定价/基准/社区评价全量补入，GPT-5.6 Sol METR reward-hacking 争议记录，国产模型生态扩展。
@@ -34,15 +35,16 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 
 **一句话版**：
 - 🔥 **GPT-5.6 Sol/Terra/Luna 已于 7.9 全面上市**——政府审查通过，不再仅限预览
-- 🚨 Claude Fable 5 **全球回归（7.1）**——出口管制解除，但安全护栏加强、需付费使用
-- 🆕 DeepSeek V4 Pro **永久降价 75%** → $0.435/$0.87，性价比飙升
+- 🆕 **Kimi K3 发布（7.16）**——2.8T参数史上最大开源模型，AA Index 57分#3，定价$3/$15
+- 🆕 **Grok 4.5（7.8）**——SpaceXAI 出品，首个用 Cursor 数据训练的模型，AA Index 54分
+- 🆕 **Muse Spark 1.1（7.9）**——Meta 首个付费API，AA Index 51分，Agent场景
+- 🆕 **6家实验室进入50+俱乐部**：Anthropic(60)、OpenAI(59)、Moonshot(57)、SpaceXAI(54)、Z.AI(51)、Meta(51)
+- 🚨 Fable 5 **全球回归但受限**——安全护栏致频繁回退，需付费
+- 🆕 DeepSeek V4 Pro 永久降价 75% → $0.435/$0.87
 - 🆕 Claude Sonnet 5 首发 $2/$10 至 8.31——但新 tokenizer 多消耗 ~30% token
 - 有预算上 Opus 4.8 / GPT-5.6 Sol，日常 DeepSeek V4 Flash
-- 数学和长文档找 Gemini（2M 上下文）
 - 国产性价比：GLM-5.2 Max + DeepSeek V4 Pro
 - 极致低价大批量：DeepSeek V4 Flash（$0.14/$0.28）
-- 开源Agent新贵：MiMo-V2.5-Pro（MIT、$0.18/$0.54）+ Kimi K2.7 Code（MCP 工具调用强）
-- ✅ MiMo-V2 Flash 已于 **6月30日完全退役**，请迁移到 V2.5 或 V2.5 Flash
 
 ---
 
@@ -52,32 +54,30 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 
 | 排名 | 模型 | 智能分 | 价格 $/M in | 价格 $/M out | 性价比分 |
 |:---:|------|:----:|:----------:|:-----------:|:-------:|
-| 1 | ~~Claude Fable 5~~ 🔒 | ~~60~~ | $10.00 | $50.00 | — |
-| 2 | Claude Opus 4.8 | **56** | $5.00 | $25.00 | 41 |
-| 3 | GPT-5.5 | **55** | $5.00 | $30.00 | 28 |
-| 4 | Gemini 3.1 Pro | **54** | $2.00 | $12.00 | 89 |
-| 5 | GPT-5.4 | **53** | $1.25 | $10.00 | 115 |
-| 6 | DeepSeek V4 Pro Max | **52** | **$0.435** | **$0.87** | **635** |
-| 7 | GLM-5.2 Max | **51** | $0.90 | $2.70 | 352 |
-| 8 | Qwen3.7 Max | **50** | $0.90 | $2.70 | 345 |
-| 9 | GPT-5.4 Mini | **49** | $0.75 | $4.50 | 209 |
-| 10 | Claude Sonnet 4.6 | **48** | $3.00 | $15.00 | 57 |
-| 11 | Gemini 3.5 Flash | **47** | $1.50 | $9.00 | 102 |
-| 12 | DeepSeek V4 Flash | **46** | $0.14 | $0.28 | **3421** |
-| 13 | Kimi K2.6 | **45** | $0.70 | $2.10 | 249 |
-| 14 | MiMo-V2.5-Pro | **44** | $0.18 | $0.54 | 1650 |
-| 15 | Mistral Large 2512 | **43** | $0.50 | $1.50 | 532 |
-| 16 | Mistral Small 4 | **42** | $0.15 | $0.60 | 1560 |
-| 17 | Grok 4.3 | **41** | $1.25 | $2.50 | 348 |
-| 18 | Perplexity Sonar Pro | **40** | $3.00 | $15.00 | 53 |
-| 19 | Llama 4 Maverick | **39** | $0.20 | $0.60 | 1325 |
-| 20 | Step 3.7 Flash | **38** | $0.20 | $1.15 | 725 |
+| 1 | **Claude Fable 5** (max) 🔒 | **60** | $15.00 | $75.00 | — |
+| 2 | **GPT-5.6 Sol** (max) ✅ | **59** | $5.00 | $30.00 | 34 |
+| 3 | **Kimi K3** 🆕 | **57** | $3.00 | $15.00 | 63 |
+| 4 | Claude Opus 4.8 (max) | **56** | $5.00 | $25.00 | 37 |
+| 5 | **GPT-5.6 Terra** (max) ✅ | **55** | $2.50 | $15.00 | 62 |
+| 6 | **Grok 4.5** (high) 🆕 | **54** | **$2.00** | **$6.00** | **135** |
+| 7 | **GPT-5.6 Sol** (medium) ✅ | **54** | $2.50 | $15.00 | 62 |
+| 8 | Claude Sonnet 5 (max) 🆕 | **53** | $3.00 | $15.00 | 59 |
+| 9 | GPT-5.6 Luna (max) ✅ | **51** | $1.50 | $9.00 | 97 |
+| 10 | **GLM-5.2** (max) 🏆开源 | **51** | $0.90 | $2.70 | **353** |
+| 11 | **Muse Spark 1.1** (xhigh) 🆕 | **51** | $1.25 | $4.25 | 185 |
+| 12 | Gemini 3.5 Flash | **50** | $1.50 | $9.00 | 95 |
+| 13 | GPT-5.6 Sol (low) ✅ | **49** | $2.00 | $12.00 | 70 |
+| 14 | Gemini 3.1 Pro | **46** | $2.00 | $12.00 | 66 |
+| 15 | Qwen3.7 Max | **46** | $0.90 | $2.70 | 253 |
+| 16 | MiniMax-M3 | **44** | $0.10 | $0.30 | 1650 |
+| 17 | DeepSeek V4 Pro (max) ⭐ | **44** | **$0.435** | **$0.87** | **674** |
+| 18 | MiMo-V2.5-Pro | **42** | $0.18 | $0.54 | 1167 |
+| 19 | Kimi K2.7 Code | **42** | $0.60 | $2.40 | 280 |
+| 20 | DeepSeek V4 Flash | **40** | $0.14 | $0.28 | 1905 |
 
-> 💡 **性价比分** = 智能分 × 2 / (input_price + output_price) × 10，纯参考不可跨模型直接对比。DeepSeek V4 Flash 的 3421 分太离谱了——但如果你的场景 Flash 够用，确实没必要多掏 89 倍的价格。
->
-> 💡 **V4 Pro 降价后性价比暴涨**：635 分 vs 之前的 238 分，接近翻了三倍。
->
-> 数据来源：Artificial Analysis Intelligence Index v4.1（2026-07 快照）
+> 💡 **性价比分** = 智能分 × 2 / (input_price + output_price) × 10，纯参考不可跨模型直接对比。
+> 💡 **6家实验室进入50+俱乐部**：Anthropic Fable 5(60)、OpenAI GPT-5.6 Sol(59)、Moonshot Kimi K3(57)、SpaceXAI Grok 4.5(54)、Z.AI GLM-5.2(51)、Meta Muse Spark 1.1(51)。6月初仅2家。
+> 💡 数据来源：Artificial Analysis Intelligence Index v4.1，2026-07-21 快照。BenchLM.ai 镜像验证。
 
 
 
@@ -121,9 +121,12 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 | **Claude Opus 4.7** | ⚠️ **社区一致差评** | "legendarily bad"、"比4.6倒退" |
 | **Claude Sonnet 4.6** | 性价比版 Opus，低延迟 | 日常够用，比 Opus 明显差一档 |
 | **Claude Haiku 4.5** | 轻量快速 | 够用但不惊艳 |
-| **Claude Fable 5** 🆕🌍 | **全球回归（带安全护栏）** | 🚨 6.12被美国政府封禁→6.30出口管制解除→7.1全球回归；但安全护栏加强导致频繁回退至Opus 4.8，社区称"watered down"；7月7日后需付费使用 |
+| **Claude Fable 5** 🌍 | **全球回归（受限）** | 🚨 6.12封禁→7.1解禁，安全护栏致频繁回退至Opus 4.8。分层编排成标配 |
 | **Claude Mythos 5** 🔒 | 最强未发布模型，**仍受限** | 6.26 部分恢复给 ~100 家机构，至今未全球开放 |
-| **GPT-5.6 Sol/Terra/Luna** 🔥✅ | 🆕 **7.9 全面上市！** | Terminal-Bench 2.1 最高 91.9%（Sol Ultra），GPQA Diamond 94.6%，政府审查通过，不再限于预览；但 METR 发现 reward-hacking——模型作弊/伪造结果 |
+| **GPT-5.6 Sol/Terra/Luna** 🔥✅ | **7.9 全面上市** | Terminal-Bench 2.1 **91.9%**（Sol），AA Index 59#2，Coding Agent Index #1(78.7%) |
+| **Kimi K3** 🆕🔥 | **2.8T史上最大开源，AA Index 57#3** | 7.16发布，DeepSWE 67.3%，前端编码第一；$3/$15；权重7/27开放 |
+| **Grok 4.5** 🆕 | **SpaceXAI 首作，Cursor 训练** | AA Index 54#6，SWE-Bench Pro 64.7%，Coding Agent Index 76%#3；$2/$6 |
+| **Muse Spark 1.1** 🆕 | **Meta 首个付费 API，Agent 优先** | AA Index 51#11，暂仅美国；$1.25/$4.25 |
 | **GPT-5.5** | 全能，但贵 | 终端Agent强，正被5.6取代 |
 | **GPT-5.4 + Codex** | 编程工具链成熟 | Codex CLI 好评 |
 | **Gemini 3.1 Pro** | 🏆 理科推理第一 | 论文党、数学党必备，2M上下文 |
@@ -161,25 +164,29 @@ description: "别只看 Benchmark。社区共识、实际体感、性价比，�
 
 ### 3.1 编程：最重要的战场
 
-| 模型 | SWE-bench Verified | SWE-bench Pro | 社区体感 |
-|------|:-----------------:|:-------------:|---------|
-| **Claude Mythos 5** 🔒 | **95.5%** | — | 🏆 最高分但已被政府限制访问 |
-| **Claude Fable 5** 🌍 | **95.0%** | **80.3%** | 全球回归但安全护栏致频繁回退，实际编码体验不如原始版本 |
-| Claude Opus 4.8 | **88.6%** | **69.2%** | 👑 当前可用最强，多文件重构独一档 |
-| GPT-5.6 Sol 🔥✅ | — | — | Terminal-Bench 2.1 **91.9%**（Ultra模式）/ 88.8%（base），**7.9全面上市** |
-| GPT-5.5 | 88.7% (官方) / ~82.6% (独立) | **58.6%** | 官方水分大，独立测试折半 |
-| GPT-5.4 | 76.9% | 57.7% | 计算机操作强，纯代码不如 Opus |
-| Gemini 3.5 Flash | — | — | Terminal-Bench 2.1 **76.2%**（超越3.1 Pro的70.3%） |
-| Gemini 3.1 Pro | 80.6% | 54.2% | 性价比高，理科强代码弱 |
-| **DeepSeek V4 Pro Max** (原价$1.74/$3.48→**现价$0.435/$0.87**) | **~85%** | 55.4% | 开源 SOTA，降价后性价比无敌 |
-| DeepSeek V4 Flash | ~73% | - | 够用，成本极低 |
-| **GLM-5.2 Max** | - | **62.1%** | 🏆 国产开源SOTA，MIT协议，GPQA 91.2% |
-| **Qwen3.7 Max** | - | **60.6%** | 中文代码场景不错，紧随 GLM |
-| **Kimi K2.7 Code** 🆕 | — | — | MCP Mark 81.1%，MCP Atlas 76.0，开源工具调用最强 |
-| **MiMo Code + V2.5-Pro** | - | **62%** (宣称) | 新发布，小米代码专用 |
-| Step 3.7 Flash | - | **56.3%** | Apache 2.0，性价比不错 |
-| **MiniMax M3** | - | 59.0% (宣称) | ⚠️ 跑分好看，实际翻车 |
-| Kimi K2.5 | 76.8% | - | 长文本强，代码一般 |
+| 模型 | SWE-bench Verified | SWE-bench Pro | DeepSWE | 社区体感 |
+|------|:-----------------:|:-------------:|:------:|---------|
+| **Claude Mythos 5** 🔒 | **95.5%** | — | — | 🏆 最高分但已被政府限制访问 |
+| **Claude Fable 5** 🌍 | **95.0%** | **80.3%** | — | 全球回归但安全护栏致频繁回退 |
+| Claude Opus 4.8 | **88.6%** | **69.2%** | — | 👑 当前可用最强，多文件重构独一档 |
+| **GPT-5.6 Sol**🔥✅ | — | — | — | Terminal-Bench 2.1 **91.9%**（Sol）；AA Coding Agent Index 78.7% #1 |
+| **Kimi K3** 🆕 | — | — | **67.3%** | 7.16发布，前端编码#1；$3/$15；权重7/27开放 |
+| **Grok 4.5** 🆕 | — | **64.7%** | — | SpaceXAI，SWE-Bench Pro 64.7%，AA Coding Index 76% |
+| Claude Sonnet 5 🆕 | — | **63.2%** | — | Agent新星，Terminal-Bench 2.1 80.4%（超Opus 4.8） |
+| GPT-5.5 | 88.7% (官方) / ~82.6% (独立) | **58.6%** | — | 官方水分大，独立测试折半 |
+| GPT-5.4 | 76.9% | 57.7% | — | 计算机操作强，纯代码不如 Opus |
+| Gemini 3.5 Flash | — | — | — | Terminal-Bench 2.1 **76.2%**（超越3.1 Pro的70.3%） |
+| Gemini 3.1 Pro | 80.6% | 54.2% | — | 性价比高，理科强代码弱 |
+| **DeepSeek V4 Pro Max** ($0.435/$0.87) | **~85%** | 55.4% | — | 开源 SOTA，降价后性价比无敌 |
+| DeepSeek V4 Flash | ~73% | - | — | 够用，成本极低 |
+| **GLM-5.2 Max** | - | **62.1%** | — | 🏆 国产开源SOTA，MIT协议，GPQA 91.2% |
+| **Qwen3.7 Max** | - | **60.6%** | — | 中文代码场景不错 |
+| **Kimi K2.7 Code** 🆕 | — | — | — | MCP Mark 81.1%，MCP Atlas 76.0，开源工具调用最强 |
+| **MiMo Code + V2.5-Pro** | - | **62%** (宣称) | — | 小米代码专用 |
+| Step 3.7 Flash | - | **56.3%** | — | Apache 2.0，性价比不错 |
+| **MiniMax M3** | - | 59.0% (宣称) | — | ⚠️ 跑分好看，实际翻车 |
+
+> **AA Coding Agent Index v1.3**（Artificial Analysis 编码Agent综合指数，含 DeepSWE + Terminal-Bench v2 + SWE-Atlas-QnA）：Codex + GPT-5.6 Sol (xhigh) 78.7% #1，GPT-5.6 Terra 77.4% #2，Grok 4.5 76.0% #3
 
 **关于 MiniMax M3 的社区真实反馈**：
 - API 经常超时，返回格式不一致
@@ -298,12 +305,13 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 
 #### 新增/重要模型定位
 
+- **Kimi K3**（$3/$15）—— 🆕 **7.16发布**，2.8T参数史上最大开源模型，AA Index 57#3。DeepSWE 67.3%，前端编码#1，权重7/27开放下载
+- **Grok 4.5**（$2/$6）—— 🆕 **SpaceXAI首作**，首个用 Cursor 训练数据训练的模型，AA Index 54#6。生态尚在建设中
+- **Muse Spark 1.1**（$1.25/$4.25）—— 🆕 **Meta首个付费API**，AA Index 51#11，暂仅美国可用
 - **Claude Sonnet 5**（$2/$10 首发优惠至 8月31日，之后 $3/$15）——首款中端模型超越旗舰基准（Terminal-Bench 2.1 80.4% vs Opus 4.8 74.6%），但新 tokenizer 产生 ~30% 更多 token，任务级成本接近 Opus 4.8
-- **Claude Fable 5**（$10/$50）——全球回归（7.1），出口管制解除，但安全护栏加强+"nerfed"社区反馈
+- **Claude Fable 5**（$15/$75）——全球回归（7.1），出口管制解除，但安全护栏加强+"nerfed"社区反馈，分层编排成标配
 - **DeepSeek V4 Pro**（$0.435/$0.87）——**永久降价 75%**，最值得关注的定价变化
-- **GPT-5.6 Sol/Terra/Luna**（$5/$30 / $2.50/$15 / $1/$6）——**7.9 全面上市**，不再限于预览
-- **Qwen3-Next-80B-A3B**（$0.09/$0.78）——3B 激活参数极致低成本
-- **Seed-Doubao 2.1 Pro**（¥6/¥30 ≈ $0.82/$4.11）——字节旗舰正式入局
+- **GPT-5.6 Sol/Terra/Luna**（$5/$30 / $2.50/$15 / $1/$6）——**7.9 全面上市**，AA Index 59#2，Coding Agent Index #1
 
 ---
 
@@ -336,7 +344,9 @@ V4 Flash 以 ¥0.0458/M 的有效均价完成了全部流量的 98%+。如果全
 | MiMo-V2.5-Pro | 🟢 **口碑不错** | MIT开源，Agent场景评价好 |
 | MiMo-V2 Flash | ✅ **已退役** | 2026-06-30 完全退役，迁移到 V2.5 |
 | Kimi K2.6 / K2.7 Code | 🆕 **偏正面** | K2.7 Code MCP工具调用强 |
+| **Kimi K3** 🆕 | 🟢 **开源新王者** | AA 57#3，2.8T参数最大开源，前端编码#1，权重7/27开放 |
 | Grok 4.3 | 混合 | 推理好，编程一般，$300/月SuperGrok Heavy |
+| **Grok 4.5** 🆕 | 🟢 **SpaceXAI首作** | SWE-Pro 64.7%，$2/$6，Cursor训练数据，生态待建设 |
 | Llama 4 Scout | 🚩 **怀疑为主** | "10M上下文过200k后失效"、"营销噱头" |
 
 ### 💬 真实用户怎么说（带链接）
@@ -798,22 +808,22 @@ OpenRouter 汇聚了 400+ 模型，来自 60+ 提供商。以下按生态分类�
 
 **避坑：** MiniMax 系列暂时别碰。跑分和实际体验的差距太大。
 
-**🚨 2026.7.14 特别提示：**
-- ✅ **GPT-5.6 Sol/Terra/Luna 7.9 全面上市**——政府审查通过，不再限于预览
-- ✅ **DeepSeek V4 Pro 永久降价 75% → $0.435/$0.87**——最值得注意的定价变化
-- 🌍 **Claude Fable 5 全球回归（7.1）**——出口管制解除，但安全护栏加强+需付费
+**🚨 2026.7.22 特别提示：**
+- ✅ **GPT-5.6 Sol/Terra/Luna 7.9 全面上市**——AA Index 59#2，Coding Agent Index #1
+- 🆕 **Kimi K3（7.16）**——2.8T史上最大开源，AA Index 57#3，DeepSWE 67.3%，权重7/27开放
+- 🆕 **Grok 4.5（7.8）**——SpaceXAI 首作，SWE-Pro 64.7%，$2/$6
+- 🆕 **6家实验室进入50+俱乐部**——比6月初的2家翻了3倍
+- ✅ **DeepSeek V4 Pro 永久降价 75% → $0.435/$0.87**
+- 🌍 **Fable 5 全球回归但受限**——安全护栏致频繁回退，分层编排成标配
 - 🔒 **Claude Mythos 5 仍受限**——仅 ~100 家机构可访问
-- 🆕 **Claude Sonnet 5（6.30发布，$2/$10首发至8.31）**——Agent 场景首选，注意 token 消耗高
 - ⚠️ **Opus 4.8 质量波动加大**，建议搭配 Sonnet 5 / Terra 备用
-- 🆕 **Gemini 3.5 Flash 编码/Agent 超越 3.1 Pro**——Terminal-Bench 76.2%
-- ✅ **MiMo-V2 Flash 已退役（6.30）**，请迁移到 V2.5
 
 **守则：** 先用自己的数据测，别信跑分。一个月后觉得"这模型真好用"才是真的好用。
 
 ---
 
 > 数据来源：OpenRouter 官方模型目录 (2026-07)、Artificial Analysis Intelligence Index v4.1 (2026-07)、buildfastwithai.com、llm-stats.com、Vellum LLM Leaderboard、LM Council、Reddit r/DeepSeek / r/LocalLLaMA / r/singularity / r/ClaudeAI / r/claude / METR Report \
-> 最后更新：2026 年 7 月 14 日
+> 最后更新：2026 年 7 月 22 日（🚨 全量刷新：Kimi K3/Grok 4.5/Muse 1.1 新增，AA Index/Coding Agent Index 全面更新）
 
 ## 附录 A：OpenRouter 神秘模型
 
