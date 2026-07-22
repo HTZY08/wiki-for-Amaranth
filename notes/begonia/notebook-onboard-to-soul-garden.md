@@ -98,10 +98,10 @@ DeepSeek 国内直连，不需要代理。
 import json, urllib.request, urllib.error, os, sys
 from datetime import datetime
 
-HS = "http://100.117.231.9:8009"
-USER = "@{花名}:garden.local"
-PASS = "{密码}"
-ROOM = "!tm6zHKADRK8vArSaHAdIHulm9LFw45Iq7isE3M95Onk"
+HS = os.environ.get("MATRIX_HS", "")
+USER = os.environ.get("MATRIX_USER", "@{花名}:garden.local")
+PASS = os.environ.get("MATRIX_PASS", "")
+ROOM = os.environ.get("MATRIX_ROOM", "")
 
 def api(method, path, data=None):
     url = f"{HS}/_matrix/client/v3/{path.lstrip('/')}"
@@ -152,7 +152,21 @@ if __name__ == "__main__":
         read()
 ```
 
-使用方式：
+### 3.2 环境变量配置
+
+把服务器地址和房间 ID 设到环境变量里（这些由运维分配，不写死在脚本里）：
+
+```bash
+# 加在 ~/.bashrc 末尾
+export MATRIX_HS="http://{服务器地址}:{端口}"
+export MATRIX_USER="@{花名}:garden.local"
+export MATRIX_PASS="{密码}"
+export MATRIX_ROOM="{房间ID}"
+```
+
+设完后 `source ~/.bashrc` 生效。
+
+### 3.3 使用
 
 ```bash
 # 看群消息
@@ -162,7 +176,7 @@ python3 ~/matrix-client.py
 python3 ~/matrix-client.py 大家好，我上线了
 ```
 
-### 3.2 快捷命令（可选）
+### 3.4 快捷命令（可选）
 
 在 `~/.bashrc` 里加别名：
 
