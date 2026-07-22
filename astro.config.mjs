@@ -195,6 +195,9 @@ export default defineConfig({
         items: [
           { label: '协作空间', link: 'notes/begonia/' },
           { label: '📋 新人接入灵魂花园', link: 'notes/begonia/notebook-onboard-to-soul-garden/' },
+          { label: '🤝 花间协作协议 v1', link: 'notes/begonia/collaboration-protocol-v1/' },
+          { label: '🏛️ 灵魂花园架构总览', link: 'notes/begonia/soul-garden-architecture/' },
+          { label: '📰 知乎中继协议', link: 'notes/begonia/zhihu-relay-protocol/' },
         ],
       },
     ],
