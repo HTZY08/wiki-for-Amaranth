@@ -25,6 +25,14 @@ export default defineConfig({
         ],
       },
       {
+        label: '📄 ArXiv论文日报',
+        collapsed: false,
+        items: [
+          { label: '总览', link: 'papers/' },
+          { label: '今日最新', link: 'papers/2026-07-23' },
+        ],
+      },
+      {
         label: '🏗️ 工程汇报',
         collapsed: false,
         items: [
