@@ -74,6 +74,7 @@ export default defineConfig({
         collapsed: false,
         items: [
           { label: '商汤 SenseNova 免费 API', link: 'freebies/2026-06-10-sensenova-token-plan/' },
+          { label: 'free-for.dev 开发者免费服务', link: 'freebies/free-for-dev/' },
         ],
       },
       {
