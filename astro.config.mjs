@@ -162,6 +162,8 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: '论文→代码：Lau博士落地实践', link: 'blog/lau-hermes-implementations/' },
+          { label: '📊 7月AI趋势（第1周）', link: 'blog/july-2026-trends/' },
+          { label: '📊 7月AI趋势（第2-3周）', link: 'blog/july-2026-trends-part2/' },
           { label: '2026 大模型横评', link: 'blog/llm-comparison-2026/' },
           { label: '🤖 AI 信息前沿', link: 'notes/ai-frontier/' },
         ],

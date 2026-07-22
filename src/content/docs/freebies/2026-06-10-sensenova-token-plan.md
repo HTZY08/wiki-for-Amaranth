@@ -1,19 +1,22 @@
 ---
-title: "2026-06-10 商汤 SenseNova Token Plan 免费 API"
-description: 商汤日日新平台限时免费公测，零成本获取原生多模态视觉 API + 26 个 Hermes 办公 Skills
+title: "商汤 SenseNova Token Plan · 免费 API 白嫖指南"
+description: 商汤日日新平台免费公测（已延长至7月底），零成本获取原生多模态 + GLM 5.2 + DeepSeek V4 API
 ---
 
-商汤（SenseTime）在 2026 年 5 月推出 **SenseNova Token Plan**，公测期完全免费开放。注册即送三个模型的无门槛调用配额，且兼容 OpenAI API 格式，可无缝接入 Hermes Agent 等主流框架。
+> **更新 2026-07-22：** 免费公测已延长至 **7 月底**，新增支持 GLM 5.2，DeepSeek V4 Flash 配额提升。同时推出 **国际版**（[sensenova.ai](https://www.sensenova.ai/)），新用户首月免费。
 
-## 免费额度
+商汤（SenseTime）在 2026 年 5 月推出 **SenseNova Token Plan**，公测期完全免费开放。注册即送多个模型的无门槛调用配额，兼容 OpenAI API 格式，可无缝接入 Hermes Agent 等主流框架。
 
-公测期方案（¥0/月）：
+## 免费额度（截至 2026-07）
+
+公测期方案（¥0/月，预计持续至 7 月底）：
 
 | 模型 | 能力 | 配额 |
 |------|------|------|
 | **SenseNova 6.7 Flash-Lite** | 原生多模态视觉 + 对话，256K 上下文 | 1500 次 / 5 小时 |
 | **SenseNova U1 Fast** | 信息图生成（理解 + 生成一体） | 1500 次 / 5 小时 |
-| DeepSeek V4 Flash | 转售的 DeepSeek 模型 | 150 次 / 5 小时 |
+| **GLM 5.2** | 智谱 753B MoE 开源前沿模型 | 500 次 / 5 小时 |
+| DeepSeek V4 Flash | 转售的 DeepSeek 模型 | 500 次 / 5 小时 |
 
 关键特性：
 - 最多创建 **20 个 API Key**
@@ -21,6 +24,7 @@ description: 商汤日日新平台限时免费公测，零成本获取原生多�
 - 原生多模态架构（不需要 OCR → 文本中间层，直接理解图像）
 - 支持 Hermes Agent / OpenClaw 快速接入
 - 开源 26 个办公 Skills（信息图、PPT、数据分析、深度调研）
+- **国际版**（sensenova.ai）已上线，面向香港及全球市场
 
 ## 获取步骤
 
@@ -178,7 +182,7 @@ Tier 0（底层工具）: sn-image-base（图像生成 + VLM + LLM）
 1. **SKill 强绑定商汤模型** — 尤其是信息图生成（`sn-infographic`）和 PPT 生成，布局模板和提示词策略针对 SenseNova U1 Fast 优化，换其他模型可能效果打折扣
 2. **视觉识别可解耦** — 纯看图（VLM）支持 OpenAI 兼容格式，可以切到其他模型
 3. **配额限制** — 1500 次 / 5 小时，单个长任务可能消耗多次调用（生成 + VLM 质检 + 重试）
-4. **公测期** — 随时可能结束，付费档位（Lite / Pro）即将上线
+4. **公测期** — 已延长至 7 月底，付费档位（Lite / Pro）即将推出。国际版新用户享首月免费
 5. **仅限国内网络** — 服务部署在国内，使用国内 API 需注意代理配置（部分代理可能导致连接失败）
 
 ### 推荐的视觉链路
