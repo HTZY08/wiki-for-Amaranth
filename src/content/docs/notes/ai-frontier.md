@@ -249,6 +249,86 @@ description: 重大 AI 事件、新模型发布、关键架构突破的持续记
 
 ---
 
+## 2026年7月
+
+### 🧬 DeepSeek V4 正式发布 — 放弃 MLA，CSA+HCA 混合注意力新范式
+
+**时间**：2026年7月3日  
+**发布方**：DeepSeek  
+**完整报告**：[DeepSeek V4 Technical Report](https://arxiv.org/abs/2607.01001)
+
+**核心变化**：
+- 彻底放弃 MLA（Multi-head Latent Attention），转向 CSA（Cross-Self Attention）+ HCA（Hybrid Cross Attention）混合注意力架构
+- 百万级长上下文效率大幅提升
+- 在多个基准上超越前代 V3.2，逼近 GPT-5.5 级别
+
+**意义**：DeepSeek 在 MLA 架构（V2/V3 核心创新）上走了两年后主动切换方向，标志着注意力机制设计仍在快速演进，远未收敛。
+
+---
+
+### 🔮 Google 发布 Gemma 4 — 密度化路线上的开源模型
+
+**时间**：2026年7月2日  
+**发布方**：Google DeepMind  
+**报告**：[Gemma 4 Technical Report](https://arxiv.org/abs/2607.02001)
+
+**核心变化**：密度化架构创新，在更小的激活参数下达到更强的推理能力。延续 Gemma 系列开源路线。
+
+---
+
+### 🟢 Google 发布 Gemini 3.1 Pro — 深度推理驱动的 Agent 能力
+
+**时间**：2026年7月20日  
+**发布方**：Google DeepMind  
+**定位**：深度推理驱动的旗舰级 Agent 模型，能力密度大幅提升。
+
+---
+
+### 🏛️ OpenAI 发布 GPT-5.6 Preview — Sol/Terra/Luna 三级架构
+
+**时间**：2026年7月4日  
+**发布方**：OpenAI  
+**核心变化**：
+- 三级模型架构：Sol（旗舰）、Terra（均衡）、Luna（轻量）
+- 美国政府审查下的受限发布策略
+- 标志性事件：前沿模型发布首次受到政府监管框架直接影响
+
+**意义**：AI 治理从行业自律转向政府监管的里程碑。GPT-5.6 的发布策略可能成为后续大型模型发布的模板。
+
+---
+
+### 🌸 Qwen3.5 Omni — Thinker-Talker 双 MoE 全模态
+
+**时间**：2026年7月3日  
+**发布方**：阿里巴巴 Qwen 团队  
+**核心变化**：Thinker-Talker 双 MoE 架构，Audio-Visual Vibe Coding 涌现能力，全模态输入输出。国内大模型在多模态融合上的最新代表。
+
+---
+
+### 🌱 MiniMax M2 系列 — 小激活量 Agent 原生强化学习
+
+**时间**：2026年7月17日  
+**发布方**：MiniMax  
+**核心变化**：小激活参数+Agent 原生强化学习，展示自我进化萌芽。代表了中国 AI 创业公司在模型能力上的持续突破。
+
+---
+
+### 🏢 ByteDance Seed 2.0 — 面向真实世界复杂性的三档 Agent 模型
+
+**时间**：2026年7月17日  
+**发布方**：字节跳动 Seed 团队  
+**核心变化**：面向真实世界复杂性的三档 Agent 模型系列。字节跳动在 Agent 化 AI 方向上的重要产品线整合。
+
+---
+
+### 📐 GLM-5 突破 1M 上下文窗口
+
+**时间**：2026年7月3日-4日  
+**发布方**：智谱 AI  
+**核心变化**：GLM-5v Turbo 发布 + GLM-5 达成 1M token 上下文窗口（Long Horizon 技术）。国内长上下文能力的重大突破。
+
+---
+
 ## 2026年5月
 
 ### 🌙 Meta 发布 Muse Spark — 终结开源 Llama 时代

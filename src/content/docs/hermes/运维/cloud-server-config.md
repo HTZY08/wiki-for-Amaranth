@@ -14,7 +14,7 @@ description: 两台腾讯云轻量服务器的配置记录——朋友的微信�
 | 规格 | 4核 3.3G |
 | 磁盘 | 69GB SSD（余 55G） |
 | OS | Ubuntu 22.04 LTS |
-| Docker | ❌ 无 |
+| Docker | ✅ 已装（当前无运行中容器，mihomo 已停用） |
 | GPU | ❌ 无 |
 | 代理 | ❌ 无（出墙全挂） |
 | Python | 3.10.12（Hermes venv） |
