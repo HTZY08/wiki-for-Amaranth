@@ -1,23 +1,12 @@
 ---
 title: OpenAI
-description: OpenAI 技术报告工程范式分析 — 统一推理模型路线
+description: OpenAI 技术报告工程范式分析
 ---
 
 # OpenAI
 
-**工程范式：统一推理模型路线**
 
-核心技术领域：GPT 系列、o3/o4/o5 推理模型、统一推理机制
-
-## 按年份
-
-- [2023年](2023/)
-- [2024年](2024/)
-- [2025年](2025/)
-- [2026年](2026/)
 
 ## 报告列表
 
-以下按时间倒序列出 OpenAI 的技术报告深度分析。
-
-_新报告将由 AI 云组会每日自动更新。_
+-  — [GPT-4 — Scaling Law Prediction & Multimodal First Step](03-14-gpt-4-technical-report/)  \n-  — [o3 & o4-mini — 工具整合推理的新高度](04-16-o3-o4-mini-system-card/)  \n-  — [GPT-5.5 — 全新基座模型的 Agentic 时代](04-23-gpt-5-5-technical-report/)  \n-  — [GPT-4o — Omni 模型与实时语音](05-13-gpt-4o-system-card/)  \n-  — [GPT-5.6 Preview System Card — Sol/Terra/Luna 三级架构与美国政府审查下的受限发布](07-04-gpt-5-6-preview-sol-terra-luna/)  \n-  — [GPT-5 — 统一推理与快速模型的智能路由系统](08-07-gpt-5-system-card/)  \n-  — [o1 系列 — 推理时 Scaling Law 的开端](09-12-o1-system-card/)  \n-  — [GPT-4 Turbo — 成本降低与知识更新](11-06-gpt-4-turbo/)  \n

@@ -1,22 +1,12 @@
 ---
 title: 小米 MiMo
-description: 小米 MiMo 技术报告工程范式分析 — MoE 路由 + 长上下文
+description: 小米 MiMo 技术报告工程范式分析
 ---
 
 # 小米 MiMo
 
-**工程范式：MoE 路由 + 长上下文**
 
-核心技术领域：MiMo V2/V2.5、MoE 路由、1M 上下文
-
-## 按年份
-
-- [2024年](2024/)
-- [2025年](2025/)
-- [2026年](2026/)
 
 ## 报告列表
 
-以下按时间倒序列出 小米 MiMo 的技术报告深度分析。
-
-_新报告将由 AI 云组会每日自动更新。_
+- 2026-04-22 — [MiMo-V2.5 — 小米全模态 Agent 模型的开源突围](2026-04-22-mimo-v2-5/)  \n-  — [MiMo-V2-Flash — MoE 路由与长上下文](01-mimo-v2-flash/)  \n-  — [Xiaomi-GUI-0 — 真机闭环移动 GUI Agent 的工程范式](07-12-xiaomi-gui-0-real-device-gui-agent/)  \n-  — [MiMo-V2.5 全管线推理优化 — Hybrid SWA 工程极限](07-20-mimo-v2-5-inference-optimization/)  \n-  — [MiMo-7B — 从预训练到后训练解锁推理潜力](12-mimo-7b/)  \n-  — [MiMo-V2 — MoE 架构下的高效推理与智能体旗舰家族](12-mimo-v2/)  \n
