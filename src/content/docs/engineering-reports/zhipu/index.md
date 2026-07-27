@@ -1,9 +1,9 @@
 ---
-title: zhipu
-description: 
+title: 智谱 AI
+description: 智谱 AI 技术报告工程范式分析
 ---
 
-# zhipu
+# 智谱 AI
 
 ## 报告列表
 

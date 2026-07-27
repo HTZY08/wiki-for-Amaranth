@@ -1,9 +1,9 @@
 ---
-title: deepmind
-description: 
+title: Google DeepMind
+description: Google DeepMind 技术报告工程范式分析
 ---
 
-# deepmind
+# Google DeepMind
 
 ## 报告列表
 

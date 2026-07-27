@@ -1,9 +1,9 @@
 ---
-title: openai
-description: 
+title: OpenAI
+description: OpenAI 技术报告工程范式分析
 ---
 
-# openai
+# OpenAI
 
 ## 报告列表
 

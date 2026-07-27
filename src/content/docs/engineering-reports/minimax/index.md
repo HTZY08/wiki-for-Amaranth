@@ -1,9 +1,9 @@
 ---
-title: minimax
-description: 
+title: MiniMax
+description: MiniMax 技术报告工程范式分析
 ---
 
-# minimax
+# MiniMax
 
 ## 报告列表
 

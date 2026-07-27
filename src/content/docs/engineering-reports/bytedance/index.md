@@ -1,9 +1,9 @@
 ---
-title: bytedance
-description: 
+title: ByteDance Seed
+description: ByteDance Seed 技术报告工程范式分析
 ---
 
-# bytedance
+# ByteDance Seed
 
 ## 报告列表
 

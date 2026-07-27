@@ -1,9 +1,9 @@
 ---
-title: anthropic
-description: 
+title: Anthropic
+description: Anthropic Claude 技术报告工程范式分析
 ---
 
-# anthropic
+# Anthropic
 
 ## 报告列表
 

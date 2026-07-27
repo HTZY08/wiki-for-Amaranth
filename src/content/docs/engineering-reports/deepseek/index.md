@@ -1,9 +1,9 @@
 ---
-title: deepseek
-description: 
+title: DeepSeek
+description: DeepSeek 技术报告工程范式分析 — 极致推理效率 + 开源路线
 ---
 
-# deepseek
+# DeepSeek
 
 ## 报告列表
 

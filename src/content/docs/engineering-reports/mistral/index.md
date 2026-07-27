@@ -1,9 +1,9 @@
 ---
-title: mistral
-description: 
+title: Mistral AI
+description: Mistral AI 技术报告工程范式分析
 ---
 
-# mistral
+# Mistral AI
 
 ## 报告列表
 

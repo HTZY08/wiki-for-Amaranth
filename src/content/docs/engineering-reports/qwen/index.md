@@ -1,9 +1,9 @@
 ---
-title: qwen
-description: 
+title: Qwen (阿里)
+description: Qwen 技术报告工程范式分析
 ---
 
-# qwen
+# Qwen (阿里)
 
 ## 报告列表
 

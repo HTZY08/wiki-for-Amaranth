@@ -1,9 +1,9 @@
 ---
-title: xiaomi
-description: 
+title: 小米 MiMo
+description: 小米 MiMo 技术报告工程范式分析
 ---
 
-# xiaomi
+# 小米 MiMo
 
 ## 报告列表
 
