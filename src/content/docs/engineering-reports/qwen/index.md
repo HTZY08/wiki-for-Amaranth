@@ -18,3 +18,6 @@ description: Qwen 技术报告工程范式分析
 - 07- — [Qwen-Audio-VAE — 12.5Hz 连续音频自编码器，高保真重建与高速编码的统一](2026/07-14-qwen-audio-vae/)
 - 07- — [Qwen-Music — 语义规划 + 声学渲染分离的通用音乐生成](2026/07-14-qwen-music/)
 - 07- — [Qwen-Image-2.0 — 统一文生图与图编辑的图像生成基座模型](2026/07-20-qwen-image-2-0/)
+- 07- — [Qwen-Audio-3.0-Gen-Preview — 非自回归统一音频场景生成](2026/07-31-qwen-audio-3-gen-preview/)
+- 08- — [Qwen-UI-Agent — 真实设备中心的 Foundation GUI Agent](2026/08-02-qwen-ui-agent/)
+- 08- — [Qwen-Audio-3.0-TTS — 五阶段渐进式 LM+FM 联合优化的生产级语音合成](2026/08-02-qwen-audio-3-0-tts/)
