@@ -31,7 +31,7 @@ export default defineConfig({
         collapsed: false,
         items: [
           { label: '总览', link: 'papers/' },
-          { label: '今日最新', link: 'papers/2026-08-30' },
+          { label: '今日最新', link: 'papers/2026-09-01' },
         ],
       },
       {
