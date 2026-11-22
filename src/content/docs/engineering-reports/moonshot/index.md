@@ -14,3 +14,4 @@ description: Moonshot AI 技术报告工程范式分析
 - 03- — [Attention Residuals — 用深度注意力替代固定残差连接，补上 Transformer 最后一块"线性拼图](2026/03-31-attention-residuals/)
 - 04- — [Kimi K2.6 — Advancing Open-Source Coding](2026/04-kimi-k2-6/)
 - 06- — [Kimi K2.7 Code — 开放权重模型进入 Copilot](2026/06-12-kimi-k2-7-code/)
+- 10-24 — [Kimi K3.1 Pro — 后训练算力堆叠，架构不动](2026/10-24-kimi-k3-1-pro/)

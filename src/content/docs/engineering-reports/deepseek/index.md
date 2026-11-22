@@ -30,3 +30,4 @@ description: DeepSeek 技术报告工程范式分析 — 极致推理效率 + �
 - 12- — [DeepSeek-V3.2 — 稀疏注意力 + 可扩展 RL，开源模型逼近 GPT-5](2025/12-02-deepseek-v3-2/)
 - 04- — [DeepSeek V4 Preview — 放弃 MLA，拥抱混合注意力](2026/04-24-deepseek-v4-preview/)
 - 07- — [DeepSeek V4 完整技术报告 — 放弃 MLA，CSA+HCA 混合注意力开创百万级长上下文效率新范式](2026/07-03-v4-full-technical-report/)
+- 09-17 — [DeepSeek-V4.1-Flash — KV Cache 压缩作为第一优化目标](2026/09-17-deepseek-v41-flash-kv-cache/)

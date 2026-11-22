@@ -15,3 +15,4 @@ description: OpenAI 技术报告工程范式分析
 - 08- — [GPT-5 — 统一推理与快速模型的智能路由系统](2025/08-07-gpt-5-system-card/)
 - 04- — [GPT-5.5 — 全新基座模型的 Agentic 时代](2026/04-23-gpt-5-5-technical-report/)
 - 07- — [GPT-5.6 Preview System Card — Sol/Terra/Luna 三级架构与美国政府审查下的受限发布](2026/07-04-gpt-5-6-preview-sol-terra-luna/)
+- 09-03 — [GPT-6 Astra 系统卡 — 能力越线之后的安全工程](2026/09-03-gpt-6-astra-system-card/)

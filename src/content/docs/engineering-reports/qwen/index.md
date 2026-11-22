@@ -21,3 +21,4 @@ description: Qwen 技术报告工程范式分析
 - 07- — [Qwen-Audio-3.0-Gen-Preview — 非自回归统一音频场景生成](2026/07-31-qwen-audio-3-gen-preview/)
 - 08- — [Qwen-UI-Agent — 真实设备中心的 Foundation GUI Agent](2026/08-02-qwen-ui-agent/)
 - 08- — [Qwen-Audio-3.0-TTS — 五阶段渐进式 LM+FM 联合优化的生产级语音合成](2026/08-02-qwen-audio-3-0-tts/)
+- 11-16 — [Qwen4-Max — 定长状态 + 微块索引的长上下文](2026/11-16-qwen4-max/)

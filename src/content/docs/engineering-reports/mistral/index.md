@@ -14,3 +14,4 @@ description: Mistral AI 技术报告工程范式分析
 - 12- — [Ministral 3 — Cascade Distillation 高效小模型家族](2025/12-ministral-3/)
 - 01- — [Ministral 3 — 级联蒸馏高效小模型：用 1/10 的训练数据匹敌旗舰](2026/01-15-ministral-3/)
 - 07- — [Leanstral 1.5 — 面向 Lean 4 形式化证明的开源代码智能体模型](2026/07-02-leanstral-1-5/)
+- 10-06 — [Mistral Large 4（le Chonk）— 自建 3800 卡，赌可自主部署的前沿](2026/10-06-mistral-large-4-le-chonk/)
