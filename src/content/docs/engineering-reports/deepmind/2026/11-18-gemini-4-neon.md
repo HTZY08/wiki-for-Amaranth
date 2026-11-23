@@ -1,5 +1,5 @@
 ---
-title: Gemini 4 Neon — 从大模型蒸馏出一档中价位，把单位任务成本压到主力档的 68%
+title: Gemini 4 Neon — 从旗舰适配出一档中价位，单位任务成本压到主力档的 68%
 date: 2026-11-18
 source: "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-neon"
 ---
@@ -15,7 +15,7 @@ source: "https://blog.google/innovation-and-ai/models-and-research/gemini-models
 
 模型卡里有一句决定性的技术事实：**"Gemini 4 Neon is adapted from Gemini 4 Carbon."** 架构、训练数据、训练数据处理、硬件、软件——五节的正文全部是"见 Carbon 模型卡"。
 
-这意味着 Neon 不是一次预训练投入，而是一次**后训练/适配**投入。约束条件因此非常明确：没有新基座可用（或者说，不打算为中等档位再烧一次预训练），只能用已有的 Carbon 权重往下调，同时要把成本压下来。
+这意味着 Neon 的成本结构里没有一次新的预训练投入——模型卡把架构、数据、数据处理、硬件、软件五节全部指向 Carbon，说明权重与训练栈是继承的，改动发生在后续阶段（具体是蒸馏、剪枝还是继续训练，原文未说明）。约束条件因此非常明确：不打算为中等档位再烧一次预训练，只能用已有的 Carbon 权重往下调，同时把成本压下来。
 
 从价格看，目标定得很具体：$3 输入 / $15 输出每百万 token，缓存输入 $0.15（95% 折扣）。Carbon 现行价 $2/$10（11 月 30 日前的导入价），12 月 1 日起回到 $4/$20。于是 Neon 的成本定位就变成了一个**时间函数**：11 月内每 token 比 Carbon 贵 50%，12 月起比 Carbon 便宜 25%。Google 自己在发布正文里只承诺了另一件事——默认 high 思考档下**每任务成本比 Carbon 低 32%**。这句话才是真的设计目标：不是每 token 便宜，是**干完一件事的总花费更少**，靠的是少用 token 和更高的单位效率。
 
