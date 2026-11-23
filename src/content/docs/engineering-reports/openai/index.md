@@ -16,3 +16,4 @@ description: OpenAI 技术报告工程范式分析
 - 04- — [GPT-5.5 — 全新基座模型的 Agentic 时代](2026/04-23-gpt-5-5-technical-report/)
 - 07- — [GPT-5.6 Preview System Card — Sol/Terra/Luna 三级架构与美国政府审查下的受限发布](2026/07-04-gpt-5-6-preview-sol-terra-luna/)
 - 09-03 — [GPT-6 Astra 系统卡 — 能力越线之后的安全工程](2026/09-03-gpt-6-astra-system-card/)
+- 11-17 — [GPT-6.2 Astra / Sol — 把成本当第一约束重做前沿模型](2026/11-17-gpt-6-2-astra-sol/)
