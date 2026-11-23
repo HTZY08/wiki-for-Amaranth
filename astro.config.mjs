@@ -20,7 +20,7 @@ export default defineConfig({
         collapsed: false,
         items: [
           { label: '总览', link: 'ai-daily/' },
-          { label: '今日最新', link: 'ai-daily/2026-11-22' },
+          { label: '今日最新', link: 'ai-daily/2026-11-23' },
           { label: '2026年11月', link: 'ai-daily/11月-2026' },
           { label: '2026年9月', link: 'ai-daily/09月-2026' },
           { label: '2026年8月', link: 'ai-daily/08月-2026' },
