@@ -14,3 +14,4 @@ description: MiniMax 技术报告工程范式分析
 - 01- — [MiniMax M2.7 — 自我进化的开端](2026/01-15-minimax-m2-7/)
 - 06- — [MiniMax Sparse Attention (MSA) — 注意力机制第三次范式转移](2026/06-30-minimax-sparse-attention-msa/)
 - 07- — [MiniMax-M2 系列技术报告 — 小激活量 + Agent 原生强化学习 + 自我进化萌芽](2026/07-17-m2-series-technical-report/)
+- 10-19 — [MiniMax M3.1 Flash — 参数一个没加，全押在推理栈和量化感知训练上](2026/10-19-minimax-m3-1-flash/)

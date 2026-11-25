@@ -20,4 +20,5 @@ description: Anthropic Claude 技术报告工程范式分析
 - 05- — [Claude Opus 4.5/4.6/4.7/4.8 System Card 合集 — 快速迭代中的安全工程](2026/05-28-opus-4-5-4-6-4-7-4-8-system-cards-collection/)
 - 06- — [Claude Fable 5 & Mythos 5 System Card — 安全分层工程](2026/06-09-claude-fable-5-mythos-5-system-card/)
 - 06- — [Claude Sonnet 5 — 最有 Agent 能力的 Sonnet](2026/06-30-claude-sonnet-5-system-card/)
+- 10-07 — [Claude Haiku 5.5 — 小模型的重点从参数量移到"可被编排"](2026/10-07-claude-haiku-5-5/)
 - 11-09 — [Claude Fable 5.2 / Mythos 5.2 — 同一权重，两套护栏](2026/11-09-claude-fable-5-2-mythos-5-2/)
