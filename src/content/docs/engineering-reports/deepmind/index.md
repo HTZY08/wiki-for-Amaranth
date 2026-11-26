@@ -18,6 +18,8 @@ description: Google DeepMind 技术报告工程范式分析
 - 07- — [Gemma 4 Technical Report — 密度化路线上的架构创新](2026/07-02-gemma-4-technical-report/)
 - 07- — [Gemini 3.1 Pro — 深度推理驱动的 Agentic 能力密度提升](2026/07-20-gemini-3-1-pro-model-card/)
 - 10- — [Gemini 4 Argon / Carbon / Neon — 家族分型替代单点旗舰](2026/10-gemini-4-argon-family/)
+- 11-11 — [Gemini Decision 1 — 不生成文本，一个前向直接输出概率](2026/11-11-gemini-decision-1/)
 - 11-10 — [Gemini 4 Carbon — 底座不动，靠后训练把能力指数从 50 拉到 59](2026/11-10-gemini-4-carbon/)
 - 11-12 — [Gemini 4 Hydrogen — 一次预训练喂三个档位，按每任务成本定位](2026/11-12-gemini-4-hydrogen/)
 - 11-18 — [Gemini 4 Neon — 从旗舰适配出一档中价位](2026/11-18-gemini-4-neon/)
+- 11-11 — [Gemini Decision 1 — 不生成文本，一个前向直接输出概率](2026/11-11-gemini-decision-1/)

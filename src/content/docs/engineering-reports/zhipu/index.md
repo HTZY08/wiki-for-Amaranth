@@ -18,3 +18,4 @@ description: 智谱 AI 技术报告工程范式分析
 - 07- — [GLM-5V-Turbo — 原生多模态 Agent，CogViT + MMTP + 30+ 任务联合强化学习](2026/07-03-glm-5v-turbo-technical-report/)
 - 07- — [GLM-5.2 — 1M上下文开放权重的长程任务旗舰](2026/07-04-glm-5-2-1m-context-long-horizon/)
 - 08-14 — [GLM-5.3 — 只做后训练，把环境工程做成护城河](2026/08-14-glm-5-3-post-training/)
+- 11-23 — [GLM-5.4 — 不堆参数堆深度，把已训好的底座改造成循环 Transformer](2026/11-23-glm-5-4-loop-transformer/)
