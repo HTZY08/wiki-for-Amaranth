@@ -22,3 +22,4 @@ description: Anthropic Claude 技术报告工程范式分析
 - 06- — [Claude Sonnet 5 — 最有 Agent 能力的 Sonnet](2026/06-30-claude-sonnet-5-system-card/)
 - 10-07 — [Claude Haiku 5.5 — 小模型的重点从参数量移到"可被编排"](2026/10-07-claude-haiku-5-5/)
 - 11-09 — [Claude Fable 5.2 / Mythos 5.2 — 同一权重，两套护栏](2026/11-09-claude-fable-5-2-mythos-5-2/)
+- 11-24 — [Siren — 沙箱逃逸评测从"能不能出去"改成"会不会出去"](2026/11-24-siren-agent-sandbox-escape/)

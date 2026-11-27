@@ -19,3 +19,4 @@ description: ByteDance Seed 技术报告工程范式分析
 - 07- — [Seed2.0 — 面向真实世界复杂性的三档 Agent 模型系列](2026/07-17-seed2-0-model-card/)
 -  — [ByteDance Seed-Thinking-v1.5 — 双轨奖励系统](2026/q2-seed-thinking-v1-5/)
 - 11-09 — [Seedream 5.5 — 图像模型把多轮编辑一致性当主指标](2026/11-09-seedream-5-5/)
+- 11-24 — [Laminar — 轨迹级异步 RL 后训练框架，把权重做成分布式参数服务](2026/11-24-laminar-async-rl-framework/)
