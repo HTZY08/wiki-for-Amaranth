@@ -22,3 +22,4 @@ description: Qwen 技术报告工程范式分析
 - 08- — [Qwen-UI-Agent — 真实设备中心的 Foundation GUI Agent](2026/08-02-qwen-ui-agent/)
 - 08- — [Qwen-Audio-3.0-TTS — 五阶段渐进式 LM+FM 联合优化的生产级语音合成](2026/08-02-qwen-audio-3-0-tts/)
 - 11-16 — [Qwen4-Max — 定长状态 + 微块索引的长上下文](2026/11-16-qwen4-max/)
+- 10-20 — [Qwen-Audio-3.1-ASR — 六阶段训练 + 说话人 token loss 重加权](2026/10-20-qwen-audio-3-1-asr/)

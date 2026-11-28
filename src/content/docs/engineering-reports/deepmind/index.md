@@ -23,3 +23,4 @@ description: Google DeepMind 技术报告工程范式分析
 - 11-12 — [Gemini 4 Hydrogen — 一次预训练喂三个档位，按每任务成本定位](2026/11-12-gemini-4-hydrogen/)
 - 11-18 — [Gemini 4 Neon — 从旗舰适配出一档中价位](2026/11-18-gemini-4-neon/)
 - 11-11 — [Gemini Decision 1 — 不生成文本，一个前向直接输出概率](2026/11-11-gemini-decision-1/)
+- 11-10 — [AlphaProof Code — 把验证瓶颈从“人写证明”改成“人审 1%”](2026/11-10-alphaproof-code-signal/)

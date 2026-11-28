@@ -18,3 +18,4 @@ description: OpenAI 技术报告工程范式分析
 - 09-03 — [GPT-6 Astra 系统卡 — 能力越线之后的安全工程](2026/09-03-gpt-6-astra-system-card/)
 - 11-17 — [GPT-6.2 Astra / Sol — 把成本当第一约束重做前沿模型](2026/11-17-gpt-6-2-astra-sol/)
 - 11-23 — [GPT-6.2 (November 23) in ChatGPT — 同一批权重换一个产品面](2026/11-23-gpt-6-2-chatgpt-system-card/)
+- 11-24 — [GPT-6 蛋白设计 — 用通才模型接管流水线里的两段，湿实验 10.9% 命中率标定边界](2026/11-24-gpt-6-protein-biology/)

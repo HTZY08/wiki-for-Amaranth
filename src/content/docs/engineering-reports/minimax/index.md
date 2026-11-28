@@ -16,3 +16,4 @@ description: MiniMax 技术报告工程范式分析
 - 07- — [MiniMax-M2 系列技术报告 — 小激活量 + Agent 原生强化学习 + 自我进化萌芽](2026/07-17-m2-series-technical-report/)
 - 10-19 — [MiniMax M3.1 Flash — 参数一个没加，全押在推理栈和量化感知训练上](2026/10-19-minimax-m3-1-flash/)
 - 11-11 — [MiniMax H3-Image — 砍掉音频分支，把视频模型蒸馏成六步出图](2026/11-11-h3-image/)
+- 11-20 — [MiniMax MIM 密码分析 — 用“脚本能不能跑通”当唯一评分函数](2026/11-20-mim-automated-cryptanalysis/)
